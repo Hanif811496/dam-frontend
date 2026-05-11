@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery — DAM</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .gallery-wrap {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* Sidebar filter */
+    .filter-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      position: sticky;
+      top: calc(var(--navbar-h) + 28px);
+    }
+
+    .filter-panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .filter-section { margin-bottom: 20px; }
+
+    .filter-section-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filter-clear {
+      font-size: 11px;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .filter-clear:hover { text-decoration: underline; }
+
+    .tipe-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tipe-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    .tipe-item:hover { background: var(--surface-2); color: var(--text); }
+
+    .tipe-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tipe-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .tag-filter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .tag-filter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tag-filter-item:hover { background: var(--surface-2); color: var(--text); }
+
+    .tag-filter-item.active {
+      background: var(--accent-yellow-light);
+      color: #7a600a;
+      font-weight: 600;
+    }
+
+    .tag-filter-item .tag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-yellow);
+      flex-shrink: 0;
+    }
+
+    /* Right side */
+    .gallery-right {}
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar .input { flex: 1; min-width: 180px; }
+
+    .result-info {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .active-filter-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .active-filter-badge span {
+      cursor: pointer;
+      color: var(--primary);
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .asset-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+
+    .asset-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .asset-preview {
+      width: 100%;
+      height: 130px;
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      overflow: hidden;
+    }
+
+    .asset-preview img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+    }
+
+    .asset-card-body { padding: 11px 12px; }
+
+    .asset-card-name {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+
+    .asset-card-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+      .gallery-wrap { grid-template-columns: 1fr; }
+      .filter-panel { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-brand">DAM System</div>
+    <div class="navbar-right">
+      <span id="user-name" style="font-size:14px;color:var(--text-muted);"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
+    </div>
+  </nav>
+
+  <aside class="sidebar">
+    <a href="dashboard.html" class="sidebar-item">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
+    <a href="gallery.html" class="sidebar-item active">
+      <i data-lucide="image"></i> Gallery
+    </a>
+    <a href="upload.html" class="sidebar-item">
+      <i data-lucide="upload-cloud"></i> Upload Aset
+    </a>
+    <a href="search.html" class="sidebar-item">
+      <i data-lucide="search"></i> Pencarian
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="page-title" style="margin:0;">Gallery</div>
+      <a href="upload.html" class="btn btn-primary">+ Upload</a>
+    </div>
+
+    <div class="gallery-wrap">
+
+      <!-- Filter Panel -->
+      <div class="filter-panel">
+        <div class="filter-panel-title">Filter</div>
+
+        <div class="filter-section">
+          <div class="filter-section-label">
+            Tipe File
+            <span class="filter-clear" onclick="clearTipe()">Reset</span>
+          </div>
+          <div class="tipe-list">
+            <div class="tipe-item active" data-tipe="" onclick="setTipe(this, '')">
+              <div class="tipe-dot" style="background:#aaa;"></div> Semua
+            </div>
+            <div class="tipe-item" data-tipe="image" onclick="setTipe(this, 'image')">
+              <div class="tipe-dot" style="background:var(--accent-blue);"></div> Gambar
+            </div>
+            <div class="tipe-item" data-tipe="video" onclick="setTipe(this, 'video')">
+              <div class="tipe-dot" style="background:var(--primary);"></div> Video
+            </div>
+            <div class="tipe-item" data-tipe="pdf" onclick="setTipe(this, 'pdf')">
+              <div class="tipe-dot" style="background:var(--accent-yellow);"></div> PDF
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-section-label">
+            Tag
+            <span class="filter-clear" onclick="clearTag()">Reset</span>
+          </div>
+          <div class="tag-filter-list" id="tag-filter-list">
+            <div style="font-size:12px;color:var(--text-light);padding:6px 10px;">Memuat tag...</div>
+          </div>
+        </div>
+
+        <div class="filter-section" style="margin-bottom:0;">
+          <div class="filter-section-label">Urutkan</div>
+          <select class="input" id="sort-by" style="font-size:13px;padding:8px 10px;">
+            <option value="newest">Terbaru</option>
+            <option value="oldest">Terlama</option>
+            <option value="largest">Terbesar</option>
+            <option value="smallest">Terkecil</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Right: grid -->
+      <div class="gallery-right">
+        <div class="toolbar">
+          <input type="text" class="input" id="search-input" placeholder="Cari nama file...">
+        </div>
+
+        <div class="active-filters" id="active-filters"></div>
+        <div class="result-info" id="result-info"></div>
+
+        <div class="asset-grid" id="asset-grid">
+          <div style="grid-column:1/-1;display:flex;justify-content:center;padding:40px">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    requireAuth();
+    const user = getUser();
+    document.getElementById("user-name").textContent = user.nama;
+
+    let allAssets  = [];
+    let allTags    = [];
+    let activeTipe = "";
+    let activeTag  = "";
+
+    function getFileIcon(tipe) {
+      if (tipe.includes("image")) return "🖼️";
+      if (tipe.includes("video")) return "🎬";
+      if (tipe.includes("pdf"))   return "📄";
+      if (tipe.includes("word") || tipe.includes("document")) return "📝";
+      if (tipe.includes("spreadsheet") || tipe.includes("excel")) return "📊";
+      return "📁";
+    }
+
+    function renderGrid(assets) {
+      const grid = document.getElementById("asset-grid");
+      document.getElementById("result-info").textContent =
+        `Menampilkan ${assets.length} dari ${allAssets.length} aset`;
+
+      if (assets.length === 0) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <div style="font-size:40px">📭</div>
+          <p>Tidak ada aset yang cocok</p>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = assets.map(a => {
+        const isImage = a.tipe_file.includes("image");
+        const preview = isImage
+          ? `<div class="asset-preview"><img src="${a.url}" alt="${a.nama_file}" loading="lazy"></div>`
+          : `<div class="asset-preview">${getFileIcon(a.tipe_file)}</div>`;
+        return `<div class="asset-card" onclick="window.location.href='detail.html?id=${a.id}'">
+          ${preview}
+          <div class="asset-card-body">
+            <div class="asset-card-name">${a.nama_file}</div>
+            <div class="asset-card-meta">${formatFileSize(a.ukuran)} · ${formatDate(a.created_at)}</div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function renderActiveFilters() {
+      const el = document.getElementById("active-filters");
+      let html = "";
+      if (activeTipe) {
+        const label = {image:"Gambar",video:"Video",pdf:"PDF"}[activeTipe] || activeTipe;
+        html += `<div class="active-filter-badge">Tipe: ${label} <span onclick="clearTipe()">×</span></div>`;
+      }
+      if (activeTag) {
+        html += `<div class="active-filter-badge">Tag: ${activeTag} <span onclick="clearTag()">×</span></div>`;
+      }
+      el.innerHTML = html;
+    }
+
+    async function applyFilters() {
+      const q    = document.getElementById("search-input").value.toLowerCase();
+      const sort = document.getElementById("sort-by").value;
+
+      let filtered = allAssets.filter(a => {
+        const matchQ    = a.nama_file.toLowerCase().includes(q);
+        const matchTipe = activeTipe ? a.tipe_file.includes(activeTipe) : true;
+        return matchQ && matchTipe;
+      });
+
+      // Filter by tag — fetch dari backend kalau ada activeTag
+      if (activeTag) {
+        const tagAssetIds = await getAssetIdsByTag(activeTag);
+        filtered = filtered.filter(a => tagAssetIds.includes(a.id));
+      }
+
+      if (sort === "oldest")   filtered.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+      if (sort === "largest")  filtered.sort((a,b) => b.ukuran - a.ukuran);
+      if (sort === "smallest") filtered.sort((a,b) => a.ukuran - b.ukuran);
+
+      renderGrid(filtered);
+      renderActiveFilters();
+    }
+
+    async function getAssetIdsByTag(tagNama) {
+      const res = await fetch(`${API_BASE_URL}/assets/by-tag?user_id=${user.user_id}&tag=${encodeURIComponent(tagNama)}`);
+      const data = await res.json();
+      return data.asset_ids || [];
+    }
+
+    function setTipe(el, tipe) {
+      activeTipe = tipe;
+      document.querySelectorAll(".tipe-item").forEach(i => i.classList.remove("active"));
+      el.classList.add("active");
+      applyFilters();
+    }
+
+    function clearTipe() {
+      activeTipe = "";
+      document.querySelectorAll(".tipe-item").forEach(i => i.classList.remove("active"));
+      document.querySelector(".tipe-item[data-tipe='']").classList.add("active");
+      applyFilters();
+    }
+
+    function setTag(nama) {
+      activeTag = activeTag === nama ? "" : nama;
+      document.querySelectorAll(".tag-filter-item").forEach(i => i.classList.remove("active"));
+      if (activeTag) {
+        document.querySelector(`.tag-filter-item[data-tag="${nama}"]`)?.classList.add("active");
+      }
+      applyFilters();
+    }
+
+    function clearTag() {
+      activeTag = "";
+      document.querySelectorAll(".tag-filter-item").forEach(i => i.classList.remove("active"));
+      applyFilters();
+    }
+
+    async function loadTags() {
+      try {
+        const res  = await fetch(`${API_BASE_URL}/tags?user_id=${user.user_id}`);
+        const data = await res.json();
+        allTags = data.tags;
+        const listEl = document.getElementById("tag-filter-list");
+        if (allTags.length === 0) {
+          listEl.innerHTML = `<div style="font-size:12px;color:var(--text-light);padding:6px 10px;">Belum ada tag</div>`;
+          return;
+        }
+        listEl.innerHTML = allTags.map(t => `
+          <div class="tag-filter-item" data-tag="${t.nama}" onclick="setTag('${t.nama}')">
+            <div class="tag-dot"></div>${t.nama}
+          </div>`).join("");
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadGallery() {
+      try {
+        const data = await getAssets(user.user_id);
+        allAssets  = data.assets;
+        applyFilters();
+      } catch (err) {
+        document.getElementById("asset-grid").innerHTML =
+          `<div class="empty-state" style="grid-column:1/-1"><p style="color:var(--danger)">${err.message}</p></div>`;
+      }
+    }
+
+    document.getElementById("search-input").addEventListener("input", debounce(applyFilters, 300));
+    document.getElementById("sort-by").addEventListener("change", applyFilters);
+
+    loadTags();
+    loadGallery();
+    lucide.createIcons();
+  </script>
+</body>
+</html>

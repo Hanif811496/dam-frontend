@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detail Aset — DAM</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .detail-wrap {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .preview-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 360px;
+    }
+
+    .preview-box img {
+      width: 100%;
+      max-height: 500px;
+      object-fit: contain;
+    }
+
+    .preview-icon {
+      font-size: 80px;
+      padding: 60px;
+    }
+
+    .info-box {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .info-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+
+    .info-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-row-label { color: var(--text-muted); }
+    .info-row-value { font-weight: 500; text-align: right; max-width: 200px; word-break: break-all; }
+
+    .tags-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .tag-pill-removable {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .tag-remove {
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      opacity: 0.6;
+    }
+
+    .tag-remove:hover { opacity: 1; }
+
+    .tag-add-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .tag-add-row .input { flex: 1; padding: 7px 12px; }
+
+    .action-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sumber-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: var(--radius-full);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      margin-left: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .detail-wrap { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-brand">DAM System</div>
+    <div class="navbar-right">
+      <span id="user-name" style="font-size:14px;color:var(--text-muted);"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
+    </div>
+  </nav>
+
+  <aside class="sidebar">
+    <a href="dashboard.html" class="sidebar-item">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
+    <a href="gallery.html" class="sidebar-item active">
+      <i data-lucide="image"></i> Gallery
+    </a>
+    <a href="upload.html" class="sidebar-item">
+      <i data-lucide="upload-cloud"></i> Upload Aset
+    </a>
+    <a href="search.html" class="sidebar-item">
+      <i data-lucide="search"></i> Pencarian
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <button class="btn btn-outline btn-sm" onclick="history.back()">← Kembali</button>
+      <div class="page-title" style="margin:0;" id="page-title">Detail Aset</div>
+    </div>
+
+    <div id="content">
+      <div style="display:flex;justify-content:center;padding:60px">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    requireAuth();
+    const user = getUser();
+    document.getElementById("user-name").textContent = user.nama;
+
+    const params   = new URLSearchParams(window.location.search);
+    const asset_id = params.get("id");
+
+    if (!asset_id) window.location.href = "gallery.html";
+
+    function getFileIcon(tipe) {
+      if (tipe.includes("video")) return "🎬";
+      if (tipe.includes("pdf"))   return "📄";
+      if (tipe.includes("word") || tipe.includes("document")) return "📝";
+      if (tipe.includes("spreadsheet") || tipe.includes("excel")) return "📊";
+      return "📁";
+    }
+
+    let currentAsset = null;
+    let currentTags  = [];
+
+    async function loadDetail() {
+      try {
+        const data = await getAssetDetail(asset_id);
+        currentAsset = data.asset;
+        currentTags  = data.tags;
+        renderDetail();
+      } catch (err) {
+        document.getElementById("content").innerHTML =
+          `<p style="color:var(--danger)">Gagal memuat: ${err.message}</p>`;
+      }
+    }
+
+    function renderDetail() {
+      const a    = currentAsset;
+      const tags = currentTags;
+      document.getElementById("page-title").textContent = a.nama_file;
+
+      const isImage = a.tipe_file.includes("image");
+      const isVideo = a.tipe_file.includes("video");
+
+      let previewHtml = "";
+      if (isImage) {
+        previewHtml = `<img src="${a.url}" alt="${a.nama_file}">`;
+      } else if (isVideo) {
+        previewHtml = `<video controls style="width:100%;max-height:500px;">
+          <source src="${a.url}" type="${a.tipe_file}">
+        </video>`;
+      } else {
+        previewHtml = `<div class="preview-icon">${getFileIcon(a.tipe_file)}</div>`;
+      }
+
+      const tagsHtml = tags.map(t => `
+        <span class="tag-pill-removable" id="tag-${t.nama}">
+          ${t.nama}
+          <span class="sumber-badge">${t.sumber}</span>
+          <span class="tag-remove" onclick="hapusTag('${t.nama}')">×</span>
+        </span>`).join("");
+
+      document.getElementById("content").innerHTML = `
+        <div class="detail-wrap">
+          <div class="preview-box">${previewHtml}</div>
+
+          <div class="info-box">
+            <div class="info-section">
+              <div class="info-section-title">Informasi File</div>
+              <div class="info-row">
+                <span class="info-row-label">Nama file</span>
+                <span class="info-row-value">${a.nama_file}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-row-label">Tipe</span>
+                <span class="info-row-value">${a.tipe_file}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-row-label">Ukuran</span>
+                <span class="info-row-value">${formatFileSize(a.ukuran)}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-row-label">Diupload</span>
+                <span class="info-row-value">${formatDate(a.created_at)}</span>
+              </div>
+            </div>
+
+            <div class="info-section">
+              <div class="info-section-title">Tag (${tags.length})</div>
+              <div class="tags-wrap" id="tags-wrap">${tagsHtml}</div>
+              <div class="tag-add-row">
+                <input type="text" class="input" id="new-tag" placeholder="Tambah tag manual...">
+                <button class="btn btn-primary btn-sm" onclick="tambahTag()">Tambah</button>
+              </div>
+            </div>
+
+            <div class="info-section action-row">
+              <a href="${a.url}" download="${a.nama_file}" class="btn btn-primary" style="justify-content:center;">
+                ⬇ Download
+              </a>
+              <button class="btn btn-danger" style="justify-content:center;" onclick="hapusAset()">
+                🗑 Hapus Aset
+              </button>
+            </div>
+          </div>
+        </div>`;
+
+      document.getElementById("new-tag").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") tambahTag();
+      });
+    }
+
+    async function tambahTag() {
+      const input = document.getElementById("new-tag");
+      const nama  = input.value.trim().toLowerCase();
+      if (!nama) return;
+
+      try {
+        await fetch(`${API_BASE_URL}/assets/${asset_id}/tags`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nama_tag: nama, sumber: "manual" })
+        });
+        input.value = "";
+        await loadDetail();
+        showToast("Tag ditambahkan");
+      } catch (err) {
+        showToast("Gagal menambah tag", "error");
+      }
+    }
+
+    async function hapusTag(nama_tag) {
+      try {
+        await fetch(`${API_BASE_URL}/assets/${asset_id}/tags/${encodeURIComponent(nama_tag)}`, {
+          method: "DELETE"
+        });
+        await loadDetail();
+        showToast("Tag dihapus");
+      } catch (err) {
+        showToast("Gagal menghapus tag", "error");
+      }
+    }
+
+    async function hapusAset() {
+      if (!confirm("Yakin ingin menghapus aset ini? Tindakan tidak bisa dibatalkan.")) return;
+      try {
+        await deleteAsset(asset_id);
+        showToast("Aset dihapus");
+        setTimeout(() => window.location.href = "gallery.html", 1000);
+      } catch (err) {
+        showToast("Gagal menghapus: " + err.message, "error");
+      }
+    }
+
+    loadDetail();
+  </script>
+</body>
+</html>

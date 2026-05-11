@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload — DAM</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .upload-wrap { max-width: 640px; }
+
+    .dropzone {
+      border: 2px dashed var(--border-dark);
+      border-radius: var(--radius-lg);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--surface);
+      margin-bottom: 20px;
+    }
+
+    .dropzone.dragging {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .dropzone-icon { font-size: 40px; margin-bottom: 10px; }
+
+    .dropzone p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .file-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+    }
+
+    .file-item-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .file-item-name {
+      font-size: 13px;
+      font-weight: 500;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-item-size {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .progress-bar-wrap {
+      height: 6px;
+      background: var(--border);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: var(--radius-full);
+      width: 0%;
+      transition: width 0.2s;
+    }
+
+    .file-status {
+      font-size: 11px;
+      margin-top: 6px;
+      color: var(--text-muted);
+    }
+
+    .file-status.done  { color: var(--primary); }
+    .file-status.error { color: var(--danger);  }
+
+    .tags-result {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-brand">DAM System</div>
+    <div class="navbar-right">
+      <span id="user-name" style="font-size:14px;color:var(--text-muted);"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
+    </div>
+  </nav>
+
+  <aside class="sidebar">
+    <a href="dashboard.html" class="sidebar-item">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
+    <a href="gallery.html" class="sidebar-item">
+      <i data-lucide="image"></i> Gallery
+    </a>
+    <a href="upload.html" class="sidebar-item active">
+      <i data-lucide="upload-cloud"></i> Upload Aset
+    </a>
+    <a href="search.html" class="sidebar-item">
+      <i data-lucide="search"></i> Pencarian
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-title">Upload Aset</div>
+
+    <div class="upload-wrap">
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">☁️</div>
+        <p>Seret file ke sini atau klik untuk memilih</p>
+        <p style="font-size:12px;">Mendukung: JPG, PNG, PDF, MP4, DOCX, XLSX (maks 50MB)</p>
+        <button class="btn btn-outline btn-sm" type="button">Pilih File</button>
+        <input type="file" id="file-input" multiple accept="image/*,video/*,.pdf,.docx,.xlsx" style="display:none;">
+      </div>
+
+      <div class="file-list" id="file-list"></div>
+
+      <button class="btn btn-primary" id="btn-upload" style="display:none;width:100%;justify-content:center;">
+        Upload Semua File
+      </button>
+    </div>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    requireAuth();
+    const user = getUser();
+    document.getElementById("user-name").textContent = user.nama;
+
+    let selectedFiles = [];
+
+    const dropzone  = document.getElementById("dropzone");
+    const fileInput = document.getElementById("file-input");
+    const fileList  = document.getElementById("file-list");
+    const btnUpload = document.getElementById("btn-upload");
+
+    dropzone.addEventListener("click", () => fileInput.click());
+
+    dropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzone.classList.add("dragging");
+    });
+
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragging"));
+
+    dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("dragging");
+      addFiles(Array.from(e.dataTransfer.files));
+    });
+
+    fileInput.addEventListener("change", () => {
+      addFiles(Array.from(fileInput.files));
+      fileInput.value = "";
+    });
+
+    function addFiles(files) {
+      files.forEach(f => {
+        if (f.size > 50 * 1024 * 1024) {
+          showToast(`${f.name} melebihi 50MB`, "error");
+          return;
+        }
+        selectedFiles.push(f);
+      });
+      renderFileList();
+    }
+
+    function renderFileList() {
+      if (selectedFiles.length === 0) {
+        fileList.innerHTML = "";
+        btnUpload.style.display = "none";
+        return;
+      }
+
+      btnUpload.style.display = "flex";
+      fileList.innerHTML = selectedFiles.map((f, i) => `
+        <div class="file-item" id="file-item-${i}">
+          <div class="file-item-header">
+            <span class="file-item-name">${f.name}</span>
+            <span class="file-item-size">${formatFileSize(f.size)}</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="prog-${i}"></div>
+          </div>
+          <div class="file-status" id="status-${i}">Menunggu upload...</div>
+          <div class="tags-result" id="tags-${i}"></div>
+        </div>`).join("");
+    }
+
+    btnUpload.addEventListener("click", async () => {
+      btnUpload.disabled = true;
+      btnUpload.textContent = "Mengupload...";
+
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const statusEl = document.getElementById(`status-${i}`);
+        const progEl   = document.getElementById(`prog-${i}`);
+        const tagsEl   = document.getElementById(`tags-${i}`);
+
+        statusEl.textContent = "Mengupload...";
+        statusEl.className = "file-status";
+
+        try {
+          const result = await uploadAsset(user.user_id, file, (pct) => {
+            progEl.style.width = pct + "%";
+          });
+
+          progEl.style.width = "100%";
+          statusEl.textContent = "Upload berhasil — tag otomatis:";
+          statusEl.className = "file-status done";
+
+          tagsEl.innerHTML = result.tags
+            .map(t => `<span class="tag-pill">${t}</span>`)
+            .join("");
+
+        } catch (err) {
+          statusEl.textContent = "Gagal: " + err.message;
+          statusEl.className = "file-status error";
+        }
+      }
+
+      btnUpload.textContent = "Selesai — Upload Lagi";
+      btnUpload.disabled = false;
+      selectedFiles = [];
+      showToast("Semua file berhasil diupload");
+    });
+
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar — DAM</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--surface-2);
+    }
+
+    .register-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--accent-blue);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .register-logo {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent-blue);
+      margin-bottom: 4px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .register-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    .register-footer {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 20px;
+    }
+
+    .register-footer a {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .error-msg {
+      background: var(--danger-light);
+      color: var(--danger);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      border: 1px solid rgba(212, 43, 43, 0.2);
+    }
+
+    .success-msg {
+      background: var(--accent-blue-light);
+      color: var(--accent-blue);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      border: 1px solid rgba(26, 107, 191, 0.2);
+    }
+
+    .btn-register {
+      background: var(--accent-blue);
+      color: white;
+      width: 100%;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    .btn-register:hover { opacity: 0.88; }
+  </style>
+</head>
+<body>
+  <div class="register-box">
+    <div class="register-logo">DAM System</div>
+    <div class="register-sub">Buat akun baru — Digital Asset Management</div>
+
+    <div class="error-msg"   id="error-msg"></div>
+    <div class="success-msg" id="success-msg"></div>
+
+    <div class="form-group">
+      <label>Nama lengkap</label>
+      <input type="text" class="input" id="nama" placeholder="Nama kamu">
+    </div>
+
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" class="input" id="email" placeholder="email@contoh.com">
+    </div>
+
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" class="input" id="password" placeholder="Minimal 6 karakter">
+    </div>
+
+    <div class="form-group">
+      <label>Konfirmasi password</label>
+      <input type="password" class="input" id="confirm" placeholder="Ulangi password">
+    </div>
+
+    <button class="btn btn-register" id="btn-register">Buat Akun</button>
+
+    <div class="register-footer">
+      Sudah punya akun? <a href="login.html">Masuk di sini</a>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/api.js"></script>
+  <script>
+    if (isLoggedIn()) window.location.href = "dashboard.html";
+
+    document.getElementById("btn-register").addEventListener("click", async () => {
+      const nama     = document.getElementById("nama").value.trim();
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const confirm  = document.getElementById("confirm").value;
+
+      const errorEl   = document.getElementById("error-msg");
+      const successEl = document.getElementById("success-msg");
+      const btn       = document.getElementById("btn-register");
+
+      errorEl.style.display   = "none";
+      successEl.style.display = "none";
+
+      if (!nama || !email || !password || !confirm) {
+        errorEl.textContent    = "Semua field wajib diisi";
+        errorEl.style.display  = "block";
+        return;
+      }
+
+      if (password.length < 6) {
+        errorEl.textContent   = "Password minimal 6 karakter";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      if (password !== confirm) {
+        errorEl.textContent   = "Password dan konfirmasi tidak sama";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      btn.textContent = "Memproses...";
+      btn.disabled    = true;
+
+      try {
+        await registerUser(nama, email, password);
+        successEl.textContent   = "Akun berhasil dibuat! Mengarahkan ke halaman login...";
+        successEl.style.display = "block";
+        setTimeout(() => window.location.href = "login.html", 1500);
+      } catch (err) {
+        errorEl.textContent   = err.message;
+        errorEl.style.display = "block";
+        btn.textContent = "Buat Akun";
+        btn.disabled    = false;
+      }
+    });
+
+    document.getElementById("confirm").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("btn-register").click();
+    });
+  </script>
+</body>
+</html>

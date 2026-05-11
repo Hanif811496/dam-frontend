@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pencarian — DAM</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .search-hero {
+      text-align: center;
+      padding: 32px 0 24px;
+    }
+
+    .search-hero h2 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .search-bar-wrap {
+      display: flex;
+      gap: 10px;
+      max-width: 580px;
+      margin: 0 auto 12px;
+    }
+
+    .search-bar-wrap .input {
+      flex: 1;
+      font-size: 15px;
+      padding: 12px 16px;
+    }
+
+    .search-mode-tabs {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .tab-btn {
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1.5px solid var(--border-dark);
+      background: var(--surface);
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .tab-btn.active {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+      font-weight: 600;
+    }
+
+    .tab-btn.active.yellow {
+      border-color: var(--accent-yellow);
+      color: #7a600a;
+      background: var(--accent-yellow-light);
+    }
+
+    .search-info {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 12px 0 20px;
+      text-align: center;
+    }
+
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+      justify-content: center;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .tag-cloud-item {
+      padding: 5px 14px;
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--accent-yellow-light);
+      color: #7a600a;
+      border: 1px solid rgba(245,197,24,0.3);
+      transition: all 0.15s;
+    }
+
+    .tag-cloud-item:hover,
+    .tag-cloud-item.active {
+      background: var(--accent-yellow);
+      color: #111;
+      border-color: var(--accent-yellow);
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 16px;
+    }
+
+    .asset-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+
+    .asset-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .asset-preview {
+      width: 100%;
+      height: 130px;
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      overflow: hidden;
+    }
+
+    .asset-preview img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+    }
+
+    .asset-card-body { padding: 12px; }
+
+    .asset-card-name {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .asset-card-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .asset-card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-brand">DAM System</div>
+    <div class="navbar-right">
+      <span id="user-name" style="font-size:14px;color:var(--text-muted);"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
+    </div>
+  </nav>
+
+  <aside class="sidebar">
+    <a href="dashboard.html" class="sidebar-item">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
+    <a href="gallery.html" class="sidebar-item">
+      <i data-lucide="image"></i> Gallery
+    </a>
+    <a href="upload.html" class="sidebar-item">
+      <i data-lucide="upload-cloud"></i> Upload Aset
+    </a>
+    <a href="search.html" class="sidebar-item active">
+      <i data-lucide="search"></i> Pencarian
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <div class="search-hero">
+      <h2>Cari Aset</h2>
+
+      <div class="search-mode-tabs">
+        <button class="tab-btn active" id="tab-nama" onclick="setMode('nama')">Cari by Nama File</button>
+        <button class="tab-btn yellow" id="tab-tag" onclick="setMode('tag')">Cari by Tag</button>
+      </div>
+
+      <div class="search-bar-wrap" id="nama-input-wrap">
+        <input type="text" class="input" id="search-input" placeholder="Ketik nama file...">
+        <button class="btn btn-primary" onclick="doSearchNama()">Cari</button>
+      </div>
+
+      <div id="tag-cloud-wrap" style="display:none;">
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Klik tag untuk mencari aset yang memiliki tag tersebut</div>
+        <div class="tag-cloud" id="tag-cloud"></div>
+      </div>
+    </div>
+
+    <div class="search-info" id="search-info"></div>
+    <div class="result-grid" id="result-grid"></div>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    requireAuth();
+    const user = getUser();
+    document.getElementById("user-name").textContent = user.nama;
+
+    let mode      = "nama";
+    let activeTag = "";
+    let allAssets = [];
+
+    function getFileIcon(tipe) {
+      if (tipe.includes("image")) return "🖼️";
+      if (tipe.includes("video")) return "🎬";
+      if (tipe.includes("pdf"))   return "📄";
+      if (tipe.includes("word") || tipe.includes("document")) return "📝";
+      if (tipe.includes("spreadsheet") || tipe.includes("excel")) return "📊";
+      return "📁";
+    }
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById("tab-nama").classList.toggle("active", m === "nama");
+      document.getElementById("tab-tag").classList.toggle("active", m === "tag");
+      document.getElementById("nama-input-wrap").style.display = m === "nama" ? "flex" : "none";
+      document.getElementById("tag-cloud-wrap").style.display  = m === "tag"  ? "block" : "none";
+      document.getElementById("search-info").textContent = "";
+      document.getElementById("result-grid").innerHTML   = "";
+      activeTag = "";
+      document.querySelectorAll(".tag-cloud-item").forEach(i => i.classList.remove("active"));
+    }
+
+    function renderGrid(assets, keyword) {
+      const infoEl = document.getElementById("search-info");
+      const gridEl = document.getElementById("result-grid");
+
+      if (assets.length === 0) {
+        infoEl.textContent = `Tidak ada hasil untuk "${keyword}"`;
+        gridEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <div style="font-size:40px">🔍</div>
+          <p>Coba kata kunci atau tag lain</p>
+        </div>`;
+        return;
+      }
+
+      infoEl.textContent = `Ditemukan ${assets.length} aset untuk "${keyword}"`;
+
+      gridEl.innerHTML = assets.map(a => {
+        const isImage = a.tipe_file.includes("image");
+        const preview = isImage
+          ? `<div class="asset-preview"><img src="${a.url}" alt="${a.nama_file}" loading="lazy"></div>`
+          : `<div class="asset-preview">${getFileIcon(a.tipe_file)}</div>`;
+        return `<div class="asset-card" onclick="window.location.href='detail.html?id=${a.id}'">
+          ${preview}
+          <div class="asset-card-body">
+            <div class="asset-card-name">${a.nama_file}</div>
+            <div class="asset-card-meta">${formatFileSize(a.ukuran)} · ${formatDate(a.created_at)}</div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    async function doSearchNama() {
+      const q = document.getElementById("search-input").value.trim();
+      if (!q) {
+        document.getElementById("search-info").textContent = "Masukkan kata kunci terlebih dahulu.";
+        return;
+      }
+      document.getElementById("search-info").textContent = "Mencari...";
+      document.getElementById("result-grid").innerHTML   = "";
+
+      const matched = allAssets.filter(a =>
+        a.nama_file.toLowerCase().includes(q.toLowerCase())
+      );
+      renderGrid(matched, q);
+    }
+
+    async function doSearchByTag(tagNama) {
+      if (activeTag === tagNama) {
+        activeTag = "";
+        document.querySelectorAll(".tag-cloud-item").forEach(i => i.classList.remove("active"));
+        document.getElementById("search-info").textContent = "";
+        document.getElementById("result-grid").innerHTML   = "";
+        return;
+      }
+
+      activeTag = tagNama;
+      document.querySelectorAll(".tag-cloud-item").forEach(i => i.classList.remove("active"));
+      document.querySelector(`.tag-cloud-item[data-tag="${tagNama}"]`)?.classList.add("active");
+
+      document.getElementById("search-info").textContent = "Mencari...";
+      document.getElementById("result-grid").innerHTML   = "";
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/search/by-tag?user_id=${user.user_id}&tag=${encodeURIComponent(tagNama)}`);
+        const data = await res.json();
+        const matched = allAssets.filter(a => data.asset_ids.includes(a.id));
+        renderGrid(matched, tagNama);
+      } catch (err) {
+        document.getElementById("search-info").textContent = "Gagal mencari: " + err.message;
+      }
+    }
+
+    async function loadTagCloud() {
+      try {
+        const res  = await fetch(`${API_BASE_URL}/tags?user_id=${user.user_id}`);
+        const data = await res.json();
+        const cloud = document.getElementById("tag-cloud");
+        if (!data.tags.length) {
+          cloud.innerHTML = `<div style="font-size:13px;color:var(--text-light);">Belum ada tag tersedia</div>`;
+          return;
+        }
+        cloud.innerHTML = data.tags.map(t =>
+          `<div class="tag-cloud-item" data-tag="${t.nama}" onclick="doSearchByTag('${t.nama}')">${t.nama}</div>`
+        ).join("");
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadAllAssets() {
+      try {
+        const data = await getAssets(user.user_id);
+        allAssets  = data.assets;
+      } catch (e) { console.error(e); }
+    }
+
+    document.getElementById("search-input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doSearchNama();
+    });
+
+    document.getElementById("search-input").addEventListener("input",
+      debounce(doSearchNama, 350)
+    );
+
+    loadAllAssets();
+    loadTagCloud();
+    lucide.createIcons();
+  </script>
+</body>
+</html>
