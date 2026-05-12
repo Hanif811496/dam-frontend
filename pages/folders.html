@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Folder — DAM</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .folders-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .section-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .folder-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      margin-bottom: 6px;
+      background: var(--surface-2);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .folder-item:hover { border-color: var(--primary); }
+    .folder-item.active {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .folder-item-icon { color: var(--accent-yellow); }
+    .folder-item-name { flex: 1; font-size: 14px; font-weight: 500; }
+    .folder-item-count {
+      font-size: 11px;
+      background: var(--border);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      color: var(--text-muted);
+    }
+
+    .folder-delete {
+      color: var(--text-muted);
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .folder-item:hover .folder-delete { opacity: 1; }
+    .folder-delete:hover { color: var(--danger); }
+
+    .rule-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      margin-bottom: 6px;
+      background: var(--surface-2);
+    }
+
+    .rule-keyword {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 2px 10px;
+      border-radius: var(--radius-full);
+    }
+
+    .rule-arrow { color: var(--text-muted); font-size: 14px; }
+
+    .rule-folder {
+      font-size: 13px;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .rule-delete {
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .rule-delete:hover { color: var(--danger); }
+
+    .add-form {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .add-form .input { flex: 1; }
+
+    .asset-grid-sm {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .asset-card-sm {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .asset-card-sm:hover { border-color: var(--primary); }
+
+    .asset-preview-sm {
+      width: 100%;
+      height: 90px;
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      overflow: hidden;
+    }
+
+    .asset-preview-sm img {
+      width: 100%;
+      height: 90px;
+      object-fit: cover;
+    }
+
+    .asset-name-sm {
+      font-size: 11px;
+      padding: 6px 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-muted);
+    }
+
+    .empty-folder {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .folder-assets-section {
+      margin-top: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .folder-assets-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .folder-assets-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-brand">DAM System</div>
+    <div class="navbar-right">
+      <span id="user-name" style="font-size:14px;color:var(--text-muted);"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
+    </div>
+  </nav>
+
+  <aside class="sidebar">
+    <a href="dashboard.html" class="sidebar-item">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
+    <a href="gallery.html" class="sidebar-item">
+      <i data-lucide="image"></i> Gallery
+    </a>
+    <a href="upload.html" class="sidebar-item">
+      <i data-lucide="upload-cloud"></i> Upload Aset
+    </a>
+    <a href="search.html" class="sidebar-item">
+      <i data-lucide="search"></i> Pencarian
+    </a>
+    <a href="folders.html" class="sidebar-item active">
+      <i data-lucide="folder"></i> Smart Folder
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="page-title" style="margin:0;">Smart Folder</div>
+    </div>
+
+    <div style="background:var(--accent-yellow-light);border:1px solid rgba(245,197,24,0.3);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px;font-size:13px;color:#7a600a;">
+      <strong>Cara kerja:</strong> Buat folder, lalu tambahkan rule — kata kunci yang cocok dengan tag aset akan otomatis dimasukkan ke folder tersebut saat upload.
+    </div>
+
+    <div class="folders-wrap">
+
+      <!-- Kiri: Folder & Rules -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Daftar Folder -->
+        <div class="section-box">
+          <div class="section-title">
+            <i data-lucide="folder" style="width:16px;height:16px;color:var(--accent-yellow);"></i>
+            Daftar Folder
+          </div>
+          <div id="folder-list">
+            <div style="display:flex;justify-content:center;padding:20px;">
+              <div class="spinner"></div>
+            </div>
+          </div>
+          <div class="add-form">
+            <input type="text" class="input" id="new-folder-name" placeholder="Nama folder baru...">
+            <button class="btn btn-primary btn-sm" onclick="buatFolder()">
+              <i data-lucide="plus" style="width:14px;height:14px;"></i> Buat
+            </button>
+          </div>
+        </div>
+
+        <!-- Rules -->
+        <div class="section-box">
+          <div class="section-title">
+            <i data-lucide="git-branch" style="width:16px;height:16px;color:var(--accent-blue);"></i>
+            Rules Auto-assign
+          </div>
+          <div id="rule-list">
+            <div style="display:flex;justify-content:center;padding:20px;">
+              <div class="spinner"></div>
+            </div>
+          </div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Tambah rule baru:</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <input type="text" class="input" id="rule-keyword" placeholder="Kata kunci tag..." style="flex:1;min-width:120px;">
+              <select class="input" id="rule-folder" style="flex:1;min-width:120px;">
+                <option value="">Pilih folder...</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="buatRule()">
+                <i data-lucide="plus" style="width:14px;height:14px;"></i> Tambah
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Kanan: Preview aset dalam folder -->
+      <div class="section-box">
+        <div class="section-title">
+          <i data-lucide="files" style="width:16px;height:16px;color:var(--primary);"></i>
+          Isi Folder
+        </div>
+        <div id="folder-preview">
+          <div class="empty-folder">
+            <i data-lucide="folder-open" style="width:40px;height:40px;opacity:0.3;margin:0 auto 10px;display:block;"></i>
+            Klik folder untuk melihat isinya
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    requireAuth();
+    const user = getUser();
+    document.getElementById("user-name").textContent = user.nama;
+
+    let folders = [];
+    let activeFolder = null;
+
+    function getFileIcon(tipe) {
+      if (tipe.includes("image")) return "🖼️";
+      if (tipe.includes("video")) return "🎬";
+      if (tipe.includes("pdf"))   return "📄";
+      if (tipe.includes("word") || tipe.includes("document")) return "📝";
+      if (tipe.includes("spreadsheet") || tipe.includes("excel")) return "📊";
+      return "📁";
+    }
+
+    async function loadFolders() {
+      try {
+        const res  = await fetch(`${API_BASE_URL}/folders?user_id=${user.user_id}`);
+        const data = await res.json();
+        folders = data.folders;
+        renderFolders();
+        updateFolderSelect();
+      } catch (e) { console.error(e); }
+    }
+
+    function renderFolders() {
+      const el = document.getElementById("folder-list");
+      if (folders.length === 0) {
+        el.innerHTML = `<div class="empty-folder">Belum ada folder. Buat folder pertama di bawah.</div>`;
+        return;
+      }
+      el.innerHTML = folders.map(f => `
+        <div class="folder-item ${activeFolder === f.id ? 'active' : ''}" onclick="lihatFolder('${f.id}', '${f.nama}')">
+          <i data-lucide="folder" class="folder-item-icon" style="width:16px;height:16px;"></i>
+          <span class="folder-item-name">${f.nama}</span>
+          <i data-lucide="trash-2" class="folder-delete" style="width:14px;height:14px;" onclick="event.stopPropagation();hapusFolder('${f.id}')"></i>
+        </div>`).join("");
+      lucide.createIcons();
+    }
+
+    function updateFolderSelect() {
+      const sel = document.getElementById("rule-folder");
+      sel.innerHTML = `<option value="">Pilih folder...</option>` +
+        folders.map(f => `<option value="${f.id}">${f.nama}</option>`).join("");
+    }
+
+    async function buatFolder() {
+      const nama = document.getElementById("new-folder-name").value.trim();
+      if (!nama) return;
+      try {
+        await fetch(`${API_BASE_URL}/folders`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({nama, user_id: user.user_id})
+        });
+        document.getElementById("new-folder-name").value = "";
+        await loadFolders();
+        await loadRules();
+        showToast("Folder dibuat");
+      } catch (e) {
+        showToast("Gagal buat folder", "error");
+      }
+    }
+
+    async function hapusFolder(folder_id) {
+      if (!confirm("Hapus folder ini? Aset di dalamnya tidak akan terhapus.")) return;
+      try {
+        await fetch(`${API_BASE_URL}/folders/${folder_id}`, {method: "DELETE"});
+        if (activeFolder === folder_id) {
+          activeFolder = null;
+          document.getElementById("folder-preview").innerHTML = `
+            <div class="empty-folder">
+              <i data-lucide="folder-open" style="width:40px;height:40px;opacity:0.3;margin:0 auto 10px;display:block;"></i>
+              Klik folder untuk melihat isinya
+            </div>`;
+          lucide.createIcons();
+        }
+        await loadFolders();
+        await loadRules();
+        showToast("Folder dihapus");
+      } catch (e) {
+        showToast("Gagal hapus folder", "error");
+      }
+    }
+
+    async function lihatFolder(folder_id, nama) {
+      activeFolder = folder_id;
+      renderFolders();
+      const previewEl = document.getElementById("folder-preview");
+      previewEl.innerHTML = `<div style="display:flex;justify-content:center;padding:30px;"><div class="spinner"></div></div>`;
+      try {
+        const res  = await fetch(`${API_BASE_URL}/folders/${folder_id}/assets`);
+        const data = await res.json();
+        const assets = data.assets;
+
+        if (assets.length === 0) {
+          previewEl.innerHTML = `
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px;">📁 ${nama}</div>
+            <div class="empty-folder">Belum ada aset di folder ini.<br>Upload aset dengan tag yang sesuai rule.</div>`;
+          return;
+        }
+
+        previewEl.innerHTML = `
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px;">📁 ${nama}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">${assets.length} aset</div>
+          <div class="asset-grid-sm">
+            ${assets.map(a => {
+              const isImage = a.tipe_file.includes("image");
+              const preview = isImage
+                ? `<div class="asset-preview-sm"><img src="${a.url}" loading="lazy"></div>`
+                : `<div class="asset-preview-sm">${getFileIcon(a.tipe_file)}</div>`;
+              return `<div class="asset-card-sm" onclick="window.location.href='detail.html?id=${a.id}'">
+                ${preview}
+                <div class="asset-name-sm">${a.nama_file}</div>
+              </div>`;
+            }).join("")}
+          </div>`;
+      } catch (e) {
+        previewEl.innerHTML = `<div style="color:var(--danger);font-size:13px;text-align:center;padding:20px;">Gagal memuat aset</div>`;
+      }
+    }
+
+    async function loadRules() {
+      try {
+        const res  = await fetch(`${API_BASE_URL}/folders/rules?user_id=${user.user_id}`);
+        const data = await res.json();
+        const el   = document.getElementById("rule-list");
+
+        if (data.rules.length === 0) {
+          el.innerHTML = `<div class="empty-folder">Belum ada rule. Tambahkan rule di bawah.</div>`;
+          return;
+        }
+
+        el.innerHTML = data.rules.map(r => `
+          <div class="rule-item">
+            <span class="rule-keyword">${r.keyword}</span>
+            <span class="rule-arrow">→</span>
+            <span class="rule-folder">
+              <i data-lucide="folder" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;color:var(--accent-yellow);"></i>
+              ${r.folders?.nama || "—"}
+            </span>
+            <i data-lucide="trash-2" class="rule-delete" style="width:14px;height:14px;" onclick="hapusRule('${r.id}')"></i>
+          </div>`).join("");
+        lucide.createIcons();
+      } catch (e) { console.error(e); }
+    }
+
+    async function buatRule() {
+      const keyword   = document.getElementById("rule-keyword").value.trim().toLowerCase();
+      const folder_id = document.getElementById("rule-folder").value;
+      if (!keyword || !folder_id) {
+        showToast("Isi keyword dan pilih folder", "error");
+        return;
+      }
+      try {
+        await fetch(`${API_BASE_URL}/folders/rules`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({user_id: user.user_id, keyword, folder_id})
+        });
+        document.getElementById("rule-keyword").value = "";
+        document.getElementById("rule-folder").value  = "";
+        await loadRules();
+        showToast("Rule ditambahkan");
+      } catch (e) {
+        showToast("Gagal tambah rule", "error");
+      }
+    }
+
+    async function hapusRule(rule_id) {
+      try {
+        await fetch(`${API_BASE_URL}/folders/rules/${rule_id}`, {method: "DELETE"});
+        await loadRules();
+        showToast("Rule dihapus");
+      } catch (e) {
+        showToast("Gagal hapus rule", "error");
+      }
+    }
+
+    loadFolders();
+    loadRules();
+    lucide.createIcons();
+  </script>
+</body>
+</html>
