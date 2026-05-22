@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="../css/variables.css">
   <link rel="stylesheet" href="../css/reset.css">
   <link rel="stylesheet" href="../css/components.css">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     body {
       display: flex;
@@ -15,6 +14,7 @@
       justify-content: center;
       min-height: 100vh;
       background: var(--surface-2);
+      padding: 20px;
     }
 
     .register-box {
@@ -24,7 +24,7 @@
       border-radius: var(--radius-lg);
       padding: 40px;
       width: 100%;
-      max-width: 420px;
+      max-width: 500px;
       box-shadow: var(--shadow-md);
     }
 
@@ -50,10 +50,7 @@
       margin-top: 20px;
     }
 
-    .register-footer a {
-      color: var(--primary);
-      font-weight: 600;
-    }
+    .register-footer a { color: var(--primary); font-weight: 600; }
 
     .error-msg {
       background: var(--danger-light);
@@ -63,7 +60,7 @@
       font-size: 13px;
       margin-bottom: 16px;
       display: none;
-      border: 1px solid rgba(212, 43, 43, 0.2);
+      border: 1px solid rgba(212,43,43,0.2);
     }
 
     .success-msg {
@@ -74,7 +71,50 @@
       font-size: 13px;
       margin-bottom: 16px;
       display: none;
-      border: 1px solid rgba(26, 107, 191, 0.2);
+      border: 1px solid rgba(26,107,191,0.2);
+    }
+
+    .division-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .division-item {
+      border: 1.5px solid var(--border-dark);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .division-item:hover {
+      border-color: var(--accent-blue);
+      background: var(--accent-blue-light);
+    }
+
+    .division-item.selected {
+      border-color: var(--accent-blue);
+      background: var(--accent-blue-light);
+      color: var(--accent-blue);
+    }
+
+    .division-item-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .division-item-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .division-item.selected .division-item-desc {
+      color: var(--accent-blue);
+      opacity: 0.8;
     }
 
     .btn-register {
@@ -116,6 +156,16 @@
       <input type="password" class="input" id="confirm" placeholder="Ulangi password">
     </div>
 
+    <div class="form-group">
+      <label>Pilih divisi kamu</label>
+      <div class="division-grid" id="division-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:10px;font-size:13px;color:var(--text-muted);">
+          Memuat divisi...
+        </div>
+      </div>
+      <input type="hidden" id="selected-division">
+    </div>
+
     <button class="btn btn-register" id="btn-register">Buat Akun</button>
 
     <div class="register-footer">
@@ -129,11 +179,35 @@
   <script>
     if (isLoggedIn()) window.location.href = "dashboard.html";
 
+    async function loadDivisions() {
+      try {
+        const res  = await fetch(`${API_BASE_URL}/divisions`);
+        const data = await res.json();
+        const grid = document.getElementById("division-grid");
+
+        grid.innerHTML = data.divisions.map(d => `
+          <div class="division-item" data-id="${d.id}" onclick="pilihDivisi('${d.id}', this)">
+            <div class="division-item-name">${d.nama}</div>
+            <div class="division-item-desc">${d.deskripsi || ""}</div>
+          </div>`).join("");
+      } catch (e) {
+        document.getElementById("division-grid").innerHTML =
+          `<div style="grid-column:1/-1;color:var(--danger);font-size:13px;text-align:center;">Gagal memuat divisi</div>`;
+      }
+    }
+
+    function pilihDivisi(id, el) {
+      document.querySelectorAll(".division-item").forEach(i => i.classList.remove("selected"));
+      el.classList.add("selected");
+      document.getElementById("selected-division").value = id;
+    }
+
     document.getElementById("btn-register").addEventListener("click", async () => {
-      const nama     = document.getElementById("nama").value.trim();
-      const email    = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const confirm  = document.getElementById("confirm").value;
+      const nama        = document.getElementById("nama").value.trim();
+      const email       = document.getElementById("email").value.trim();
+      const password    = document.getElementById("password").value;
+      const confirm     = document.getElementById("confirm").value;
+      const division_id = document.getElementById("selected-division").value;
 
       const errorEl   = document.getElementById("error-msg");
       const successEl = document.getElementById("success-msg");
@@ -143,8 +217,8 @@
       successEl.style.display = "none";
 
       if (!nama || !email || !password || !confirm) {
-        errorEl.textContent    = "Semua field wajib diisi";
-        errorEl.style.display  = "block";
+        errorEl.textContent   = "Semua field wajib diisi";
+        errorEl.style.display = "block";
         return;
       }
 
@@ -160,11 +234,27 @@
         return;
       }
 
+      if (!division_id) {
+        errorEl.textContent   = "Pilih divisi terlebih dahulu";
+        errorEl.style.display = "block";
+        return;
+      }
+
       btn.textContent = "Memproses...";
       btn.disabled    = true;
 
       try {
-        await registerUser(nama, email, password);
+        const res = await fetch(
+          `${API_BASE_URL}/auth/register-with-division?division_id=${division_id}`,
+          {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({nama, email, password})
+          }
+        );
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Registrasi gagal");
+
         successEl.textContent   = "Akun berhasil dibuat! Mengarahkan ke halaman login...";
         successEl.style.display = "block";
         setTimeout(() => window.location.href = "login.html", 1500);
@@ -176,9 +266,7 @@
       }
     });
 
-    document.getElementById("confirm").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") document.getElementById("btn-register").click();
-    });
+    loadDivisions();
   </script>
 </body>
 </html>

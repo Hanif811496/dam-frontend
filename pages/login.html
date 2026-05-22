@@ -7,70 +7,69 @@
   <link rel="stylesheet" href="../css/variables.css">
   <link rel="stylesheet" href="../css/reset.css">
   <link rel="stylesheet" href="../css/components.css">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: var(--surface-2);
-  }
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--surface-2);
+    }
 
-  .login-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-top: 4px solid var(--primary);
-    border-radius: var(--radius-lg);
-    padding: 40px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: var(--shadow-md);
-  }
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--primary);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow-md);
+    }
 
-  .login-logo {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--primary);
-    margin-bottom: 4px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
+    .login-logo {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 4px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
 
-  .login-sub {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 28px;
-  }
+    .login-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
 
-  .login-footer {
-    text-align: center;
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-top: 20px;
-  }
+    .login-footer {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 20px;
+    }
 
-  .login-footer a {
-    color: var(--primary);
-    font-weight: 600;
-  }
+    .login-footer a {
+      color: var(--primary);
+      font-weight: 600;
+    }
 
-  .error-msg {
-    background: var(--danger-light);
-    color: var(--danger);
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    font-size: 13px;
-    margin-bottom: 16px;
-    display: none;
-    border: 1px solid rgba(212, 43, 43, 0.2);
-  }
+    .error-msg {
+      background: var(--danger-light);
+      color: var(--danger);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      border: 1px solid rgba(212, 43, 43, 0.2);
+    }
   </style>
 </head>
 <body>
   <div class="login-box">
     <div class="login-logo">DAM System</div>
-    <div class="login-sub">Digital Asset Management</div>
+    <div class="login-sub">Digital Asset Management — Temotion Studio</div>
 
     <div class="error-msg" id="error-msg"></div>
 
@@ -100,30 +99,31 @@
     if (isLoggedIn()) window.location.href = "dashboard.html";
 
     document.getElementById("btn-login").addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
+      const email    = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
-      const errorEl = document.getElementById("error-msg");
-      const btn = document.getElementById("btn-login");
+      const errorEl  = document.getElementById("error-msg");
+      const btn      = document.getElementById("btn-login");
 
       if (!email || !password) {
-        errorEl.textContent = "Email dan password wajib diisi";
+        errorEl.textContent   = "Email dan password wajib diisi";
         errorEl.style.display = "block";
         return;
       }
 
       btn.textContent = "Memproses...";
-      btn.disabled = true;
+      btn.disabled    = true;
       errorEl.style.display = "none";
 
       try {
         const result = await loginUser(email, password);
         saveUser({ user_id: result.user_id, nama: result.nama });
+        await loadUserDivision();
         window.location.href = "dashboard.html";
       } catch (err) {
-        errorEl.textContent = err.message;
+        errorEl.textContent   = err.message;
         errorEl.style.display = "block";
         btn.textContent = "Masuk";
-        btn.disabled = false;
+        btn.disabled    = false;
       }
     });
 
