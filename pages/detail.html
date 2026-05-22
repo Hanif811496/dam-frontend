@@ -157,6 +157,9 @@
     <a href="folders.html" class="sidebar-item">
       <i data-lucide="folder"></i> Smart Folder
     </a>
+    <a href="admin.html" class="sidebar-item" id="sidebar-admin" style="display:none;">
+      <i data-lucide="shield"></i> Admin
+    </a>
   </aside>
 
   <main class="main-content">
@@ -178,6 +181,9 @@
   <script src="../js/utils.js"></script>
   <script>
     requireAuth();
+    if (isManager()) {
+      document.getElementById("sidebar-admin").style.display = "flex";
+    }
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
 

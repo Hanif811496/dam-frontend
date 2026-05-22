@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — DAM</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .admin-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .section-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      background: var(--surface-2);
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+
+    .user-nama {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-email {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .user-division {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .div-manager      { background:#FCEBEB;color:var(--primary); }
+    .div-design       { background:#E6F1FB;color:var(--accent-blue); }
+    .div-3d           { background:#EEEDFE;color:#3C3489; }
+    .div-animator     { background:#E1F5EE;color:#085041; }
+    .div-editor       { background:#FAEEDA;color:#633806; }
+    .div-render       { background:#F1EFE8;color:#444441; }
+    .div-custom       { background:#F5F5F5;color:#666; }
+    .div-none         { background:#F5F5F5;color:#aaa; }
+
+    .user-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-dark);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .btn-icon:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-icon.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    .stat-mini {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-mini-item {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-mini-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .stat-mini-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-brand">DAM System</div>
+    <div style="margin-left:8px;font-size:11px;background:var(--primary);color:white;padding:2px 8px;border-radius:var(--radius-full);font-weight:600;">ADMIN</div>
+    <div class="navbar-right">
+      <span id="user-name" style="font-size:14px;color:var(--text-muted);"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
+    </div>
+  </nav>
+
+  <aside class="sidebar">
+    <a href="dashboard.html" class="sidebar-item">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
+    <a href="gallery.html" class="sidebar-item">
+      <i data-lucide="image"></i> Gallery
+    </a>
+    <a href="upload.html" class="sidebar-item">
+      <i data-lucide="upload-cloud"></i> Upload Aset
+    </a>
+    <a href="search.html" class="sidebar-item">
+      <i data-lucide="search"></i> Pencarian
+    </a>
+    <a href="folders.html" class="sidebar-item">
+      <i data-lucide="folder"></i> Smart Folder
+    </a>
+    <a href="admin.html" class="sidebar-item active">
+      <i data-lucide="shield"></i> Admin
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="page-title" style="margin:0;">Panel Admin</div>
+      <button class="btn btn-primary" onclick="bukaModalBuatAkun()">
+        <i data-lucide="user-plus" style="width:15px;height:15px;"></i> Buat Akun Staff
+      </button>
+    </div>
+
+    <div class="stat-mini" id="stat-mini">
+      <div class="stat-mini-item">
+        <div class="stat-mini-value" id="stat-total-user">—</div>
+        <div class="stat-mini-label">Total User</div>
+      </div>
+      <div class="stat-mini-item">
+        <div class="stat-mini-value" id="stat-total-aset">—</div>
+        <div class="stat-mini-label">Total Aset</div>
+      </div>
+      <div class="stat-mini-item">
+        <div class="stat-mini-value" id="stat-total-divisi">7</div>
+        <div class="stat-mini-label">Divisi</div>
+      </div>
+    </div>
+
+    <div class="admin-wrap">
+
+      <!-- Daftar User -->
+      <div class="section-box">
+        <div class="section-title">
+          <i data-lucide="users" style="width:16px;height:16px;color:var(--primary);"></i>
+          Daftar Staff
+        </div>
+        <div id="user-list">
+          <div style="display:flex;justify-content:center;padding:30px;">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Divisi -->
+      <div class="section-box">
+        <div class="section-title">
+          <i data-lucide="layers" style="width:16px;height:16px;color:var(--accent-blue);"></i>
+          Akses per Divisi
+        </div>
+        <div id="division-info"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modal Buat Akun -->
+  <div class="modal-overlay" id="modal-buat">
+    <div class="modal-box">
+      <div class="modal-title">Buat Akun Staff Baru</div>
+
+      <div class="form-group">
+        <label>Nama lengkap</label>
+        <input type="text" class="input" id="new-nama" placeholder="Nama staff">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" class="input" id="new-email" placeholder="email@temotion.id">
+      </div>
+      <div class="form-group">
+        <label>Password sementara</label>
+        <input type="text" class="input" id="new-password" placeholder="Min. 6 karakter" value="temotion123">
+      </div>
+      <div class="form-group">
+        <label>Divisi</label>
+        <select class="input" id="new-division">
+          <option value="">Pilih divisi...</option>
+        </select>
+      </div>
+
+      <div id="modal-error" style="color:var(--danger);font-size:13px;margin-top:8px;display:none;"></div>
+
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="tutupModal()">Batal</button>
+        <button class="btn btn-primary" id="btn-buat-akun" onclick="buatAkunStaff()">
+          <i data-lucide="user-plus" style="width:14px;height:14px;"></i> Buat Akun
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ubah Divisi -->
+  <div class="modal-overlay" id="modal-ubah">
+    <div class="modal-box">
+      <div class="modal-title">Ubah Divisi</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;" id="ubah-user-nama"></div>
+      <div class="form-group">
+        <label>Divisi baru</label>
+        <select class="input" id="ubah-division">
+          <option value="">Pilih divisi...</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="tutupModalUbah()">Batal</button>
+        <button class="btn btn-primary" onclick="simpanUbahDivisi()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    requireAuth();
+    const user = getUser();
+    document.getElementById("user-name").textContent = user.nama;
+
+    if (!isManager()) {
+      showToast("Akses ditolak — hanya Manager", "error");
+      setTimeout(() => window.location.href = "dashboard.html", 1500);
+    }
+
+    let divisions    = [];
+    let selectedUser = null;
+
+    const divisionClass = {
+      "Manager":       "div-manager",
+      "Design Artist": "div-design",
+      "3D Modeler":    "div-3d",
+      "Animator":      "div-animator",
+      "Editor":        "div-editor",
+      "Render Artist": "div-render",
+      "Custom":        "div-custom",
+    };
+
+    const divisionAccess = {
+      "Manager":       "Semua aset dan fitur admin",
+      "Design Artist": "Gambar (JPG, PNG, PSD, AI, SVG)",
+      "3D Modeler":    "Gambar + file 3D (BLEND, OBJ, FBX)",
+      "Animator":      "File 3D + audio voice over (MP3, WAV)",
+      "Editor":        "Video + audio + naskah (PDF, DOCX)",
+      "Render Artist": "File 3D + video render + gambar",
+      "Custom":        "Dikonfigurasi manual oleh Manager",
+    };
+
+    async function loadDivisions() {
+      try {
+        const res  = await fetch(`${API_BASE_URL}/divisions`);
+        const data = await res.json();
+        divisions  = data.divisions;
+
+        const sel1 = document.getElementById("new-division");
+        const sel2 = document.getElementById("ubah-division");
+        const opts = divisions.map(d => `<option value="${d.id}">${d.nama}</option>`).join("");
+        sel1.innerHTML = `<option value="">Pilih divisi...</option>` + opts;
+        sel2.innerHTML = `<option value="">Pilih divisi...</option>` + opts;
+
+        const infoEl = document.getElementById("division-info");
+        infoEl.innerHTML = divisions.map(d => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span class="user-division ${divisionClass[d.nama] || 'div-none'}">${d.nama}</span>
+            <span style="font-size:12px;color:var(--text-muted);flex:1;">${divisionAccess[d.nama] || d.deskripsi || "—"}</span>
+          </div>`).join("");
+
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadUsers() {
+      try {
+        const res  = await fetch(`${API_BASE_URL}/divisions/users`);
+        const data = await res.json();
+        const el   = document.getElementById("user-list");
+
+        document.getElementById("stat-total-user").textContent = data.users.length;
+
+        if (data.users.length === 0) {
+          el.innerHTML = `<div class="empty-state"><p>Belum ada user</p></div>`;
+          return;
+        }
+
+        el.innerHTML = data.users.map(u => {
+          const divNama  = u.division?.divisions?.nama || null;
+          const divClass = divisionClass[divNama] || "div-none";
+          const initial  = u.nama.charAt(0).toUpperCase();
+          return `
+            <div class="user-item">
+              <div class="user-avatar">${initial}</div>
+              <div class="user-info">
+                <div class="user-nama">${u.nama}</div>
+                <div class="user-email">${u.email}</div>
+              </div>
+              <span class="user-division ${divClass}">${divNama || "Belum ada"}</span>
+              <div class="user-actions">
+                <div class="btn-icon" title="Ubah divisi" onclick="bukaModalUbah('${u.id}', '${u.nama}')">
+                  <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+                </div>
+              </div>
+            </div>`;
+        }).join("");
+        lucide.createIcons();
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadStats() {
+      try {
+        const res  = await getAssets(user.user_id);
+        document.getElementById("stat-total-aset").textContent = res.assets.length;
+      } catch (e) {}
+    }
+
+    function bukaModalBuatAkun() {
+      document.getElementById("modal-buat").classList.add("open");
+      document.getElementById("modal-error").style.display = "none";
+      lucide.createIcons();
+    }
+
+    function tutupModal() {
+      document.getElementById("modal-buat").classList.remove("open");
+      document.getElementById("new-nama").value     = "";
+      document.getElementById("new-email").value    = "";
+      document.getElementById("new-password").value = "temotion123";
+      document.getElementById("new-division").value = "";
+    }
+
+    function bukaModalUbah(user_id, nama) {
+      selectedUser = user_id;
+      document.getElementById("ubah-user-nama").textContent = `Mengubah divisi untuk: ${nama}`;
+      document.getElementById("modal-ubah").classList.add("open");
+      lucide.createIcons();
+    }
+
+    function tutupModalUbah() {
+      document.getElementById("modal-ubah").classList.remove("open");
+      selectedUser = null;
+    }
+
+    async function buatAkunStaff() {
+      const nama        = document.getElementById("new-nama").value.trim();
+      const email       = document.getElementById("new-email").value.trim();
+      const password    = document.getElementById("new-password").value;
+      const division_id = document.getElementById("new-division").value;
+      const errorEl     = document.getElementById("modal-error");
+      const btn         = document.getElementById("btn-buat-akun");
+
+      errorEl.style.display = "none";
+
+      if (!nama || !email || !password || !division_id) {
+        errorEl.textContent   = "Semua field wajib diisi";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      btn.textContent = "Memproses...";
+      btn.disabled    = true;
+
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/auth/register-with-division?division_id=${division_id}`,
+          {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({nama, email, password})
+          }
+        );
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Gagal buat akun");
+
+        tutupModal();
+        await loadUsers();
+        showToast(`Akun ${nama} berhasil dibuat`);
+      } catch (err) {
+        errorEl.textContent   = err.message;
+        errorEl.style.display = "block";
+      } finally {
+        btn.textContent = "Buat Akun";
+        btn.disabled    = false;
+        lucide.createIcons();
+      }
+    }
+
+    async function simpanUbahDivisi() {
+      const division_id = document.getElementById("ubah-division").value;
+      if (!division_id || !selectedUser) return;
+
+      try {
+        await fetch(`${API_BASE_URL}/divisions/assign?user_id=${selectedUser}&division_id=${division_id}`, {
+          method: "POST"
+        });
+        tutupModalUbah();
+        await loadUsers();
+        showToast("Divisi berhasil diubah");
+      } catch (e) {
+        showToast("Gagal ubah divisi", "error");
+      }
+    }
+
+    loadDivisions();
+    loadUsers();
+    loadStats();
+    lucide.createIcons();
+  </script>
+</body>
+</html>
