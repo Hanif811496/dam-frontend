@@ -24,7 +24,7 @@ async function registerUser(nama, email, password) {
 }
 
 async function getAssets(user_id) {
-  return apiCall(`/assets?user_id=${user_id}`);
+  return apiCall(`/assets/by-division?user_id=${user_id}`);
 }
 
 async function getAssetDetail(asset_id) {
