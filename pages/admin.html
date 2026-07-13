@@ -84,14 +84,14 @@
       flex-shrink: 0;
     }
 
-    .div-manager      { background:#FCEBEB;color:var(--primary); }
-    .div-design       { background:#E6F1FB;color:var(--accent-blue); }
-    .div-3d           { background:#EEEDFE;color:#3C3489; }
-    .div-animator     { background:#E1F5EE;color:#085041; }
-    .div-editor       { background:#FAEEDA;color:#633806; }
-    .div-render       { background:#F1EFE8;color:#444441; }
-    .div-custom       { background:#F5F5F5;color:#666; }
-    .div-none         { background:#F5F5F5;color:#aaa; }
+    .div-manager      { background:#FCEBEB; color:var(--primary); }
+    .div-design       { background:#E6F1FB; color:var(--accent-blue); }
+    .div-3d           { background:#EEEDFE; color:#3C3489; }
+    .div-animator     { background:#E1F5EE; color:#085041; }
+    .div-editor       { background:#FAEEDA; color:#633806; }
+    .div-render       { background:#F1EFE8; color:#444441; }
+    .div-custom       { background:#F5F5F5; color:#666; }
+    .div-none         { background:#F5F5F5; color:#aaa; }
 
     .user-actions {
       display: flex;
@@ -218,7 +218,7 @@
       </button>
     </div>
 
-    <div class="stat-mini" id="stat-mini">
+    <div class="stat-mini">
       <div class="stat-mini-item">
         <div class="stat-mini-value" id="stat-total-user">—</div>
         <div class="stat-mini-label">Total User</div>
@@ -228,14 +228,12 @@
         <div class="stat-mini-label">Total Aset</div>
       </div>
       <div class="stat-mini-item">
-        <div class="stat-mini-value" id="stat-total-divisi">7</div>
+        <div class="stat-mini-value">7</div>
         <div class="stat-mini-label">Divisi</div>
       </div>
     </div>
 
     <div class="admin-wrap">
-
-      <!-- Daftar User -->
       <div class="section-box">
         <div class="section-title">
           <i data-lucide="users" style="width:16px;height:16px;color:var(--primary);"></i>
@@ -248,7 +246,6 @@
         </div>
       </div>
 
-      <!-- Info Divisi -->
       <div class="section-box">
         <div class="section-title">
           <i data-lucide="layers" style="width:16px;height:16px;color:var(--accent-blue);"></i>
@@ -256,7 +253,6 @@
         </div>
         <div id="division-info"></div>
       </div>
-
     </div>
   </main>
 
@@ -264,7 +260,6 @@
   <div class="modal-overlay" id="modal-buat">
     <div class="modal-box">
       <div class="modal-title">Buat Akun Staff Baru</div>
-
       <div class="form-group">
         <label>Nama lengkap</label>
         <input type="text" class="input" id="new-nama" placeholder="Nama staff">
@@ -283,9 +278,7 @@
           <option value="">Pilih divisi...</option>
         </select>
       </div>
-
       <div id="modal-error" style="color:var(--danger);font-size:13px;margin-top:8px;display:none;"></div>
-
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="tutupModal()">Batal</button>
         <button class="btn btn-primary" id="btn-buat-akun" onclick="buatAkunStaff()">
@@ -389,11 +382,12 @@
           const divNama  = u.division?.divisions?.nama || null;
           const divClass = divisionClass[divNama] || "div-none";
           const initial  = u.nama.charAt(0).toUpperCase();
+          const isSelf   = u.id === user.user_id;
           return `
             <div class="user-item">
               <div class="user-avatar">${initial}</div>
               <div class="user-info">
-                <div class="user-nama">${u.nama}</div>
+                <div class="user-nama">${u.nama} ${isSelf ? '<span style="font-size:10px;color:var(--text-muted);">(kamu)</span>' : ''}</div>
                 <div class="user-email">${u.email}</div>
               </div>
               <span class="user-division ${divClass}">${divNama || "Belum ada"}</span>
@@ -401,6 +395,10 @@
                 <div class="btn-icon" title="Ubah divisi" onclick="bukaModalUbah('${u.id}', '${u.nama}')">
                   <i data-lucide="pencil" style="width:13px;height:13px;"></i>
                 </div>
+                ${!isSelf ? `
+                <div class="btn-icon danger" title="Hapus akun" onclick="hapusStaff('${u.id}', '${u.nama}')">
+                  <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+                </div>` : ''}
               </div>
             </div>`;
         }).join("");
@@ -410,8 +408,9 @@
 
     async function loadStats() {
       try {
-        const res  = await getAssets(user.user_id);
-        document.getElementById("stat-total-aset").textContent = res.assets.length;
+        const res  = await fetch(`${API_BASE_URL}/assets/by-division?user_id=${user.user_id}`);
+        const data = await res.json();
+        document.getElementById("stat-total-aset").textContent = data.assets.length;
       } catch (e) {}
     }
 
@@ -488,7 +487,6 @@
     async function simpanUbahDivisi() {
       const division_id = document.getElementById("ubah-division").value;
       if (!division_id || !selectedUser) return;
-
       try {
         await fetch(`${API_BASE_URL}/divisions/assign?user_id=${selectedUser}&division_id=${division_id}`, {
           method: "POST"
@@ -498,6 +496,20 @@
         showToast("Divisi berhasil diubah");
       } catch (e) {
         showToast("Gagal ubah divisi", "error");
+      }
+    }
+
+    async function hapusStaff(staff_id, nama) {
+      if (!confirm(`Hapus akun "${nama}"? Semua aset milik akun ini juga akan dihapus. Tindakan tidak bisa dibatalkan.`)) return;
+      try {
+        const res  = await fetch(`${API_BASE_URL}/admin/users/${staff_id}`, {method: "DELETE"});
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Gagal menghapus akun");
+        await loadUsers();
+        await loadStats();
+        showToast(`Akun ${nama} berhasil dihapus`);
+      } catch (err) {
+        showToast(err.message, "error");
       }
     }
 
