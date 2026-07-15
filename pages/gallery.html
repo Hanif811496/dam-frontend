@@ -17,7 +17,6 @@
       align-items: start;
     }
 
-    /* Filter Panel */
     .filter-panel {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -125,7 +124,6 @@
       flex-shrink: 0;
     }
 
-    /* View mode toggle */
     .view-toggle {
       display: flex;
       background: var(--surface-2);
@@ -155,7 +153,6 @@
       box-shadow: var(--shadow-sm);
     }
 
-    /* Toolbar */
     .toolbar {
       display: flex;
       align-items: center;
@@ -197,7 +194,6 @@
       font-size: 14px;
     }
 
-    /* Breadcrumb */
     .breadcrumb {
       display: flex;
       align-items: center;
@@ -214,11 +210,9 @@
     }
 
     .breadcrumb-item:hover { text-decoration: underline; }
-
     .breadcrumb-sep { color: var(--text-muted); }
     .breadcrumb-current { color: var(--text-muted); }
 
-    /* Folder grid (Drive mode) */
     .folder-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -274,7 +268,6 @@
       gap: 6px;
     }
 
-    /* Asset grid */
     .asset-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -326,6 +319,15 @@
 
     .asset-card-meta { font-size: 11px; color: var(--text-muted); }
 
+    .asset-card-uploader {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
     @media (max-width: 768px) {
       .gallery-wrap { grid-template-columns: 1fr; }
       .filter-panel { position: static; }
@@ -372,8 +374,6 @@
     </div>
 
     <div class="gallery-wrap">
-
-      <!-- Filter Panel -->
       <div class="filter-panel">
         <div class="filter-panel-title">Filter</div>
 
@@ -419,7 +419,6 @@
         </div>
       </div>
 
-      <!-- Right: content -->
       <div>
         <div class="toolbar">
           <input type="text" class="input" id="search-input" placeholder="Cari nama file...">
@@ -442,7 +441,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </main>
 
@@ -452,11 +450,9 @@
   <script src="../js/utils.js"></script>
   <script>
     requireAuth();
-    if (isManager()) {
-      document.getElementById("sidebar-admin").style.display = "flex";
-    }
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
+    if (isManager()) document.getElementById("sidebar-admin").style.display = "flex";
 
     let allAssets   = [];
     let allFolders  = [];
@@ -485,22 +481,18 @@
     }
 
     async function render() {
-      if (viewMode === "drive") {
-        renderDrive();
-      } else {
-        applyFilters();
-      }
+      if (viewMode === "drive") renderDrive();
+      else applyFilters();
     }
 
     async function renderDrive(folder_id = null) {
-      const contentEl   = document.getElementById("content-area");
-      const breadcrumb  = document.getElementById("breadcrumb");
-      const resultInfo  = document.getElementById("result-info");
+      const contentEl  = document.getElementById("content-area");
+      const breadcrumb = document.getElementById("breadcrumb");
+      const resultInfo = document.getElementById("result-info");
 
       contentEl.innerHTML = `<div style="display:flex;justify-content:center;padding:40px;"><div class="spinner"></div></div>`;
 
       if (!folder_id) {
-        // Root — tampilkan semua folder
         breadcrumb.style.display = "none";
         resultInfo.textContent   = "";
 
@@ -525,18 +517,14 @@
             </div>
           </div>`).join("");
         html += `</div>`;
-
         html += `<div class="drive-section-title" style="margin-top:8px;"><i data-lucide="image" style="width:14px;height:14px;color:var(--primary);"></i> Semua Aset</div>`;
         html += renderAssetGrid(allAssets.slice(0, 8));
-
         contentEl.innerHTML = html;
         lucide.createIcons();
 
       } else {
-        // Isi folder
         breadcrumb.style.display = "flex";
         const folderNama = allFolders.find(f => f.id === folder_id)?.nama || "Folder";
-
         breadcrumb.innerHTML = `
           <span class="breadcrumb-item" onclick="renderDrive(null)">
             <i data-lucide="home" style="width:13px;height:13px;vertical-align:middle;"></i> Gallery
@@ -555,7 +543,7 @@
             contentEl.innerHTML = `
               <div class="empty-state">
                 <i data-lucide="folder-open" style="width:48px;height:48px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
-                <p>Folder kosong. Upload aset dengan tag yang sesuai rule.</p>
+                <p>Folder kosong.</p>
               </div>`;
             lucide.createIcons();
             return;
@@ -563,14 +551,13 @@
 
           contentEl.innerHTML = renderAssetGrid(assets);
           lucide.createIcons();
-
         } catch (e) {
           contentEl.innerHTML = `<p style="color:var(--danger);text-align:center;padding:20px;">Gagal memuat folder</p>`;
         }
       }
     }
 
-    function bukaFolder(folder_id, nama) {
+    function bukaFolder(folder_id) {
       activeFolder = folder_id;
       renderDrive(folder_id);
     }
@@ -593,6 +580,10 @@
             <div class="asset-card-body">
               <div class="asset-card-name">${a.nama_file}</div>
               <div class="asset-card-meta">${formatFileSize(a.ukuran)} · ${formatDate(a.created_at)}</div>
+              <div class="asset-card-uploader">
+                <i data-lucide="user" style="width:10px;height:10px;"></i>
+                ${a.uploader || "—"}
+              </div>
             </div>
           </div>`;
         }).join("") + `</div>`;

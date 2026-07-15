@@ -53,10 +53,10 @@
     }
 
     .info-section-title {
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       color: var(--text-muted);
       margin-bottom: 12px;
     }
@@ -65,14 +65,30 @@
       display: flex;
       justify-content: space-between;
       font-size: 13px;
-      padding: 5px 0;
+      padding: 6px 0;
       border-bottom: 1px solid var(--border);
     }
 
     .info-row:last-child { border-bottom: none; }
-
     .info-row-label { color: var(--text-muted); }
-    .info-row-value { font-weight: 500; text-align: right; max-width: 200px; word-break: break-all; }
+    .info-row-value {
+      font-weight: 500;
+      text-align: right;
+      max-width: 220px;
+      word-break: break-all;
+    }
+
+    .uploader-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 600;
+    }
 
     .tags-wrap {
       display: flex;
@@ -181,11 +197,9 @@
   <script src="../js/utils.js"></script>
   <script>
     requireAuth();
-    if (isManager()) {
-      document.getElementById("sidebar-admin").style.display = "flex";
-    }
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
+    if (isManager()) document.getElementById("sidebar-admin").style.display = "flex";
 
     const params   = new URLSearchParams(window.location.search);
     const asset_id = params.get("id");
@@ -264,6 +278,15 @@
                 <span class="info-row-label">Diupload</span>
                 <span class="info-row-value">${formatDate(a.created_at)}</span>
               </div>
+              <div class="info-row">
+                <span class="info-row-label">Oleh</span>
+                <span class="info-row-value">
+                  <span class="uploader-badge">
+                    <i data-lucide="user" style="width:11px;height:11px;"></i>
+                    ${a.uploader || "—"}
+                  </span>
+                </span>
+              </div>
             </div>
 
             <div class="info-section">
@@ -277,10 +300,10 @@
 
             <div class="info-section action-row">
               <a href="${a.url}" download="${a.nama_file}" class="btn btn-primary" style="justify-content:center;">
-                ⬇ Download
+                <i data-lucide="download" style="width:15px;height:15px;"></i> Download
               </a>
               <button class="btn btn-danger" style="justify-content:center;" onclick="hapusAset()">
-                🗑 Hapus Aset
+                <i data-lucide="trash-2" style="width:15px;height:15px;"></i> Hapus Aset
               </button>
             </div>
           </div>
@@ -289,18 +312,19 @@
       document.getElementById("new-tag").addEventListener("keydown", (e) => {
         if (e.key === "Enter") tambahTag();
       });
+
+      lucide.createIcons();
     }
 
     async function tambahTag() {
       const input = document.getElementById("new-tag");
       const nama  = input.value.trim().toLowerCase();
       if (!nama) return;
-
       try {
         await fetch(`${API_BASE_URL}/assets/${asset_id}/tags`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nama_tag: nama, sumber: "manual" })
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({nama_tag: nama, sumber: "manual"})
         });
         input.value = "";
         await loadDetail();
