@@ -345,10 +345,10 @@
   </nav>
 
   <aside class="sidebar">
-    <a href="dashboard.html" class="sidebar-item">
+    <a href="dashboard.html" class="sidebar-item" id="sidebar-dashboard" style="display:none;">
       <i data-lucide="layout-dashboard"></i> Dashboard
     </a>
-    <a href="gallery.html" class="sidebar-item active">
+    <a href="gallery.html" class="sidebar-item">
       <i data-lucide="image"></i> Gallery
     </a>
     <a href="upload.html" class="sidebar-item">
@@ -452,8 +452,11 @@
     requireAuth();
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
-    if (isManager()) document.getElementById("sidebar-admin").style.display = "flex";
-
+    if (isManager()) {
+      document.getElementById("sidebar-admin").style.display = "flex";
+      document.getElementById("sidebar-dashboard").style.display = "flex";
+    }
+    
     let allAssets   = [];
     let allFolders  = [];
     let activeTipe  = "";

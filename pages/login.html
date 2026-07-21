@@ -118,7 +118,7 @@
         const result = await loginUser(email, password);
         saveUser({ user_id: result.user_id, nama: result.nama });
         await loadUserDivision();
-        window.location.href = "dashboard.html";
+        redirectAfterLogin();
       } catch (err) {
         errorEl.textContent   = err.message;
         errorEl.style.display = "block";
