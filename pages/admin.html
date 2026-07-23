@@ -205,6 +205,9 @@
     <a href="folders.html" class="sidebar-item">
       <i data-lucide="folder"></i> Smart Folder
     </a>
+    <a href="profile.html" class="sidebar-item">
+      <i data-lucide="user"></i> Profil Saya
+    </a>
     <a href="admin.html" class="sidebar-item active">
       <i data-lucide="shield"></i> Admin
     </a>
@@ -288,20 +291,32 @@
     </div>
   </div>
 
-  <!-- Modal Ubah Divisi -->
+  <!-- Modal Ubah User -->
   <div class="modal-overlay" id="modal-ubah">
     <div class="modal-box">
-      <div class="modal-title">Ubah Divisi</div>
+      <div class="modal-title">Edit Staff</div>
       <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;" id="ubah-user-nama"></div>
+
       <div class="form-group">
-        <label>Divisi baru</label>
+        <label>Nama baru (kosongkan jika tidak diubah)</label>
+        <input type="text" class="input" id="ubah-nama" placeholder="Nama lengkap">
+      </div>
+      <div class="form-group">
+        <label>Divisi</label>
         <select class="input" id="ubah-division">
-          <option value="">Pilih divisi...</option>
+          <option value="">Tidak mengubah divisi</option>
         </select>
       </div>
+      <div class="form-group">
+        <label>Reset password (kosongkan jika tidak diubah)</label>
+        <input type="text" class="input" id="ubah-password" placeholder="Password baru min. 6 karakter">
+      </div>
+
+      <div id="ubah-error" style="color:var(--danger);font-size:13px;margin-top:4px;display:none;"></div>
+
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="tutupModalUbah()">Batal</button>
-        <button class="btn btn-primary" onclick="simpanUbahDivisi()">Simpan</button>
+        <button class="btn btn-primary" onclick="simpanUbahUser()">Simpan</button>
       </div>
     </div>
   </div>
@@ -437,6 +452,10 @@
 
     function tutupModalUbah() {
       document.getElementById("modal-ubah").classList.remove("open");
+      document.getElementById("ubah-nama").value     = "";
+      document.getElementById("ubah-division").value = "";
+      document.getElementById("ubah-password").value = "";
+      document.getElementById("ubah-error").style.display = "none";
       selectedUser = null;
     }
 
@@ -484,18 +503,49 @@
       }
     }
 
-    async function simpanUbahDivisi() {
+    async function simpanUbahUser() {
+      const nama        = document.getElementById("ubah-nama").value.trim();
       const division_id = document.getElementById("ubah-division").value;
-      if (!division_id || !selectedUser) return;
+      const password    = document.getElementById("ubah-password").value;
+      const errorEl     = document.getElementById("ubah-error");
+
+      errorEl.style.display = "none";
+
+      if (password && password.length < 6) {
+        errorEl.textContent   = "Password minimal 6 karakter";
+        errorEl.style.display = "block";
+        return;
+      }
+
       try {
-        await fetch(`${API_BASE_URL}/divisions/assign?user_id=${selectedUser}&division_id=${division_id}`, {
-          method: "POST"
-        });
+        // Update nama dan/atau password
+        if (nama || password) {
+          const payload = {};
+          if (nama)     payload.nama         = nama;
+          if (password) payload.password_baru = password;
+
+          const res = await fetch(`${API_BASE_URL}/admin/users/${selectedUser}`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail);
+        }
+
+        // Update divisi jika dipilih
+        if (division_id) {
+          await fetch(`${API_BASE_URL}/divisions/assign?user_id=${selectedUser}&division_id=${division_id}`, {
+            method: "POST"
+          });
+        }
+
         tutupModalUbah();
         await loadUsers();
-        showToast("Divisi berhasil diubah");
-      } catch (e) {
-        showToast("Gagal ubah divisi", "error");
+        showToast("Data staff berhasil diupdate");
+      } catch (err) {
+        errorEl.textContent   = err.message;
+        errorEl.style.display = "block";
       }
     }
 

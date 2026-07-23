@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profil — DAM</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/reset.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .profile-wrap {
+      max-width: 560px;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .profile-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .profile-info-name {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .profile-info-email {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .profile-info-div {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      margin-top: 6px;
+    }
+
+    .section-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    .alert {
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .alert-success { background: var(--success-light); color: #085041; border: 1px solid rgba(29,158,117,0.2); }
+    .alert-error   { background: var(--danger-light);  color: var(--danger); border: 1px solid rgba(212,43,43,0.2); }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="navbar-brand">DAM System</div>
+    <div class="navbar-right">
+      <span id="user-name" style="font-size:14px;color:var(--text-muted);"></span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
+    </div>
+  </nav>
+
+  <aside class="sidebar">
+    <a href="dashboard.html" class="sidebar-item" id="sidebar-dashboard" style="display:none;">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
+    <a href="gallery.html" class="sidebar-item">
+      <i data-lucide="image"></i> Gallery
+    </a>
+    <a href="upload.html" class="sidebar-item">
+      <i data-lucide="upload-cloud"></i> Upload Aset
+    </a>
+    <a href="search.html" class="sidebar-item">
+      <i data-lucide="search"></i> Pencarian
+    </a>
+    <a href="folders.html" class="sidebar-item">
+      <i data-lucide="folder"></i> Smart Folder
+    </a>
+    <a href="profile.html" class="sidebar-item active">
+      <i data-lucide="user"></i> Profil Saya
+    </a>
+    <a href="admin.html" class="sidebar-item" id="sidebar-admin" style="display:none;">
+      <i data-lucide="shield"></i> Admin
+    </a>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-title">Profil Saya</div>
+
+    <div class="profile-wrap">
+      <!-- Header profil -->
+      <div class="profile-header">
+        <div class="profile-avatar" id="profile-initial">?</div>
+        <div>
+          <div class="profile-info-name" id="profile-name">—</div>
+          <div class="profile-info-email" id="profile-email">—</div>
+          <div class="profile-info-div" id="profile-div">—</div>
+        </div>
+      </div>
+
+      <!-- Ubah nama -->
+      <div class="section-box">
+        <div class="section-title">
+          <i data-lucide="user" style="width:16px;height:16px;color:var(--primary);"></i>
+          Ubah Nama
+        </div>
+        <div class="alert alert-success" id="nama-success">Nama berhasil diupdate</div>
+        <div class="alert alert-error"   id="nama-error"></div>
+        <div class="form-group">
+          <label>Nama baru</label>
+          <input type="text" class="input" id="input-nama" placeholder="Nama lengkap">
+        </div>
+        <button class="btn btn-primary" onclick="updateNama()">
+          <i data-lucide="save" style="width:14px;height:14px;"></i> Simpan Nama
+        </button>
+      </div>
+
+      <!-- Ubah password -->
+      <div class="section-box">
+        <div class="section-title">
+          <i data-lucide="lock" style="width:16px;height:16px;color:var(--accent-blue);"></i>
+          Ubah Password
+        </div>
+        <div class="alert alert-success" id="pw-success">Password berhasil diupdate</div>
+        <div class="alert alert-error"   id="pw-error"></div>
+        <div class="form-group">
+          <label>Password lama</label>
+          <input type="password" class="input" id="pw-lama" placeholder="Password saat ini">
+        </div>
+        <div class="form-group">
+          <label>Password baru</label>
+          <input type="password" class="input" id="pw-baru" placeholder="Minimal 6 karakter">
+        </div>
+        <div class="form-group">
+          <label>Konfirmasi password baru</label>
+          <input type="password" class="input" id="pw-konfirm" placeholder="Ulangi password baru">
+        </div>
+        <button class="btn btn-primary" style="background:var(--accent-blue);" onclick="updatePassword()">
+          <i data-lucide="lock" style="width:14px;height:14px;"></i> Simpan Password
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    requireAuth();
+    const user = getUser();
+    document.getElementById("user-name").textContent = user.nama;
+
+    if (isManager()) {
+      document.getElementById("sidebar-admin").style.display    = "flex";
+      document.getElementById("sidebar-dashboard").style.display = "flex";
+    }
+
+    // Isi data profil
+    document.getElementById("profile-initial").textContent = user.nama.charAt(0).toUpperCase();
+    document.getElementById("profile-name").textContent    = user.nama;
+    document.getElementById("input-nama").value            = user.nama;
+
+    async function loadProfile() {
+      try {
+        const res  = await fetch(`${API_BASE_URL}/divisions/user/${user.user_id}`);
+        const data = await res.json();
+        if (data.division) {
+          document.getElementById("profile-div").textContent   = data.division.divisions?.nama || "—";
+          document.getElementById("profile-email").textContent =
+            (await fetch(`${API_BASE_URL}/divisions/users`).then(r => r.json()))
+            .users.find(u => u.id === user.user_id)?.email || "—";
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    async function updateNama() {
+      const nama      = document.getElementById("input-nama").value.trim();
+      const successEl = document.getElementById("nama-success");
+      const errorEl   = document.getElementById("nama-error");
+
+      successEl.style.display = "none";
+      errorEl.style.display   = "none";
+
+      if (!nama) {
+        errorEl.textContent   = "Nama tidak boleh kosong";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      try {
+        const res  = await fetch(`${API_BASE_URL}/profile/${user.user_id}`, {
+          method: "PUT",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({nama})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+
+        // Update localStorage
+        const u = getUser();
+        u.nama  = nama;
+        saveUser(u);
+
+        document.getElementById("user-name").textContent    = nama;
+        document.getElementById("profile-name").textContent = nama;
+        document.getElementById("profile-initial").textContent = nama.charAt(0).toUpperCase();
+
+        successEl.style.display = "block";
+        showToast("Nama berhasil diupdate");
+      } catch (err) {
+        errorEl.textContent   = err.message;
+        errorEl.style.display = "block";
+      }
+    }
+
+    async function updatePassword() {
+      const lama    = document.getElementById("pw-lama").value;
+      const baru    = document.getElementById("pw-baru").value;
+      const konfirm = document.getElementById("pw-konfirm").value;
+
+      const successEl = document.getElementById("pw-success");
+      const errorEl   = document.getElementById("pw-error");
+
+      successEl.style.display = "none";
+      errorEl.style.display   = "none";
+
+      if (!lama || !baru || !konfirm) {
+        errorEl.textContent   = "Semua field wajib diisi";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      if (baru.length < 6) {
+        errorEl.textContent   = "Password baru minimal 6 karakter";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      if (baru !== konfirm) {
+        errorEl.textContent   = "Password baru dan konfirmasi tidak sama";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      try {
+        const res  = await fetch(`${API_BASE_URL}/profile/${user.user_id}/password`, {
+          method: "PUT",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({password_lama: lama, password_baru: baru})
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+
+        document.getElementById("pw-lama").value    = "";
+        document.getElementById("pw-baru").value    = "";
+        document.getElementById("pw-konfirm").value = "";
+
+        successEl.style.display = "block";
+        showToast("Password berhasil diupdate");
+      } catch (err) {
+        errorEl.textContent   = err.message;
+        errorEl.style.display = "block";
+      }
+    }
+
+    loadProfile();
+    lucide.createIcons();
+  </script>
+</body>
+</html>
