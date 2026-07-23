@@ -12,9 +12,9 @@
   <style>
     .stat-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
 
     .stat-card {
@@ -40,8 +40,6 @@
     .stat-card.red    { background: var(--primary); color: white; }
     .stat-card.yellow { background: var(--accent-yellow); color: #111; }
     .stat-card.blue   { background: var(--accent-blue); color: white; }
-    .stat-card.green  { background: #2E7D32; color: white; }
-    .stat-card.dark   { background: #333; color: white; }
 
     .stat-label {
       font-size: 11px;
@@ -66,6 +64,58 @@
       font-size: 11px;
       opacity: 0.7;
       margin-top: 5px;
+    }
+
+    .storage-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+
+    .storage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .storage-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .storage-pct {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .storage-bar {
+      height: 10px;
+      background: var(--border);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .storage-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+      background: linear-gradient(90deg, var(--primary), var(--accent-yellow));
+      width: 0%;
+      transition: width 1s ease;
+    }
+
+    .storage-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
     }
 
     /* Tabs */
@@ -172,6 +222,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       overflow: hidden;
+      overflow-x: auto;
     }
 
     .report-table {
@@ -211,11 +262,11 @@
       white-space: nowrap;
     }
 
-    .tipe-image   { background: #E6F1FB; color: var(--accent-blue); }
-    .tipe-video   { background: #FCEBEB; color: var(--primary); }
-    .tipe-pdf     { background: #FAEEDA; color: #633806; }
-    .tipe-doc     { background: #EEEDFE; color: #3C3489; }
-    .tipe-other   { background: #F5F5F5; color: #666; }
+    .tipe-image { background: #E6F1FB; color: var(--accent-blue); }
+    .tipe-video { background: #FCEBEB; color: var(--primary); }
+    .tipe-pdf   { background: #FAEEDA; color: #633806; }
+    .tipe-doc   { background: #EEEDFE; color: #3C3489; }
+    .tipe-other { background: #F5F5F5; color: #666; }
 
     .div-badge {
       font-size: 10px;
@@ -302,7 +353,7 @@
       margin-bottom: 12px;
     }
 
-    .tag-stat-label { font-size: 13px; color: var(--text-muted); min-width: 110px; }
+    .tag-stat-label  { font-size: 13px; color: var(--text-muted); min-width: 110px; }
 
     .tag-stat-bar {
       flex: 1;
@@ -312,9 +363,9 @@
       overflow: hidden;
     }
 
-    .tag-stat-fill { height: 100%; border-radius: var(--radius-full); }
-    .tag-stat-pct  { font-size: 12px; font-weight: 700; min-width: 40px; text-align: right; }
-    .tag-stat-count { font-size: 11px; color: var(--text-muted); min-width: 50px; text-align: right; }
+    .tag-stat-fill   { height: 100%; border-radius: var(--radius-full); }
+    .tag-stat-pct    { font-size: 12px; font-weight: 700; min-width: 40px; text-align: right; }
+    .tag-stat-count  { font-size: 11px; color: var(--text-muted); min-width: 50px; text-align: right; }
 
     .top-tag-item {
       display: flex;
@@ -337,7 +388,6 @@
       color: var(--text-muted);
     }
 
-    /* Export btn */
     .export-btn {
       display: inline-flex;
       align-items: center;
@@ -397,29 +447,43 @@
     <!-- Stat cards -->
     <div class="stat-grid">
       <div class="stat-card red">
-        <div class="stat-label"><i data-lucide="users" style="width:12px;height:12px;"></i> Total User</div>
+        <div class="stat-label">
+          <i data-lucide="users" style="width:12px;height:12px;"></i> Total User
+        </div>
         <div class="stat-value" id="stat-user">—</div>
         <div class="stat-sub">akun terdaftar</div>
       </div>
       <div class="stat-card blue">
-        <div class="stat-label"><i data-lucide="folder" style="width:12px;height:12px;"></i> Total Aset</div>
+        <div class="stat-label">
+          <i data-lucide="folder" style="width:12px;height:12px;"></i> Total Aset
+        </div>
         <div class="stat-value" id="stat-aset">—</div>
         <div class="stat-sub">file tersimpan</div>
       </div>
       <div class="stat-card yellow">
-        <div class="stat-label"><i data-lucide="tag" style="width:12px;height:12px;"></i> Total Tag</div>
+        <div class="stat-label">
+          <i data-lucide="tag" style="width:12px;height:12px;"></i> Total Tag
+        </div>
         <div class="stat-value" id="stat-tag">—</div>
         <div class="stat-sub">tag unik</div>
       </div>
-      <div class="stat-card green">
-        <div class="stat-label"><i data-lucide="database" style="width:12px;height:12px;"></i> Storage</div>
-        <div class="stat-value" id="stat-storage">—</div>
-        <div class="stat-sub">dari 50 MB</div>
+    </div>
+
+    <!-- Storage bar -->
+    <div class="storage-box">
+      <div class="storage-header">
+        <div class="storage-title">
+          <i data-lucide="database" style="width:14px;height:14px;color:var(--primary);"></i>
+          Penggunaan Storage
+        </div>
+        <div class="storage-pct" id="stat-storage-pct">0%</div>
       </div>
-      <div class="stat-card dark">
-        <div class="stat-label"><i data-lucide="layers" style="width:12px;height:12px;"></i> Divisi</div>
-        <div class="stat-value">7</div>
-        <div class="stat-sub">divisi aktif</div>
+      <div class="storage-bar">
+        <div class="storage-fill" id="stat-storage-fill"></div>
+      </div>
+      <div class="storage-info">
+        <span id="stat-storage">0 MB digunakan</span>
+        <span>50 MB tersedia (Supabase free tier)</span>
       </div>
     </div>
 
@@ -442,7 +506,7 @@
     <!-- Tab: Aktivitas -->
     <div class="tab-content active" id="tab-activity">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <div style="font-size:13px;color:var(--text-muted);">20 aktivitas terbaru dari seluruh staff</div>
+        <div style="font-size:13px;color:var(--text-muted);">30 aktivitas terbaru dari seluruh staff</div>
         <button class="export-btn" onclick="exportActivityCSV()">
           <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
         </button>
@@ -489,7 +553,7 @@
             </tr>
           </thead>
           <tbody id="asset-table-body">
-            <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted);">
+            <tr><td colspan="9" style="text-align:center;padding:30px;">
               <div class="spinner" style="margin:0 auto;"></div>
             </td></tr>
           </tbody>
@@ -512,7 +576,7 @@
       </div>
       <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;">
         <div class="chart-title">Ringkasan Auto-Tagging</div>
-        <div id="tagging-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;"></div>
+        <div id="tagging-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:12px;"></div>
       </div>
     </div>
 
@@ -537,8 +601,8 @@
     document.getElementById("user-name").textContent = user.nama;
     document.getElementById("last-update").textContent = "Update: " + new Date().toLocaleTimeString("id-ID");
 
-    let allReportAssets  = [];
-    let allActivityData  = [];
+    let allReportAssets = [];
+    let allActivityData = [];
 
     const divisionColors = {
       "Manager":       "#D42B2B",
@@ -565,13 +629,6 @@
       return `<span class="tipe-badge tipe-other">Lainnya</span>`;
     }
 
-    function getFileIcon(tipe) {
-      if (tipe.includes("image")) return "🖼️";
-      if (tipe.includes("video")) return "🎬";
-      if (tipe.includes("pdf"))   return "📄";
-      return "📁";
-    }
-
     // ── Load Stats ────────────────────────────────────
     async function loadStats() {
       try {
@@ -585,12 +642,20 @@
         const assetsData = await assetsRes.json();
         const tagsData   = await tagsRes.json();
 
-        document.getElementById("stat-user").textContent    = usersData.users.length;
-        document.getElementById("stat-aset").textContent    = assetsData.assets.length;
-        document.getElementById("stat-tag").textContent     = tagsData.count;
+        document.getElementById("stat-user").textContent = usersData.users.length;
+        document.getElementById("stat-aset").textContent = assetsData.assets.length;
+        document.getElementById("stat-tag").textContent  = tagsData.count;
 
         const totalBytes = assetsData.assets.reduce((s, a) => s + a.ukuran, 0);
-        document.getElementById("stat-storage").textContent = formatFileSize(totalBytes);
+        const totalMB    = totalBytes / (1024 * 1024);
+        const limitMB    = 50;
+        const pct        = Math.min(Math.round(totalMB / limitMB * 100), 100);
+
+        document.getElementById("stat-storage").textContent     = totalMB.toFixed(1) + " MB digunakan";
+        document.getElementById("stat-storage-pct").textContent = pct + "%";
+        setTimeout(() => {
+          document.getElementById("stat-storage-fill").style.width = pct + "%";
+        }, 300);
 
       } catch (e) { console.error(e); }
     }
@@ -614,7 +679,6 @@
         el.innerHTML = `<div style="background:var(--surface);padding:30px;text-align:center;color:var(--text-muted);">Belum ada aktivitas</div>`;
         return;
       }
-
       el.innerHTML = activities.map(a => {
         const isUpload = a.type === "upload";
         const icon     = isUpload
@@ -626,7 +690,6 @@
         const meta = isUpload
           ? `${a.division} · ${formatFileSize(a.ukuran)}`
           : a.catatan ? `Catatan: ${a.catatan}` : "Tanpa catatan";
-
         return `
           <div class="activity-item">
             <div class="activity-icon ${isUpload ? 'upload' : 'share'}">${icon}</div>
@@ -641,12 +704,10 @@
     }
 
     function exportActivityCSV() {
-      const headers = ["Tipe", "User", "Divisi", "File", "Detail", "Tanggal"];
+      const headers = ["Tipe","User","Divisi","File","Detail","Tanggal"];
       const rows    = allActivityData.map(a => [
         a.type === "upload" ? "Upload" : "Share",
-        a.user,
-        a.division,
-        a.file,
+        a.user, a.division, a.file,
         a.type === "upload" ? formatFileSize(a.ukuran) : (a.catatan || ""),
         a.created_at
       ]);
@@ -667,8 +728,8 @@
 
         renderAssetsTable(allReportAssets);
 
-        document.getElementById("filter-nama").addEventListener("input",  debounce(filterAssets, 300));
-        document.getElementById("filter-tipe").addEventListener("change", filterAssets);
+        document.getElementById("filter-nama").addEventListener("input",   debounce(filterAssets, 300));
+        document.getElementById("filter-tipe").addEventListener("change",  filterAssets);
         document.getElementById("filter-divisi").addEventListener("change", filterAssets);
 
       } catch (e) { console.error(e); }
@@ -678,42 +739,32 @@
       const q      = document.getElementById("filter-nama").value.toLowerCase();
       const tipe   = document.getElementById("filter-tipe").value;
       const divisi = document.getElementById("filter-divisi").value;
-
       const filtered = allReportAssets.filter(a => {
-        const matchQ   = a.nama_file.toLowerCase().includes(q);
-        const matchT   = tipe   ? a.tipe_file.includes(tipe)   : true;
-        const matchD   = divisi ? a.divisi === divisi           : true;
+        const matchQ = a.nama_file.toLowerCase().includes(q);
+        const matchT = tipe   ? a.tipe_file.includes(tipe) : true;
+        const matchD = divisi ? a.divisi === divisi         : true;
         return matchQ && matchT && matchD;
       });
-
       renderAssetsTable(filtered);
     }
 
     function renderAssetsTable(assets) {
       document.getElementById("asset-count").textContent = `${assets.length} aset`;
       const tbody = document.getElementById("asset-table-body");
-
       if (!assets.length) {
         tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-muted);">Tidak ada aset</td></tr>`;
         return;
       }
-
       tbody.innerHTML = assets.map((a, i) => `
         <tr>
           <td style="color:var(--text-muted);">${i + 1}</td>
-          <td>
-            <div style="font-weight:500;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.nama_file}</div>
-          </td>
+          <td><div style="font-weight:500;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.nama_file}</div></td>
           <td>${getTipeBadge(a.tipe_file)}</td>
           <td style="white-space:nowrap;">${formatFileSize(a.ukuran)}</td>
           <td>${a.uploader}</td>
           <td><span class="div-badge">${a.divisi}</span></td>
           <td style="text-align:center;">${a.jumlah_tag}</td>
-          <td>
-            <span class="public-badge ${a.is_public ? 'public-yes' : 'public-no'}">
-              ${a.is_public ? "Publik" : "Private"}
-            </span>
-          </td>
+          <td><span class="public-badge ${a.is_public ? 'public-yes' : 'public-no'}">${a.is_public ? "Publik" : "Private"}</span></td>
           <td style="white-space:nowrap;color:var(--text-muted);">${formatDate(a.created_at)}</td>
         </tr>`).join("");
     }
@@ -723,8 +774,7 @@
       const rows    = allReportAssets.map((a, i) => [
         i + 1, a.nama_file, a.tipe_file,
         formatFileSize(a.ukuran), a.uploader, a.divisi,
-        a.jumlah_tag, a.is_public ? "Publik" : "Private",
-        a.created_at
+        a.jumlah_tag, a.is_public ? "Publik" : "Private", a.created_at
       ]);
       downloadCSV("laporan_aset.csv", headers, rows);
     }
@@ -736,7 +786,6 @@
           fetch(`${API_BASE_URL}/stats/tagging?user_id=${user.user_id}`),
           fetch(`${API_BASE_URL}/tags/top?user_id=${user.user_id}&limit=10`)
         ]);
-
         const stats = await statsRes.json();
         const top   = await topRes.json();
 
@@ -773,10 +822,10 @@
           : "—";
 
         document.getElementById("tagging-summary").innerHTML = [
-          {label:"Total Tag", value: stats.total, color: "var(--primary)"},
-          {label:"Rata-rata Tag/Aset", value: avgTag, color: "var(--accent-blue)"},
-          {label:"Tag dari AI", value: stats.ai, color: "#4CAF50"},
-          {label:"Tag Manual", value: stats.manual, color: "#633806"},
+          {label:"Total Tag",         value: stats.total,  color:"var(--primary)"},
+          {label:"Rata-rata Tag/Aset", value: avgTag,       color:"var(--accent-blue)"},
+          {label:"Tag dari AI",        value: stats.ai,     color:"#4CAF50"},
+          {label:"Tag Manual",         value: stats.manual, color:"#633806"},
         ].map(s => `
           <div style="text-align:center;padding:14px;background:var(--surface-2);border-radius:var(--radius-md);border:1px solid var(--border);">
             <div style="font-size:24px;font-weight:800;color:${s.color};">${s.value}</div>
@@ -792,7 +841,6 @@
         const res  = await fetch(`${API_BASE_URL}/admin/report/divisions`);
         const data = await res.json();
         const el   = document.getElementById("div-report-grid");
-
         el.innerHTML = data.divisions.map(d => `
           <div class="div-report-card">
             <div class="div-report-name">
@@ -812,7 +860,6 @@
               <span>${formatFileSize(d.total_storage)}</span>
             </div>
           </div>`).join("");
-
       } catch (e) { console.error(e); }
     }
 
@@ -820,7 +867,7 @@
     function downloadCSV(filename, headers, rows) {
       const escape = val => `"${String(val).replace(/"/g, '""')}"`;
       const csv    = [headers, ...rows].map(r => r.map(escape).join(",")).join("\n");
-      const blob   = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+      const blob   = new Blob(["\uFEFF" + csv], {type:"text/csv;charset=utf-8;"});
       const url    = URL.createObjectURL(blob);
       const a      = document.createElement("a");
       a.href       = url;
