@@ -344,12 +344,16 @@
         el.innerHTML = `<div class="empty-folder">Belum ada folder. Buat folder pertama di bawah.</div>`;
         return;
       }
-      el.innerHTML = folders.map(f => `
-        <div class="folder-item ${activeFolder === f.id ? 'active' : ''}" onclick="lihatFolder('${f.id}', '${f.nama}')">
-          <i data-lucide="folder" class="folder-item-icon" style="width:16px;height:16px;"></i>
-          <span class="folder-item-name">${f.nama}</span>
-          <i data-lucide="trash-2" class="folder-delete" style="width:14px;height:14px;" onclick="event.stopPropagation();hapusFolder('${f.id}')"></i>
-        </div>`).join("");
+      el.innerHTML = folders.map(f => {
+        const isOwner = f.user_id === user.user_id || isManager();
+        return `
+          <div class="folder-item ${activeFolder === f.id ? 'active' : ''}" onclick="lihatFolder('${f.id}', '${f.nama}')">
+            <i data-lucide="folder" class="folder-item-icon" style="width:16px;height:16px;"></i>
+            <span class="folder-item-name">${f.nama}</span>
+            <span style="font-size:10px;color:var(--text-muted);margin-right:4px;">${f.owner || ""}</span>
+            ${isOwner ? `<i data-lucide="trash-2" class="folder-delete" style="width:14px;height:14px;" onclick="event.stopPropagation();hapusFolder('${f.id}')"></i>` : ""}
+          </div>`;
+      }).join("");
       lucide.createIcons();
     }
 
