@@ -63,24 +63,49 @@ async function searchAssets(user_id, q) {
   return apiCall(`/assets/${user_id}/search?q=${encodeURIComponent(q)}`);
 }
 
-async function uploadAsset(user_id, file, onProgress) {
-  return new Promise((resolve, reject) => {
-    const formData = new FormData();
-    formData.append("user_id", user_id);
-    formData.append("file", file);
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", API_BASE_URL + "/assets/upload");
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
+async function uploadAsset(user_id, file, onProgress, maxRetries = 3, retryDelayMs = 4000) {
+  let lastError;
+  let toastShown = false;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append("user_id", user_id);
+        formData.append("file", file);
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", API_BASE_URL + "/assets/upload");
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable && onProgress) {
+            onProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+        xhr.onload = () => {
+          let data = {};
+          try { data = JSON.parse(xhr.responseText); } catch (e) {}
+          if (xhr.status === 200) {
+            resolve(data);
+          } else if (xhr.status >= 500) {
+            reject({ retryable: true, error: new Error(data.detail || `Server error ${xhr.status}`) });
+          } else {
+            reject({ retryable: false, error: new Error(data.detail || "Upload gagal") });
+          }
+        };
+        xhr.onerror   = () => reject({ retryable: true, error: new Error("Koneksi gagal") });
+        xhr.ontimeout = () => reject({ retryable: true, error: new Error("Waktu koneksi habis") });
+        xhr.send(formData);
+      });
+    } catch (rejection) {
+      lastError = rejection.error;
+      if (!rejection.retryable || attempt === maxRetries) throw lastError;
+
+      if (onProgress) onProgress(0);
+      if (!toastShown && typeof showToast === "function") {
+        toastShown = true;
+        showToast("Koneksi ke server gagal, mencoba lagi...", "warning");
       }
-    };
-    xhr.onload = () => {
-      const data = JSON.parse(xhr.responseText);
-      if (xhr.status === 200) resolve(data);
-      else reject(new Error(data.detail || "Upload gagal"));
-    };
-    xhr.onerror = () => reject(new Error("Koneksi gagal"));
-    xhr.send(formData);
-  });
+      await new Promise(r => setTimeout(r, retryDelayMs));
+    }
+  }
+  throw lastError;
 }

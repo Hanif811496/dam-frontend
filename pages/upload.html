@@ -28,6 +28,11 @@
       background: var(--primary-light);
     }
 
+    .dropzone.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
     .dropzone-icon { font-size: 40px; margin-bottom: 10px; }
 
     .dropzone p {
@@ -94,6 +99,16 @@
 
     .file-status.done  { color: var(--primary); }
     .file-status.error { color: var(--danger);  }
+
+    .file-retry-btn {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .file-retry-btn:hover { text-decoration: underline; }
 
     .tags-result {
       display: flex;
@@ -168,6 +183,9 @@
     document.getElementById("user-name").textContent = user.nama;
 
     let selectedFiles = [];
+    let fileStatuses  = [];   // 'pending' | 'uploading' | 'done' | 'error'
+    let fileTags      = [];   // hasil tag per file (untuk restore saat render ulang)
+    let isUploading   = false;
 
     const dropzone  = document.getElementById("dropzone");
     const fileInput = document.getElementById("file-input");
@@ -201,8 +219,19 @@
           return;
         }
         selectedFiles.push(f);
+        fileStatuses.push("pending");
+        fileTags.push(null);
       });
       renderFileList();
+    }
+
+    function statusLabel(status) {
+      switch (status) {
+        case "done":      return { text: "Upload berhasil — tag otomatis:", cls: "file-status done" };
+        case "error":     return { text: "Gagal upload",                   cls: "file-status error" };
+        case "uploading": return { text: "Mengupload...",                  cls: "file-status" };
+        default:          return { text: "Menunggu upload...",             cls: "file-status" };
+      }
     }
 
     function renderFileList() {
@@ -213,57 +242,118 @@
       }
 
       btnUpload.style.display = "flex";
-      fileList.innerHTML = selectedFiles.map((f, i) => `
+      fileList.innerHTML = selectedFiles.map((f, i) => {
+        const status   = fileStatuses[i] || "pending";
+        const label    = statusLabel(status);
+        const pct      = status === "done" ? 100 : 0;
+        const tagsHtml = (fileTags[i] || []).map(t => `<span class="tag-pill">${t}</span>`).join("");
+        return `
         <div class="file-item" id="file-item-${i}">
           <div class="file-item-header">
             <span class="file-item-name">${f.name}</span>
             <span class="file-item-size">${formatFileSize(f.size)}</span>
           </div>
           <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" id="prog-${i}"></div>
+            <div class="progress-bar-fill" id="prog-${i}" style="width:${pct}%;"></div>
           </div>
-          <div class="file-status" id="status-${i}">Menunggu upload...</div>
-          <div class="tags-result" id="tags-${i}"></div>
-        </div>`).join("");
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div class="${label.cls}" id="status-${i}">${label.text}</div>
+            <span class="file-retry-btn" id="retry-${i}" style="display:${status === 'error' ? 'inline' : 'none'};" onclick="retrySingle(${i})">Coba Lagi</span>
+          </div>
+          <div class="tags-result" id="tags-${i}">${tagsHtml}</div>
+        </div>`;
+      }).join("");
+
+      updateUploadButton();
     }
 
-    btnUpload.addEventListener("click", async () => {
-      btnUpload.disabled = true;
+    function updateUploadButton() {
+      const errorCount = fileStatuses.filter(s => s === "error").length;
+      const anyPending = fileStatuses.some(s => s === "pending");
+      const allDone    = selectedFiles.length > 0 && fileStatuses.every(s => s === "done");
+
+      if (allDone) {
+        btnUpload.textContent = "Upload File Baru";
+        btnUpload.onclick     = resetUpload;
+      } else if (errorCount > 0 && !anyPending) {
+        btnUpload.textContent = `Coba Lagi File Gagal (${errorCount})`;
+        btnUpload.onclick     = () => uploadBatch(fileStatuses.map((s, i) => s === "error" ? i : null).filter(i => i !== null));
+      } else {
+        btnUpload.textContent = "Upload Semua File";
+        btnUpload.onclick     = () => uploadBatch(selectedFiles.map((_, i) => i));
+      }
+      btnUpload.disabled = isUploading;
+    }
+
+    function resetUpload() {
+      selectedFiles = [];
+      fileStatuses  = [];
+      fileTags      = [];
+      renderFileList();
+    }
+
+    function retrySingle(i) {
+      if (isUploading) return;
+      uploadBatch([i]);
+    }
+
+    async function uploadBatch(indices) {
+      if (isUploading || indices.length === 0) return;
+      isUploading = true;
+      dropzone.classList.add("disabled");
+      btnUpload.disabled    = true;
       btnUpload.textContent = "Mengupload...";
 
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
+      for (const i of indices) {
+        const file     = selectedFiles[i];
         const statusEl = document.getElementById(`status-${i}`);
         const progEl   = document.getElementById(`prog-${i}`);
         const tagsEl   = document.getElementById(`tags-${i}`);
+        const retryEl  = document.getElementById(`retry-${i}`);
 
+        fileStatuses[i] = "uploading";
         statusEl.textContent = "Mengupload...";
-        statusEl.className = "file-status";
+        statusEl.className   = "file-status";
+        retryEl.style.display = "none";
+        tagsEl.innerHTML = "";
 
         try {
           const result = await uploadAsset(user.user_id, file, (pct) => {
             progEl.style.width = pct + "%";
           });
 
-          progEl.style.width = "100%";
+          progEl.style.width  = "100%";
+          fileStatuses[i]     = "done";
+          fileTags[i]         = result.tags;
           statusEl.textContent = "Upload berhasil — tag otomatis:";
-          statusEl.className = "file-status done";
-
-          tagsEl.innerHTML = result.tags
-            .map(t => `<span class="tag-pill">${t}</span>`)
-            .join("");
+          statusEl.className   = "file-status done";
+          tagsEl.innerHTML = result.tags.map(t => `<span class="tag-pill">${t}</span>`).join("");
 
         } catch (err) {
+          fileStatuses[i] = "error";
+          progEl.style.width = "0%";
           statusEl.textContent = "Gagal: " + err.message;
-          statusEl.className = "file-status error";
+          statusEl.className   = "file-status error";
+          retryEl.style.display = "inline";
         }
       }
 
-      btnUpload.textContent = "Selesai — Upload Lagi";
-      btnUpload.disabled = false;
-      selectedFiles = [];
-      showToast("Semua file berhasil diupload");
-    });
+      dropzone.classList.remove("disabled");
+      isUploading = false;
+
+      const doneCount  = fileStatuses.filter(s => s === "done").length;
+      const errorCount = fileStatuses.filter(s => s === "error").length;
+
+      if (errorCount === 0) {
+        showToast(`${doneCount} file berhasil diupload`);
+      } else if (doneCount === 0) {
+        showToast(`${errorCount} file gagal diupload`, "error");
+      } else {
+        showToast(`${doneCount} berhasil, ${errorCount} gagal diupload`, "warning");
+      }
+
+      updateUploadButton();
+    }
 
     lucide.createIcons();
   </script>
