@@ -31,3 +31,34 @@ function showLoading(containerId) {
   const el = document.getElementById(containerId);
   if (el) el.innerHTML = '<div style="display:flex;justify-content:center;padding:40px"><div class="spinner"></div></div>';
 }
+
+// Fetch dengan auto-retry — berguna saat backend baru "bangun" dari sleep
+// (mis. Render free tier) sehingga request pertama gagal/timeout.
+let _coldStartToastShown = false;
+
+async function fetchWithRetry(url, options = {}, maxRetries = 4, retryDelayMs = 4000) {
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, options);
+      if (res.ok) return await res.json();
+      if (res.status >= 500 || res.status === 0) {
+        lastError = new Error(`Server error ${res.status}`);
+      } else {
+        let detail = "";
+        try { detail = (await res.json()).detail; } catch (e) {}
+        throw new Error(detail || `Request gagal (${res.status})`);
+      }
+    } catch (e) {
+      lastError = e;
+    }
+    if (attempt < maxRetries) {
+      if (!_coldStartToastShown) {
+        _coldStartToastShown = true;
+        showToast("Menghubungkan ke server, mohon tunggu sebentar...", "warning");
+      }
+      await new Promise(r => setTimeout(r, retryDelayMs));
+    }
+  }
+  throw lastError;
+}

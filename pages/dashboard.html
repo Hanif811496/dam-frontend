@@ -632,21 +632,16 @@
     // ── Load Stats ────────────────────────────────────
     async function loadStats() {
       try {
-        const [usersRes, assetsRes, tagsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/divisions/users`),
-          fetch(`${API_BASE_URL}/admin/report/assets`),
-          fetch(`${API_BASE_URL}/tags/count?user_id=${user.user_id}`)
+        const [usersData, tagsData] = await Promise.all([
+          fetchWithRetry(`${API_BASE_URL}/divisions/users`),
+          fetchWithRetry(`${API_BASE_URL}/tags/count?user_id=${user.user_id}`)
         ]);
 
-        const usersData  = await usersRes.json();
-        const assetsData = await assetsRes.json();
-        const tagsData   = await tagsRes.json();
-
         document.getElementById("stat-user").textContent = usersData.users.length;
-        document.getElementById("stat-aset").textContent = assetsData.assets.length;
+        document.getElementById("stat-aset").textContent = allReportAssets.length;
         document.getElementById("stat-tag").textContent  = tagsData.count;
 
-        const totalBytes = assetsData.assets.reduce((s, a) => s + a.ukuran, 0);
+        const totalBytes = allReportAssets.reduce((s, a) => s + a.ukuran, 0);
         const totalMB    = totalBytes / (1024 * 1024);
         const limitMB    = 50;
         const pct        = Math.min(Math.round(totalMB / limitMB * 100), 100);
@@ -657,14 +652,14 @@
           document.getElementById("stat-storage-fill").style.width = pct + "%";
         }, 300);
 
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error(e); showToast("Gagal memuat statistik", "error"); }
     }
 
     // ── Load Activity ─────────────────────────────────
     async function loadActivity() {
+      showLoading("activity-list");
       try {
-        const res  = await fetch(`${API_BASE_URL}/admin/activity?limit=30`);
-        const data = await res.json();
+        const data = await fetchWithRetry(`${API_BASE_URL}/admin/activity?limit=30`);
         allActivityData = data.activities;
         renderActivity(allActivityData);
       } catch (e) {
@@ -717,8 +712,7 @@
     // ── Load Assets Report ────────────────────────────
     async function loadAssetsReport() {
       try {
-        const res  = await fetch(`${API_BASE_URL}/admin/report/assets`);
-        const data = await res.json();
+        const data = await fetchWithRetry(`${API_BASE_URL}/admin/report/assets`);
         allReportAssets = data.assets;
 
         const divSet = [...new Set(data.assets.map(a => a.divisi).filter(Boolean))];
@@ -732,7 +726,10 @@
         document.getElementById("filter-tipe").addEventListener("change",  filterAssets);
         document.getElementById("filter-divisi").addEventListener("change", filterAssets);
 
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        showToast("Gagal memuat laporan aset", "error");
+      }
     }
 
     function filterAssets() {
@@ -782,12 +779,10 @@
     // ── Load Tagging Report ───────────────────────────
     async function loadTaggingReport() {
       try {
-        const [statsRes, topRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/stats/tagging?user_id=${user.user_id}`),
-          fetch(`${API_BASE_URL}/tags/top?user_id=${user.user_id}&limit=10`)
+        const [stats, top] = await Promise.all([
+          fetchWithRetry(`${API_BASE_URL}/stats/tagging?user_id=${user.user_id}`),
+          fetchWithRetry(`${API_BASE_URL}/tags/top?user_id=${user.user_id}&limit=10`)
         ]);
-        const stats = await statsRes.json();
-        const top   = await topRes.json();
 
         const rows = [
           {label:"Dari Nama File", pct: stats.pct_nama_file, count: stats.nama_file, color:"var(--primary)"},
@@ -832,14 +827,13 @@
             <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${s.label}</div>
           </div>`).join("");
 
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error(e); showToast("Gagal memuat laporan tagging", "error"); }
     }
 
     // ── Load Division Report ──────────────────────────
     async function loadDivisionReport() {
       try {
-        const res  = await fetch(`${API_BASE_URL}/admin/report/divisions`);
-        const data = await res.json();
+        const data = await fetchWithRetry(`${API_BASE_URL}/admin/report/divisions`);
         const el   = document.getElementById("div-report-grid");
         el.innerHTML = data.divisions.map(d => `
           <div class="div-report-card">
@@ -860,7 +854,7 @@
               <span>${formatFileSize(d.total_storage)}</span>
             </div>
           </div>`).join("");
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error(e); showToast("Gagal memuat laporan divisi", "error"); }
     }
 
     // ── CSV Helper ────────────────────────────────────
@@ -878,11 +872,15 @@
 
     // ── Init ──────────────────────────────────────────
     async function init() {
-      await loadStats();
-      await loadActivity();
+      // allReportAssets dipakai oleh loadStats() dan loadTaggingReport(),
+      // jadi dimuat dulu sekali saja (tidak fetch /admin/report/assets berkali-kali).
       await loadAssetsReport();
-      await loadTaggingReport();
-      await loadDivisionReport();
+      await Promise.all([
+        loadStats(),
+        loadActivity(),
+        loadTaggingReport(),
+        loadDivisionReport()
+      ]);
       lucide.createIcons();
     }
 

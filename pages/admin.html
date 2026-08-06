@@ -360,8 +360,7 @@
 
     async function loadDivisions() {
       try {
-        const res  = await fetch(`${API_BASE_URL}/divisions`);
-        const data = await res.json();
+        const data = await fetchWithRetry(`${API_BASE_URL}/divisions`);
         divisions  = data.divisions;
 
         const sel1 = document.getElementById("new-division");
@@ -377,13 +376,12 @@
             <span style="font-size:12px;color:var(--text-muted);flex:1;">${divisionAccess[d.nama] || d.deskripsi || "—"}</span>
           </div>`).join("");
 
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error(e); showToast("Gagal memuat divisi", "error"); }
     }
 
     async function loadUsers() {
       try {
-        const res  = await fetch(`${API_BASE_URL}/divisions/users`);
-        const data = await res.json();
+        const data = await fetchWithRetry(`${API_BASE_URL}/divisions/users`);
         const el   = document.getElementById("user-list");
 
         document.getElementById("stat-total-user").textContent = data.users.length;
@@ -418,15 +416,14 @@
             </div>`;
         }).join("");
         lucide.createIcons();
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error(e); showToast("Gagal memuat daftar user", "error"); }
     }
 
     async function loadStats() {
       try {
-        const res  = await fetch(`${API_BASE_URL}/assets/by-division?user_id=${user.user_id}`);
-        const data = await res.json();
+        const data = await fetchWithRetry(`${API_BASE_URL}/assets/by-division?user_id=${user.user_id}`);
         document.getElementById("stat-total-aset").textContent = data.assets.length;
-      } catch (e) {}
+      } catch (e) { console.error(e); }
     }
 
     function bukaModalBuatAkun() {
