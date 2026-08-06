@@ -396,6 +396,7 @@
     let allFolders = [];
     let activeTipe = "";
     let activeTag  = "";
+    let tagAssetIds = null;
     let viewMode   = "drive";
 
     function getFileIcon(tipe) {
@@ -414,6 +415,12 @@
       document.getElementById("breadcrumb").style.display = "none";
       lucide.createIcons();
       render();
+    }
+
+    // Pindah otomatis ke tampilan "Semua" saat user mencari/filter,
+    // karena pencarian mencari lintas semua aset (bukan per-folder).
+    function ensureGridView() {
+      if (viewMode !== "grid") setView("grid");
     }
 
     function render() {
@@ -509,8 +516,7 @@
           <span class="breadcrumb-current">${folderNama}</span>`;
 
         try {
-          const res    = await fetch(`${API_BASE_URL}/folders/${folder_id}/assets`);
-          const data   = await res.json();
+          const data   = await fetchWithRetry(`${API_BASE_URL}/folders/${folder_id}/assets?user_id=${user.user_id}`);
           const assets = data.assets;
 
           resultInfo.textContent = `${assets.length} aset di folder ini`;
@@ -528,7 +534,13 @@
           contentEl.innerHTML = renderAssetGrid(assets);
           lucide.createIcons();
         } catch (e) {
-          contentEl.innerHTML = `<p style="color:var(--danger);text-align:center;padding:20px;">Gagal memuat folder</p>`;
+          contentEl.innerHTML = `
+            <div class="empty-state">
+              <i data-lucide="wifi-off" style="width:40px;height:40px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
+              <p style="color:var(--danger);">Gagal memuat folder: ${e.message}</p>
+              <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="renderDrive('${folder_id}')">Coba Lagi</button>
+            </div>`;
+          lucide.createIcons();
         }
       }
     }
@@ -577,21 +589,16 @@
       el.innerHTML = html;
     }
 
-    async function applyFilters() {
+    function applyFilters() {
       const q    = document.getElementById("search-input").value.toLowerCase();
       const sort = document.getElementById("sort-by").value;
 
       let filtered = allAssets.filter(a => {
         const matchQ    = a.nama_file.toLowerCase().includes(q);
         const matchTipe = activeTipe ? a.tipe_file.includes(activeTipe) : true;
-        return matchQ && matchTipe;
+        const matchTag  = activeTag ? (tagAssetIds || []).includes(a.id) : true;
+        return matchQ && matchTipe && matchTag;
       });
-
-      if (activeTag) {
-        const res  = await fetch(`${API_BASE_URL}/search/by-tag?user_id=${user.user_id}&tag=${encodeURIComponent(activeTag)}`);
-        const data = await res.json();
-        filtered   = filtered.filter(a => data.asset_ids.includes(a.id));
-      }
 
       if (sort === "oldest")   filtered.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
       if (sort === "largest")  filtered.sort((a,b) => b.ukuran - a.ukuran);
@@ -607,33 +614,48 @@
       activeTipe = tipe;
       document.querySelectorAll(".tipe-item").forEach(i => i.classList.remove("active"));
       el.classList.add("active");
-      if (viewMode === "grid") applyFilters();
+      ensureGridView();
+      applyFilters();
     }
 
     function clearTipe() {
       activeTipe = "";
       document.querySelectorAll(".tipe-item").forEach(i => i.classList.remove("active"));
       document.querySelector(".tipe-item[data-tipe='']").classList.add("active");
-      if (viewMode === "grid") applyFilters();
+      ensureGridView();
+      applyFilters();
     }
 
-    function setTag(nama) {
+    async function setTag(nama) {
       activeTag = activeTag === nama ? "" : nama;
       document.querySelectorAll(".tag-filter-item").forEach(i => i.classList.remove("active"));
-      if (activeTag) document.querySelector(`.tag-filter-item[data-tag="${nama}"]`)?.classList.add("active");
-      if (viewMode === "grid") applyFilters();
+      if (activeTag) {
+        document.querySelector(`.tag-filter-item[data-tag="${nama}"]`)?.classList.add("active");
+        try {
+          const data = await fetchWithRetry(`${API_BASE_URL}/search/by-tag?user_id=${user.user_id}&tag=${encodeURIComponent(activeTag)}`);
+          tagAssetIds = data.asset_ids;
+        } catch (e) {
+          tagAssetIds = [];
+          showToast("Gagal memuat filter tag", "error");
+        }
+      } else {
+        tagAssetIds = null;
+      }
+      ensureGridView();
+      applyFilters();
     }
 
     function clearTag() {
-      activeTag = "";
+      activeTag   = "";
+      tagAssetIds = null;
       document.querySelectorAll(".tag-filter-item").forEach(i => i.classList.remove("active"));
-      if (viewMode === "grid") applyFilters();
+      ensureGridView();
+      applyFilters();
     }
 
     async function loadTags() {
       try {
-        const res  = await fetch(`${API_BASE_URL}/tags?user_id=${user.user_id}`);
-        const data = await res.json();
+        const data = await fetchWithRetry(`${API_BASE_URL}/tags?user_id=${user.user_id}`);
         const listEl = document.getElementById("tag-filter-list");
         if (!data.tags.length) {
           listEl.innerHTML = `<div style="font-size:12px;color:var(--text-light);padding:6px 10px;">Belum ada tag</div>`;
@@ -643,30 +665,40 @@
           <div class="tag-filter-item" data-tag="${t.nama}" onclick="setTag('${t.nama}')">
             <div class="tag-dot"></div>${t.nama}
           </div>`).join("");
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        document.getElementById("tag-filter-list").innerHTML =
+          `<div style="font-size:12px;color:var(--danger);padding:6px 10px;">Gagal memuat tag</div>`;
+      }
     }
 
     async function loadAll() {
       try {
-        const [assetRes, folderRes] = await Promise.all([
+        const [assetData, folderData] = await Promise.all([
           getAssets(user.user_id),
-          fetch(`${API_BASE_URL}/folders?user_id=${user.user_id}`)
+          fetchWithRetry(`${API_BASE_URL}/folders?user_id=${user.user_id}`)
         ]);
-        allAssets  = assetRes.assets;
-        allFolders = (await folderRes.json()).folders;
+        allAssets  = assetData.assets;
+        allFolders = folderData.folders;
         render();
       } catch (err) {
         document.getElementById("content-area").innerHTML =
-          `<p style="color:var(--danger);text-align:center;">Gagal memuat: ${err.message}</p>`;
+          `<div class="empty-state">
+            <i data-lucide="wifi-off" style="width:40px;height:40px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
+            <p style="color:var(--danger);">Gagal memuat data: ${err.message}</p>
+            <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="loadAll()">Coba Lagi</button>
+          </div>`;
+        lucide.createIcons();
       }
     }
 
     document.getElementById("search-input").addEventListener("input", debounce(() => {
-      if (viewMode === "grid") applyFilters();
+      ensureGridView();
+      applyFilters();
     }, 300));
 
     document.getElementById("sort-by").addEventListener("change", () => {
-      if (viewMode === "grid") applyFilters();
+      ensureGridView();
+      applyFilters();
     });
 
     loadTags();

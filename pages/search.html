@@ -238,9 +238,10 @@
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
 
-    let mode      = "nama";
-    let activeTag = "";
-    let allAssets = [];
+    let mode        = "nama";
+    let activeTag   = "";
+    let allAssets   = [];
+    let assetsReady = false;
 
     function getFileIcon(tipe) {
       if (tipe.includes("image")) return "🖼️";
@@ -299,6 +300,11 @@
         document.getElementById("search-info").textContent = "Masukkan kata kunci terlebih dahulu.";
         return;
       }
+      if (!assetsReady) {
+        document.getElementById("search-info").textContent = "Data aset belum termuat, mencoba menghubungkan ke server...";
+        document.getElementById("result-grid").innerHTML   = "";
+        return;
+      }
       document.getElementById("search-info").textContent = "Mencari...";
       document.getElementById("result-grid").innerHTML   = "";
 
@@ -325,19 +331,18 @@
       document.getElementById("result-grid").innerHTML   = "";
 
       try {
-        const res = await fetch(`${API_BASE_URL}/search/by-tag?user_id=${user.user_id}&tag=${encodeURIComponent(tagNama)}`);
-        const data = await res.json();
+        const data = await fetchWithRetry(`${API_BASE_URL}/search/by-tag?user_id=${user.user_id}&tag=${encodeURIComponent(tagNama)}`);
         const matched = allAssets.filter(a => data.asset_ids.includes(a.id));
         renderGrid(matched, tagNama);
       } catch (err) {
-        document.getElementById("search-info").textContent = "Gagal mencari: " + err.message;
+        document.getElementById("search-info").innerHTML =
+          `Gagal mencari: ${err.message} <span style="color:var(--primary);cursor:pointer;" onclick="doSearchByTag('${tagNama}')">Coba lagi</span>`;
       }
     }
 
     async function loadTagCloud() {
       try {
-        const res  = await fetch(`${API_BASE_URL}/tags?user_id=${user.user_id}`);
-        const data = await res.json();
+        const data = await fetchWithRetry(`${API_BASE_URL}/tags?user_id=${user.user_id}`);
         const cloud = document.getElementById("tag-cloud");
         if (!data.tags.length) {
           cloud.innerHTML = `<div style="font-size:13px;color:var(--text-light);">Belum ada tag tersedia</div>`;
@@ -346,14 +351,22 @@
         cloud.innerHTML = data.tags.map(t =>
           `<div class="tag-cloud-item" data-tag="${t.nama}" onclick="doSearchByTag('${t.nama}')">${t.nama}</div>`
         ).join("");
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        document.getElementById("tag-cloud").innerHTML =
+          `<div style="font-size:13px;color:var(--danger);">Gagal memuat tag. <span style="color:var(--primary);cursor:pointer;" onclick="loadTagCloud()">Coba lagi</span></div>`;
+      }
     }
 
     async function loadAllAssets() {
       try {
-        const data = await getAssets(user.user_id);
-        allAssets  = data.assets;
-      } catch (e) { console.error(e); }
+        const data  = await getAssets(user.user_id);
+        allAssets   = data.assets;
+        assetsReady = true;
+        if (document.getElementById("search-input").value.trim()) doSearchNama();
+      } catch (e) {
+        document.getElementById("search-info").innerHTML =
+          `Gagal memuat data aset. <span style="color:var(--primary);cursor:pointer;" onclick="loadAllAssets()">Coba lagi</span>`;
+      }
     }
 
     document.getElementById("search-input").addEventListener("keydown", (e) => {

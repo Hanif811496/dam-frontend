@@ -1,12 +1,36 @@
-async function apiCall(endpoint, options = {}) {
+async function apiCall(endpoint, options = {}, maxRetries = 3, retryDelayMs = 4000) {
   const url = API_BASE_URL + endpoint;
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...options.headers },
-    ...options,
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Terjadi kesalahan");
-  return data;
+  let lastError;
+  let toastShown = false;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res  = await fetch(url, {
+        headers: { "Content-Type": "application/json", ...options.headers },
+        ...options,
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) return data;
+
+      if (res.status >= 500 && attempt < maxRetries) {
+        lastError = new Error(data.detail || `Server error ${res.status}`);
+      } else {
+        throw new Error(data.detail || "Terjadi kesalahan");
+      }
+    } catch (e) {
+      lastError = e;
+    }
+
+    if (attempt < maxRetries) {
+      if (!toastShown && typeof showToast === "function") {
+        toastShown = true;
+        showToast("Menghubungkan ke server, mohon tunggu sebentar...", "warning");
+      }
+      await new Promise(r => setTimeout(r, retryDelayMs));
+    }
+  }
+  throw lastError;
 }
 
 async function loginUser(email, password) {
