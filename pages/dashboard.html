@@ -118,37 +118,53 @@
       color: var(--text-muted);
     }
 
-    /* Tabs */
-    .tab-bar {
-      display: flex;
-      gap: 4px;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 20px;
+    /* Collapsible sections */
+    .section-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+      overflow: hidden;
     }
 
-    .tab-btn {
-      padding: 10px 18px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      transition: all 0.15s;
+    .section-panel-header {
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: space-between;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
     }
 
-    .tab-btn:hover { color: var(--text); }
+    .section-panel-header:hover { background: var(--surface-2); }
 
-    .tab-btn.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
+    .section-panel.collapsed .section-panel-header { border-bottom: none; }
+
+    .section-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
     }
 
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    .section-chevron {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .section-panel.collapsed .section-chevron { transform: rotate(-90deg); }
+
+    .section-panel-body {
+      padding: 18px;
+    }
+
+    .section-panel.collapsed .section-panel-body { display: none; }
 
     /* Activity */
     .activity-list {
@@ -433,6 +449,9 @@
     <a href="folders.html" class="sidebar-item">
       <i data-lucide="folder"></i> Smart Folder
     </a>
+    <a href="profile.html" class="sidebar-item">
+      <i data-lucide="user"></i> Profil Saya
+    </a>
     <a href="admin.html" class="sidebar-item">
       <i data-lucide="shield"></i> Admin
     </a>
@@ -487,104 +506,120 @@
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="tab-bar">
-      <div class="tab-btn active" onclick="switchTab('activity', this)">
-        <i data-lucide="activity" style="width:14px;height:14px;"></i> Aktivitas Staff
+    <!-- Section: Aktivitas -->
+    <div class="section-panel" id="section-activity">
+      <div class="section-panel-header" onclick="toggleSection('activity')">
+        <div class="section-panel-title">
+          <i data-lucide="chevron-down" class="section-chevron" id="chevron-activity"></i>
+          <i data-lucide="activity" style="width:14px;height:14px;color:var(--primary);"></i> Aktivitas Staff
+        </div>
       </div>
-      <div class="tab-btn" onclick="switchTab('assets', this)">
-        <i data-lucide="file" style="width:14px;height:14px;"></i> Laporan Aset
-      </div>
-      <div class="tab-btn" onclick="switchTab('tagging', this)">
-        <i data-lucide="cpu" style="width:14px;height:14px;"></i> Laporan Tagging
-      </div>
-      <div class="tab-btn" onclick="switchTab('divisions', this)">
-        <i data-lucide="layers" style="width:14px;height:14px;"></i> Laporan Divisi
-      </div>
-    </div>
-
-    <!-- Tab: Aktivitas -->
-    <div class="tab-content active" id="tab-activity">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <div style="font-size:13px;color:var(--text-muted);">30 aktivitas terbaru dari seluruh staff</div>
-        <button class="export-btn" onclick="exportActivityCSV()">
-          <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
-        </button>
-      </div>
-      <div class="activity-list" id="activity-list">
-        <div style="display:flex;justify-content:center;padding:30px;background:var(--surface);">
-          <div class="spinner"></div>
+      <div class="section-panel-body" id="body-activity">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div style="font-size:13px;color:var(--text-muted);">30 aktivitas terbaru dari seluruh staff</div>
+          <button class="export-btn" onclick="exportActivityCSV()">
+            <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+          </button>
+        </div>
+        <div class="activity-list" id="activity-list">
+          <div style="display:flex;justify-content:center;padding:30px;background:var(--surface);">
+            <div class="spinner"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Tab: Laporan Aset -->
-    <div class="tab-content" id="tab-assets">
-      <div class="report-toolbar">
-        <input type="text" class="input" id="filter-nama" placeholder="Cari nama file...">
-        <select class="input" id="filter-tipe" style="width:160px;">
-          <option value="">Semua tipe</option>
-          <option value="image">Gambar</option>
-          <option value="video">Video</option>
-          <option value="pdf">PDF</option>
-          <option value="word">Word</option>
-        </select>
-        <select class="input" id="filter-divisi" style="width:180px;">
-          <option value="">Semua divisi</option>
-        </select>
-        <button class="export-btn" onclick="exportAssetsCSV()">
-          <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
-        </button>
-        <span style="font-size:12px;color:var(--text-muted);margin-left:auto;" id="asset-count"></span>
+    <!-- Section: Laporan Aset -->
+    <div class="section-panel" id="section-assets">
+      <div class="section-panel-header" onclick="toggleSection('assets')">
+        <div class="section-panel-title">
+          <i data-lucide="chevron-down" class="section-chevron" id="chevron-assets"></i>
+          <i data-lucide="file" style="width:14px;height:14px;color:var(--accent-blue);"></i> Laporan Aset
+        </div>
       </div>
-      <div class="report-table-wrap">
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Nama File</th>
-              <th>Tipe</th>
-              <th>Ukuran</th>
-              <th>Uploader</th>
-              <th>Divisi</th>
-              <th>Tag</th>
-              <th>Akses</th>
-              <th>Tanggal Upload</th>
-            </tr>
-          </thead>
-          <tbody id="asset-table-body">
-            <tr><td colspan="9" style="text-align:center;padding:30px;">
-              <div class="spinner" style="margin:0 auto;"></div>
-            </td></tr>
-          </tbody>
-        </table>
+      <div class="section-panel-body" id="body-assets">
+        <div class="report-toolbar">
+          <input type="text" class="input" id="filter-nama" placeholder="Cari nama file...">
+          <select class="input" id="filter-tipe" style="width:160px;">
+            <option value="">Semua tipe</option>
+            <option value="image">Gambar</option>
+            <option value="video">Video</option>
+            <option value="pdf">PDF</option>
+            <option value="word">Word</option>
+          </select>
+          <select class="input" id="filter-divisi" style="width:180px;">
+            <option value="">Semua divisi</option>
+          </select>
+          <button class="export-btn" onclick="exportAssetsCSV()">
+            <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+          </button>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:auto;" id="asset-count"></span>
+        </div>
+        <div class="report-table-wrap">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nama File</th>
+                <th>Tipe</th>
+                <th>Ukuran</th>
+                <th>Uploader</th>
+                <th>Divisi</th>
+                <th>Tag</th>
+                <th>Akses</th>
+                <th>Tanggal Upload</th>
+              </tr>
+            </thead>
+            <tbody id="asset-table-body">
+              <tr><td colspan="9" style="text-align:center;padding:30px;">
+                <div class="spinner" style="margin:0 auto;"></div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- Tab: Laporan Tagging -->
-    <div class="tab-content" id="tab-tagging">
-      <div class="tag-report-grid">
-        <div class="chart-box">
-          <div class="chart-title">Distribusi Sumber Tag</div>
-          <div id="tag-source-chart"></div>
-          <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);text-align:center;" id="tag-total-info"></div>
-        </div>
-        <div class="chart-box">
-          <div class="chart-title">Tag Terpopuler (Top 10)</div>
-          <div id="top-tags-report"></div>
+    <!-- Section: Laporan Tagging -->
+    <div class="section-panel" id="section-tagging">
+      <div class="section-panel-header" onclick="toggleSection('tagging')">
+        <div class="section-panel-title">
+          <i data-lucide="chevron-down" class="section-chevron" id="chevron-tagging"></i>
+          <i data-lucide="cpu" style="width:14px;height:14px;color:var(--accent-yellow);"></i> Laporan Tagging
         </div>
       </div>
-      <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;">
-        <div class="chart-title">Ringkasan Auto-Tagging</div>
-        <div id="tagging-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:12px;"></div>
+      <div class="section-panel-body" id="body-tagging">
+        <div class="tag-report-grid">
+          <div class="chart-box">
+            <div class="chart-title">Distribusi Sumber Tag</div>
+            <div id="tag-source-chart"></div>
+            <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);text-align:center;" id="tag-total-info"></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Tag Terpopuler (Top 10)</div>
+            <div id="top-tags-report"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;">
+          <div class="chart-title">Ringkasan Auto-Tagging</div>
+          <div id="tagging-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:12px;"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Tab: Laporan Divisi -->
-    <div class="tab-content" id="tab-divisions">
-      <div class="div-report-grid" id="div-report-grid">
-        <div style="grid-column:1/-1;display:flex;justify-content:center;padding:30px;">
-          <div class="spinner"></div>
+    <!-- Section: Laporan Divisi -->
+    <div class="section-panel" id="section-divisions">
+      <div class="section-panel-header" onclick="toggleSection('divisions')">
+        <div class="section-panel-title">
+          <i data-lucide="chevron-down" class="section-chevron" id="chevron-divisions"></i>
+          <i data-lucide="layers" style="width:14px;height:14px;color:#8E44AD;"></i> Laporan Divisi
+        </div>
+      </div>
+      <div class="section-panel-body" id="body-divisions">
+        <div class="div-report-grid" id="div-report-grid">
+          <div style="grid-column:1/-1;display:flex;justify-content:center;padding:30px;">
+            <div class="spinner"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -614,11 +649,9 @@
       "Custom":        "#666",
     };
 
-    function switchTab(name, el) {
-      document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
-      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      document.getElementById(`tab-${name}`).classList.add("active");
-      el.classList.add("active");
+    function toggleSection(name) {
+      const panel = document.getElementById(`section-${name}`);
+      panel.classList.toggle("collapsed");
     }
 
     function getTipeBadge(tipe) {
