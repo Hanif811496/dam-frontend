@@ -35,6 +35,15 @@
       gap: 8px;
     }
 
+    .folder-group-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 8px 0 4px;
+      margin-top: 4px;
+    }
+
     .folder-item {
       display: flex;
       align-items: center;
@@ -49,20 +58,9 @@
     }
 
     .folder-item:hover { border-color: var(--primary); }
-    .folder-item.active {
-      border-color: var(--primary);
-      background: var(--primary-light);
-    }
+    .folder-item.active { border-color: var(--primary); background: var(--primary-light); }
 
-    .folder-item-icon { color: var(--accent-yellow); }
     .folder-item-name { flex: 1; font-size: 14px; font-weight: 500; }
-    .folder-item-count {
-      font-size: 11px;
-      background: var(--border);
-      padding: 2px 8px;
-      border-radius: var(--radius-full);
-      color: var(--text-muted);
-    }
 
     .folder-delete {
       color: var(--text-muted);
@@ -95,26 +93,11 @@
     }
 
     .rule-arrow { color: var(--text-muted); font-size: 14px; }
-
-    .rule-folder {
-      font-size: 13px;
-      font-weight: 500;
-      flex: 1;
-    }
-
-    .rule-delete {
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-
+    .rule-folder { font-size: 13px; font-weight: 500; flex: 1; }
+    .rule-delete { color: var(--text-muted); cursor: pointer; }
     .rule-delete:hover { color: var(--danger); }
 
-    .add-form {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
+    .add-form { display: flex; gap: 8px; margin-top: 12px; }
     .add-form .input { flex: 1; }
 
     .asset-grid-sm {
@@ -146,48 +129,19 @@
       overflow: hidden;
     }
 
-    .asset-preview-sm img {
-      width: 100%;
-      height: 90px;
-      object-fit: cover;
-    }
+    .asset-preview-sm img { width: 100%; height: 90px; object-fit: cover; }
+    .asset-name-sm { font-size: 11px; padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-muted); }
 
-    .asset-name-sm {
-      font-size: 11px;
-      padding: 6px 8px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: var(--text-muted);
-    }
+    .empty-folder { text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px; }
 
-    .empty-folder {
-      text-align: center;
-      padding: 30px;
-      color: var(--text-muted);
+    .info-banner {
+      background: var(--accent-yellow-light);
+      border: 1px solid rgba(245,197,24,0.3);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      margin-bottom: 20px;
       font-size: 13px;
-    }
-
-    .folder-assets-section {
-      margin-top: 24px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-    }
-
-    .folder-assets-title {
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 4px;
-    }
-
-    .folder-assets-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 14px;
+      color: #7a600a;
     }
   </style>
 </head>
@@ -214,7 +168,7 @@
     <a href="search.html" class="sidebar-item">
       <i data-lucide="search"></i> Pencarian
     </a>
-    <a href="folders.html" class="sidebar-item">
+    <a href="folders.html" class="sidebar-item active">
       <i data-lucide="folder"></i> Smart Folder
     </a>
     <a href="profile.html" class="sidebar-item">
@@ -230,16 +184,13 @@
       <div class="page-title" style="margin:0;">Smart Folder</div>
     </div>
 
-    <div style="background:var(--accent-yellow-light);border:1px solid rgba(245,197,24,0.3);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px;font-size:13px;color:#7a600a;">
-      <strong>Cara kerja:</strong> Buat folder, lalu tambahkan rule — kata kunci yang cocok dengan tag aset akan otomatis dimasukkan ke folder tersebut saat upload.
+    <div class="info-banner">
+      <strong>Cara kerja:</strong> Folder Shared bisa diakses semua divisi. Folder Divisi hanya untuk divisinya masing-masing. Smart Folder otomatis mengisi aset berdasarkan rule keyword tag saat upload.
     </div>
 
     <div class="folders-wrap">
-
-      <!-- Kiri: Folder & Rules -->
       <div style="display:flex;flex-direction:column;gap:16px;">
 
-        <!-- Daftar Folder -->
         <div class="section-box">
           <div class="section-title">
             <i data-lucide="folder" style="width:16px;height:16px;color:var(--accent-yellow);"></i>
@@ -250,15 +201,18 @@
               <div class="spinner"></div>
             </div>
           </div>
-          <div class="add-form">
-            <input type="text" class="input" id="new-folder-name" placeholder="Nama folder baru...">
-            <button class="btn btn-primary btn-sm" onclick="buatFolder()">
-              <i data-lucide="plus" style="width:14px;height:14px;"></i> Buat
-            </button>
+
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Buat Smart Folder baru (untuk divisi kamu):</div>
+            <div class="add-form">
+              <input type="text" class="input" id="new-folder-name" placeholder="Nama smart folder...">
+              <button class="btn btn-primary btn-sm" onclick="buatFolder()">
+                <i data-lucide="plus" style="width:14px;height:14px;"></i> Buat
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Rules -->
         <div class="section-box">
           <div class="section-title">
             <i data-lucide="git-branch" style="width:16px;height:16px;color:var(--accent-blue);"></i>
@@ -285,7 +239,6 @@
 
       </div>
 
-      <!-- Kanan: Preview aset dalam folder -->
       <div class="section-box">
         <div class="section-title">
           <i data-lucide="files" style="width:16px;height:16px;color:var(--primary);"></i>
@@ -298,7 +251,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </main>
 
@@ -308,15 +260,14 @@
   <script src="../js/utils.js"></script>
   <script>
     requireAuth();
-    if (isManager()) {
-      document.getElementById("sidebar-admin").style.display = "flex";
-      document.getElementById("sidebar-dashboard").style.display = "flex";
-    }
-    
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
+    if (isManager()) {
+      document.getElementById("sidebar-admin").style.display    = "flex";
+      document.getElementById("sidebar-dashboard").style.display = "flex";
+    }
 
-    let folders = [];
+    let folders     = [];
     let activeFolder = null;
 
     function getFileIcon(tipe) {
@@ -340,34 +291,56 @@
 
     function renderFolders() {
       const el = document.getElementById("folder-list");
-      if (folders.length === 0) {
-        el.innerHTML = `<div class="empty-folder">Belum ada folder. Buat folder pertama di bawah.</div>`;
-        return;
-      }
-      el.innerHTML = folders.map(f => {
-        const isOwner = f.user_id === user.user_id || isManager();
+
+      const shared = folders.filter(f => f.type === "shared");
+      const system = folders.filter(f => f.type === "system");
+      const smart  = folders.filter(f => f.type === "smart");
+
+      function renderGroup(list, label, color) {
+        if (!list.length) return "";
         return `
-          <div class="folder-item ${activeFolder === f.id ? 'active' : ''}" onclick="lihatFolder('${f.id}', '${f.nama}')">
-            <i data-lucide="folder" class="folder-item-icon" style="width:16px;height:16px;"></i>
-            <span class="folder-item-name">${f.nama}</span>
-            <span style="font-size:10px;color:var(--text-muted);margin-right:4px;">${f.owner || ""}</span>
-            ${isOwner ? `<i data-lucide="trash-2" class="folder-delete" style="width:14px;height:14px;" onclick="event.stopPropagation();hapusFolder('${f.id}')"></i>` : ""}
-          </div>`;
-      }).join("");
+          <div class="folder-group-label" style="color:${color};">${label}</div>
+          ${list.map(f => {
+            const isActive  = activeFolder === f.id;
+            const canDelete = f.type === "smart" && (f.user_id === user.user_id || isManager());
+            const subtitle  = f.type === "system" ? f.div_nama || "" :
+                              f.type === "shared"  ? "Semua divisi" :
+                              f.owner || "";
+            return `
+              <div class="folder-item ${isActive ? 'active' : ''}" onclick="lihatFolder('${f.id}', '${f.nama}')">
+                <i data-lucide="folder" style="width:16px;height:16px;color:${color};flex-shrink:0;"></i>
+                <span class="folder-item-name">${f.nama}</span>
+                <span style="font-size:10px;color:var(--text-muted);margin-right:4px;">${subtitle}</span>
+                ${canDelete ? `<i data-lucide="trash-2" class="folder-delete" style="width:14px;height:14px;" onclick="event.stopPropagation();hapusFolder('${f.id}')"></i>` : ""}
+              </div>`;
+          }).join("")}`;
+      }
+
+      const html =
+        renderGroup(shared, "Shared — Semua Divisi", "#2E7D32") +
+        renderGroup(system, "Folder Divisi",         "var(--accent-blue)") +
+        renderGroup(smart,  "Smart Folder",           "var(--accent-yellow)");
+
+      el.innerHTML = html || `<div class="empty-folder">Belum ada folder</div>`;
       lucide.createIcons();
     }
 
     function updateFolderSelect() {
       const sel = document.getElementById("rule-folder");
       sel.innerHTML = `<option value="">Pilih folder...</option>` +
-        folders.map(f => `<option value="${f.id}">${f.nama}</option>`).join("");
+        folders.map(f => {
+          const label = f.type === "shared"  ? `[Shared] ${f.nama}` :
+                        f.type === "system"   ? `[${f.div_nama}] ${f.nama}` :
+                        `[Smart] ${f.nama}`;
+          return `<option value="${f.id}">${label}</option>`;
+        }).join("");
     }
 
     async function buatFolder() {
       const nama = document.getElementById("new-folder-name").value.trim();
       if (!nama) return;
       try {
-        await fetch(`${API_BASE_URL}/folders`, {
+        await fetch(`${API_BASE_URL}/folders/smart`, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({nama, user_id: user.user_id})
@@ -375,14 +348,14 @@
         document.getElementById("new-folder-name").value = "";
         await loadFolders();
         await loadRules();
-        showToast("Folder dibuat");
+        showToast("Smart folder dibuat");
       } catch (e) {
         showToast("Gagal buat folder", "error");
       }
     }
 
     async function hapusFolder(folder_id) {
-      if (!confirm("Hapus folder ini? Aset di dalamnya tidak akan terhapus.")) return;
+      if (!confirm("Hapus smart folder ini? Aset di dalamnya tidak akan terhapus.")) return;
       try {
         await fetch(`${API_BASE_URL}/folders/${folder_id}`, {method: "DELETE"});
         if (activeFolder === folder_id) {
@@ -408,14 +381,14 @@
       const previewEl = document.getElementById("folder-preview");
       previewEl.innerHTML = `<div style="display:flex;justify-content:center;padding:30px;"><div class="spinner"></div></div>`;
       try {
-        const res  = await fetch(`${API_BASE_URL}/folders/${folder_id}/assets`);
-        const data = await res.json();
+        const res    = await fetch(`${API_BASE_URL}/folders/${folder_id}/assets`);
+        const data   = await res.json();
         const assets = data.assets;
 
         if (assets.length === 0) {
           previewEl.innerHTML = `
             <div style="font-size:13px;font-weight:600;margin-bottom:12px;">📁 ${nama}</div>
-            <div class="empty-folder">Belum ada aset di folder ini.<br>Upload aset dengan tag yang sesuai rule.</div>`;
+            <div class="empty-folder">Belum ada aset di folder ini.</div>`;
           return;
         }
 
@@ -446,7 +419,7 @@
         const el   = document.getElementById("rule-list");
 
         if (data.rules.length === 0) {
-          el.innerHTML = `<div class="empty-folder">Belum ada rule. Tambahkan rule di bawah.</div>`;
+          el.innerHTML = `<div class="empty-folder">Belum ada rule.</div>`;
           return;
         }
 
