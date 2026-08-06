@@ -134,6 +134,52 @@
 
     .empty-folder { text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px; }
 
+    .folder-share {
+      color: var(--text-muted);
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s;
+      margin-right: 2px;
+    }
+    .folder-item:hover .folder-share { opacity: 1; }
+    .folder-share:hover { color: var(--primary); }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      width: 380px;
+      max-width: 90vw;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .modal-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+    .modal-user-list { overflow-y: auto; flex: 1; margin-bottom: 14px; border-top: 1px solid var(--border); padding-top: 8px; }
+    .modal-user-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 4px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-user-item:last-child { border-bottom: none; }
+    .modal-user-name { font-weight: 500; flex: 1; }
+    .modal-user-email { color: var(--text-muted); font-size: 11px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
     .info-banner {
       background: var(--accent-yellow-light);
       border: 1px solid rgba(245,197,24,0.3);
@@ -185,7 +231,7 @@
     </div>
 
     <div class="info-banner">
-      <strong>Cara kerja:</strong> Folder Shared bisa diakses semua divisi. Folder Divisi hanya untuk divisinya masing-masing. Smart Folder otomatis mengisi aset berdasarkan rule keyword tag saat upload.
+      <strong>Cara kerja:</strong> Folder Shared bisa diakses semua divisi. Folder Divisi hanya untuk divisinya masing-masing. Smart Folder otomatis mengisi aset berdasarkan rule keyword tag saat upload. Smart Folder juga bisa dibagikan ke user tertentu lewat ikon <i data-lucide="user-plus" style="width:12px;height:12px;vertical-align:middle;"></i> di sebelah namanya.
     </div>
 
     <div class="folders-wrap">
@@ -203,9 +249,10 @@
           </div>
 
           <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Buat Smart Folder baru (untuk divisi kamu):</div>
-            <div class="add-form">
-              <input type="text" class="input" id="new-folder-name" placeholder="Nama smart folder...">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;" id="new-folder-label">Buat Smart Folder baru (untuk divisi kamu):</div>
+            <div class="add-form" style="flex-wrap:wrap;">
+              <input type="text" class="input" id="new-folder-name" placeholder="Nama smart folder..." style="flex:1;min-width:140px;">
+              <select class="input" id="new-folder-division" style="display:none;flex:1;min-width:140px;"></select>
               <button class="btn btn-primary btn-sm" onclick="buatFolder()">
                 <i data-lucide="plus" style="width:14px;height:14px;"></i> Buat
               </button>
@@ -254,6 +301,20 @@
     </div>
   </main>
 
+  <div class="modal-overlay" id="share-modal">
+    <div class="modal-box">
+      <div class="modal-title">Bagikan Folder</div>
+      <div class="modal-subtitle" id="share-modal-subtitle">Pilih user yang boleh mengakses folder ini.</div>
+      <div class="modal-user-list" id="share-user-list">
+        <div style="display:flex;justify-content:center;padding:16px;"><div class="spinner"></div></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-sm" onclick="closeShareModal()">Batal</button>
+        <button class="btn btn-primary btn-sm" onclick="simpanShareFolder()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../js/config.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/api.js"></script>
@@ -267,8 +328,29 @@
       document.getElementById("sidebar-dashboard").style.display = "flex";
     }
 
-    let folders     = [];
+    let folders      = [];
     let activeFolder = null;
+    let allUsers     = [];
+    let allDivisions = [];
+    let shareModalFolderId = null;
+    let shareModalSelected = new Set();
+
+    if (isManager()) {
+      document.getElementById("new-folder-label").textContent = "Buat Smart Folder baru (pilih divisi tujuan):";
+      const sel = document.getElementById("new-folder-division");
+      sel.style.display = "block";
+      loadDivisionsForForm();
+    }
+
+    async function loadDivisionsForForm() {
+      try {
+        const res  = await fetch(`${API_BASE_URL}/divisions`);
+        const data = await res.json();
+        allDivisions = data.divisions;
+        const sel = document.getElementById("new-folder-division");
+        sel.innerHTML = allDivisions.map(d => `<option value="${d.id}">${d.nama}</option>`).join("");
+      } catch (e) { console.error(e); }
+    }
 
     function getFileIcon(tipe) {
       if (tipe.includes("image")) return "🖼️";
@@ -292,9 +374,10 @@
     function renderFolders() {
       const el = document.getElementById("folder-list");
 
-      const shared = folders.filter(f => f.type === "shared");
-      const system = folders.filter(f => f.type === "system");
-      const smart  = folders.filter(f => f.type === "smart");
+      const shared    = folders.filter(f => f.type === "shared");
+      const system    = folders.filter(f => f.type === "system");
+      const smart     = folders.filter(f => f.type === "smart" && !f.shared_to_me);
+      const sharedToMe = folders.filter(f => f.shared_to_me);
 
       function renderGroup(list, label, color) {
         if (!list.length) return "";
@@ -302,24 +385,29 @@
           <div class="folder-group-label" style="color:${color};">${label}</div>
           ${list.map(f => {
             const isActive  = activeFolder === f.id;
-            const canDelete = f.type === "smart" && (f.user_id === user.user_id || isManager());
+            const isOwner   = f.user_id === user.user_id;
+            const canDelete = f.type === "smart" && (isOwner || isManager());
+            const canShare  = f.type === "smart" && (isOwner || isManager());
             const subtitle  = f.type === "system" ? f.div_nama || "" :
                               f.type === "shared"  ? "Semua divisi" :
+                              f.shared_to_me ? `Dibagikan • ${f.div_nama || ""}` :
                               f.owner || "";
             return `
               <div class="folder-item ${isActive ? 'active' : ''}" onclick="lihatFolder('${f.id}', '${f.nama}')">
                 <i data-lucide="folder" style="width:16px;height:16px;color:${color};flex-shrink:0;"></i>
                 <span class="folder-item-name">${f.nama}</span>
                 <span style="font-size:10px;color:var(--text-muted);margin-right:4px;">${subtitle}</span>
+                ${canShare ? `<i data-lucide="user-plus" class="folder-share" style="width:14px;height:14px;" title="Bagikan folder" onclick="event.stopPropagation();openShareModal('${f.id}','${f.nama.replace(/'/g, "\\'")}')"></i>` : ""}
                 ${canDelete ? `<i data-lucide="trash-2" class="folder-delete" style="width:14px;height:14px;" onclick="event.stopPropagation();hapusFolder('${f.id}')"></i>` : ""}
               </div>`;
           }).join("")}`;
       }
 
       const html =
-        renderGroup(shared, "Shared — Semua Divisi", "#2E7D32") +
-        renderGroup(system, "Folder Divisi",         "var(--accent-blue)") +
-        renderGroup(smart,  "Smart Folder",           "var(--accent-yellow)");
+        renderGroup(shared,     "Shared — Semua Divisi", "#2E7D32") +
+        renderGroup(system,     "Folder Divisi",         "var(--accent-blue)") +
+        renderGroup(smart,      "Smart Folder",           "var(--accent-yellow)") +
+        renderGroup(sharedToMe, "Dibagikan ke Saya",      "#8E44AD");
 
       el.innerHTML = html || `<div class="empty-folder">Belum ada folder</div>`;
       lucide.createIcons();
@@ -339,11 +427,16 @@
     async function buatFolder() {
       const nama = document.getElementById("new-folder-name").value.trim();
       if (!nama) return;
+      const payload = {nama, user_id: user.user_id};
+      if (isManager()) {
+        const targetDiv = document.getElementById("new-folder-division").value;
+        if (targetDiv) payload.target_division_id = targetDiv;
+      }
       try {
         await fetch(`${API_BASE_URL}/folders/smart`, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({nama, user_id: user.user_id})
+          body: JSON.stringify(payload)
         });
         document.getElementById("new-folder-name").value = "";
         await loadFolders();
@@ -351,6 +444,85 @@
         showToast("Smart folder dibuat");
       } catch (e) {
         showToast("Gagal buat folder", "error");
+      }
+    }
+
+    async function loadAllUsers() {
+      if (allUsers.length) return;
+      try {
+        const res  = await fetch(`${API_BASE_URL}/divisions/users`);
+        const data = await res.json();
+        allUsers = data.users;
+      } catch (e) { console.error(e); }
+    }
+
+    async function openShareModal(folder_id, folder_nama) {
+      shareModalFolderId = folder_id;
+      shareModalSelected = new Set();
+      document.getElementById("share-modal-subtitle").textContent = `Folder: ${folder_nama}`;
+      document.getElementById("share-modal").classList.add("open");
+      const listEl = document.getElementById("share-user-list");
+      listEl.innerHTML = `<div style="display:flex;justify-content:center;padding:16px;"><div class="spinner"></div></div>`;
+
+      await loadAllUsers();
+      let currentAccess = [];
+      try {
+        const res  = await fetch(`${API_BASE_URL}/folders/${folder_id}/access`);
+        const data = await res.json();
+        currentAccess = data.users.map(u => u.id);
+      } catch (e) { console.error(e); }
+      shareModalSelected = new Set(currentAccess);
+
+      renderShareUserList();
+    }
+
+    function renderShareUserList() {
+      const listEl = document.getElementById("share-user-list");
+      const others = allUsers.filter(u => u.id !== user.user_id);
+      if (!others.length) {
+        listEl.innerHTML = `<div class="empty-folder">Tidak ada user lain.</div>`;
+        return;
+      }
+      listEl.innerHTML = others.map(u => `
+        <label class="modal-user-item">
+          <input type="checkbox" value="${u.id}" ${shareModalSelected.has(u.id) ? "checked" : ""} onchange="toggleShareUser('${u.id}', this.checked)">
+          <span class="modal-user-name">${u.nama}<br><span class="modal-user-email">${u.email}${u.division ? " • " + (u.division.divisions?.nama || "") : ""}</span></span>
+        </label>`).join("");
+    }
+
+    function toggleShareUser(user_id, checked) {
+      if (checked) shareModalSelected.add(user_id);
+      else shareModalSelected.delete(user_id);
+    }
+
+    function closeShareModal() {
+      document.getElementById("share-modal").classList.remove("open");
+      shareModalFolderId = null;
+    }
+
+    async function simpanShareFolder() {
+      if (!shareModalFolderId) return;
+      try {
+        await fetch(`${API_BASE_URL}/folders/${shareModalFolderId}/access`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({user_ids: Array.from(shareModalSelected), granted_by: user.user_id})
+        });
+        // Cabut akses user yang di-uncheck
+        let currentAccess = [];
+        try {
+          const res  = await fetch(`${API_BASE_URL}/folders/${shareModalFolderId}/access`);
+          const data = await res.json();
+          currentAccess = data.users.map(u => u.id);
+        } catch (e) {}
+        const toRemove = currentAccess.filter(uid => !shareModalSelected.has(uid));
+        for (const uid of toRemove) {
+          await fetch(`${API_BASE_URL}/folders/${shareModalFolderId}/access/${uid}`, {method: "DELETE"});
+        }
+        closeShareModal();
+        showToast("Akses folder disimpan");
+      } catch (e) {
+        showToast("Gagal menyimpan akses", "error");
       }
     }
 
@@ -381,7 +553,11 @@
       const previewEl = document.getElementById("folder-preview");
       previewEl.innerHTML = `<div style="display:flex;justify-content:center;padding:30px;"><div class="spinner"></div></div>`;
       try {
-        const res    = await fetch(`${API_BASE_URL}/folders/${folder_id}/assets`);
+        const res    = await fetch(`${API_BASE_URL}/folders/${folder_id}/assets?user_id=${user.user_id}`);
+        if (res.status === 403) {
+          previewEl.innerHTML = `<div style="color:var(--danger);font-size:13px;text-align:center;padding:20px;">Kamu tidak punya akses ke folder ini.</div>`;
+          return;
+        }
         const data   = await res.json();
         const assets = data.assets;
 
