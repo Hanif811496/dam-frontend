@@ -198,8 +198,7 @@
     </a>
     <a href="upload.html" class="sidebar-item">
       <i data-lucide="upload-cloud"></i> Upload Aset
-    </a>
-    <a href="folders.html" class="sidebar-item">
+    </a>    <a href="folders.html" class="sidebar-item">
       <i data-lucide="folder"></i> Smart Folder
     </a>
     <a href="profile.html" class="sidebar-item">
@@ -249,9 +248,11 @@
       <div class="section-box">
         <div class="section-title">
           <i data-lucide="layers" style="width:16px;height:16px;color:var(--accent-blue);"></i>
-          Akses per Divisi
+          Ringkasan Divisi
         </div>
-        <div id="division-info"></div>
+        <div id="division-info">
+          <div style="display:flex;justify-content:center;padding:20px;"><div class="spinner"></div></div>
+        </div>
       </div>
     </div>
   </main>
@@ -345,16 +346,6 @@
       "Custom":        "div-custom",
     };
 
-    const divisionAccess = {
-      "Manager":       "Semua aset dan fitur admin",
-      "Design Artist": "Gambar (JPG, PNG, PSD, AI, SVG)",
-      "3D Modeler":    "Gambar + file 3D (BLEND, OBJ, FBX)",
-      "Animator":      "File 3D + audio voice over (MP3, WAV)",
-      "Editor":        "Video + audio + naskah (PDF, DOCX)",
-      "Render Artist": "File 3D + video render + gambar",
-      "Custom":        "Dikonfigurasi manual oleh Manager",
-    };
-
     async function loadDivisions() {
       try {
         const data = await fetchWithRetry(`${API_BASE_URL}/divisions`);
@@ -366,14 +357,30 @@
         sel1.innerHTML = `<option value="">Pilih divisi...</option>` + opts;
         sel2.innerHTML = `<option value="">Pilih divisi...</option>` + opts;
 
+      } catch (e) { console.error(e); showToast("Gagal memuat divisi", "error"); }
+    }
+
+    async function loadDivisionSummary() {
+      try {
+        const data = await fetchWithRetry(`${API_BASE_URL}/admin/report/divisions`);
         const infoEl = document.getElementById("division-info");
-        infoEl.innerHTML = divisions.map(d => `
+
+        if (!data.divisions.length) {
+          infoEl.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:10px 0;">Belum ada divisi</div>`;
+          return;
+        }
+
+        infoEl.innerHTML = data.divisions.map(d => `
           <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
-            <span class="user-division ${divisionClass[d.nama] || 'div-none'}">${d.nama}</span>
-            <span style="font-size:12px;color:var(--text-muted);flex:1;">${divisionAccess[d.nama] || d.deskripsi || "—"}</span>
+            <span class="user-division ${divisionClass[d.nama] || 'div-none'}" style="flex-shrink:0;">${d.nama}</span>
+            <span style="font-size:12px;color:var(--text-muted);flex:1;">${d.jumlah_user} user &bull; ${d.jumlah_aset} aset</span>
+            <span style="font-size:12px;color:var(--text-muted);white-space:nowrap;">${formatFileSize(d.total_storage)}</span>
           </div>`).join("");
 
-      } catch (e) { console.error(e); showToast("Gagal memuat divisi", "error"); }
+      } catch (e) {
+        document.getElementById("division-info").innerHTML =
+          `<div style="font-size:12px;color:var(--danger);padding:10px 0;">Gagal memuat ringkasan divisi</div>`;
+      }
     }
 
     async function loadUsers() {
@@ -486,6 +493,7 @@
 
         tutupModal();
         await loadUsers();
+        await loadDivisionSummary();
         showToast(`Akun ${nama} berhasil dibuat`);
       } catch (err) {
         errorEl.textContent   = err.message;
@@ -536,6 +544,7 @@
 
         tutupModalUbah();
         await loadUsers();
+        await loadDivisionSummary();
         showToast("Data staff berhasil diupdate");
       } catch (err) {
         errorEl.textContent   = err.message;
@@ -551,6 +560,7 @@
         if (!res.ok) throw new Error(data.detail || "Gagal menghapus akun");
         await loadUsers();
         await loadStats();
+        await loadDivisionSummary();
         showToast(`Akun ${nama} berhasil dihapus`);
       } catch (err) {
         showToast(err.message, "error");
@@ -558,6 +568,7 @@
     }
 
     loadDivisions();
+    loadDivisionSummary();
     loadUsers();
     loadStats();
     lucide.createIcons();
