@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DAM System</title>
+  <script src="/js/config.js"></script>
+  <script src="/js/auth.js"></script>
+</head>
+<body>
+  <script>
+    if (!isLoggedIn()) {
+      window.location.href = "/pages/login.html";
+    } else if (isManager()) {
+      window.location.href = "/pages/dashboard.html";
+    } else {
+      window.location.href = "/pages/gallery.html";
+    }
+  </script>
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=/pages/login.html">
+  </noscript>
+</body>
+</html>
