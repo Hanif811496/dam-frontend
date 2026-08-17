@@ -10,7 +10,64 @@
   <link rel="stylesheet" href="../css/layout.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    .upload-wrap { max-width: 640px; }
+    .upload-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      max-width: 1100px;
+    }
+
+    @media (max-width: 900px) {
+      .upload-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── Kolom kiri: destinasi + dropzone ── */
+    .destination-card {
+      margin-bottom: 20px;
+    }
+
+    .destination-card .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .destination-card .card-title i { width: 15px; height: 15px; color: var(--primary); }
+
+    .destination-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 520px) {
+      .destination-row { grid-template-columns: 1fr; }
+    }
+
+    .destination-field label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .destination-summary {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: var(--primary-light);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .destination-summary i { width: 14px; height: 14px; flex-shrink: 0; }
 
     .dropzone {
       border: 2px dashed var(--border-dark);
@@ -61,6 +118,29 @@
       gap: 10px;
       margin-bottom: 8px;
     }
+
+    .file-item-thumb {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm, 6px);
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--surface-2);
+    }
+
+    .file-item-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm, 6px);
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--text-muted);
+    }
+
+    .file-item-icon i { width: 16px; height: 16px; }
 
     .file-item-name {
       font-size: 13px;
@@ -116,6 +196,98 @@
       gap: 4px;
       margin-top: 6px;
     }
+
+    /* ── Kolom kanan: info panel ── */
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .side-card .side-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .side-card .side-card-title i { width: 14px; height: 14px; }
+
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .info-row i { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; color: var(--primary); }
+
+    .recent-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .recent-item:last-child { border-bottom: none; }
+
+    .recent-item-thumb {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm, 6px);
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--surface-2);
+    }
+
+    .recent-item-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm, 6px);
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--text-muted);
+    }
+
+    .recent-item-icon i { width: 14px; height: 14px; }
+
+    .recent-item-info { flex: 1; min-width: 0; }
+
+    .recent-item-name {
+      font-size: 12.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recent-item-date {
+      font-size: 11px;
+      color: var(--text-light);
+    }
+
+    .side-empty {
+      font-size: 12.5px;
+      color: var(--text-light);
+      text-align: center;
+      padding: 12px 0;
+    }
   </style>
 </head>
 <body>
@@ -158,27 +330,77 @@
   <main class="main-content">
     <div class="page-title">Upload Aset</div>
 
-    <div class="upload-wrap">
-      <div class="section-box" id="upload-division-box" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:16px;">
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Upload ke folder divisi (khusus Manager):</div>
-        <select class="input" id="upload-target-division" style="width:100%;">
-          <option value="">Divisi saya sendiri</option>
-        </select>
+    <div class="upload-layout">
+      <!-- Kolom kiri -->
+      <div>
+        <div class="card destination-card">
+          <div class="card-title"><i data-lucide="map-pin"></i> Tujuan Upload</div>
+          <div class="destination-row">
+            <div class="destination-field" id="division-field" style="display:none;">
+              <label>Divisi</label>
+              <select class="input" id="upload-target-division">
+                <option value="">Divisi saya sendiri</option>
+              </select>
+            </div>
+            <div class="destination-field">
+              <label>Simpan ke folder</label>
+              <select class="input" id="upload-target-folder">
+                <option value="">Otomatis saja</option>
+              </select>
+            </div>
+          </div>
+          <div class="destination-summary" id="destination-summary">
+            <i data-lucide="info"></i>
+            <span id="destination-summary-text">Aset akan otomatis masuk ke folder divisi dan tag terkait.</span>
+          </div>
+        </div>
+
+        <div class="dropzone" id="dropzone">
+          <div class="dropzone-icon">☁️</div>
+          <p>Seret file ke sini atau klik untuk memilih</p>
+          <p style="font-size:12px;">Mendukung: JPG, PNG, PDF, MP4, DOCX, XLSX (maks 50MB)</p>
+          <button class="btn btn-outline btn-sm" type="button">Pilih File</button>
+          <input type="file" id="file-input" multiple accept="image/*,video/*,.pdf,.docx,.xlsx" style="display:none;">
+        </div>
+
+        <div class="file-list" id="file-list"></div>
+
+        <button class="btn btn-primary" id="btn-upload" style="display:none;width:100%;justify-content:center;">
+          Upload Semua File
+        </button>
       </div>
 
-      <div class="dropzone" id="dropzone">
-        <div class="dropzone-icon">☁️</div>
-        <p>Seret file ke sini atau klik untuk memilih</p>
-        <p style="font-size:12px;">Mendukung: JPG, PNG, PDF, MP4, DOCX, XLSX (maks 50MB)</p>
-        <button class="btn btn-outline btn-sm" type="button">Pilih File</button>
-        <input type="file" id="file-input" multiple accept="image/*,video/*,.pdf,.docx,.xlsx" style="display:none;">
+      <!-- Kolom kanan -->
+      <div class="side-panel">
+        <div class="card side-card">
+          <div class="side-card-title"><i data-lucide="lightbulb"></i> Info Upload</div>
+          <div class="info-list">
+            <div class="info-row">
+              <i data-lucide="file-check-2"></i>
+              <span>Format didukung: JPG, PNG, PDF, MP4, DOCX, XLSX.</span>
+            </div>
+            <div class="info-row">
+              <i data-lucide="database"></i>
+              <span>Ukuran maksimal per file 50MB.</span>
+            </div>
+            <div class="info-row">
+              <i data-lucide="sparkles"></i>
+              <span>Tag dibuat otomatis dari nama file, tipe file, dan AI untuk gambar.</span>
+            </div>
+            <div class="info-row" id="info-manager" style="display:none;">
+              <i data-lucide="shield-check"></i>
+              <span>Sebagai Manager, kamu bisa upload ke divisi lain dan pilih folder tujuannya langsung.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card side-card">
+          <div class="side-card-title"><i data-lucide="history"></i> Upload Terakhir</div>
+          <div id="recent-uploads">
+            <div class="side-empty">Memuat...</div>
+          </div>
+        </div>
       </div>
-
-      <div class="file-list" id="file-list"></div>
-
-      <button class="btn btn-primary" id="btn-upload" style="display:none;width:100%;justify-content:center;">
-        Upload Semua File
-      </button>
     </div>
   </main>
 
@@ -194,28 +416,111 @@
       document.getElementById("sidebar-users").style.display     = "flex";
       document.getElementById("sidebar-dashboard").style.display = "flex";
     }
-    
+
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
 
+    const divisionSelect = document.getElementById("upload-target-division");
+    const folderSelect   = document.getElementById("upload-target-folder");
+    const summaryText    = document.getElementById("destination-summary-text");
+
+    let allFolders = [];
+
     if (isManager()) {
-      document.getElementById("upload-division-box").style.display = "block";
+      document.getElementById("division-field").style.display = "block";
+      document.getElementById("info-manager").style.display   = "flex";
       loadDivisionsForUpload();
     }
+
+    loadFoldersForUpload();
+    loadRecentUploads();
 
     async function loadDivisionsForUpload() {
       try {
         const res  = await fetch(`${API_BASE_URL}/divisions`);
         const data = await res.json();
-        const sel  = document.getElementById("upload-target-division");
-        sel.innerHTML = `<option value="">Divisi saya sendiri</option>` +
+        divisionSelect.innerHTML = `<option value="">Divisi saya sendiri</option>` +
           data.divisions.map(d => `<option value="${d.id}">${d.nama}</option>`).join("");
       } catch (e) { console.error(e); }
+    }
+
+    async function loadFoldersForUpload() {
+      try {
+        const data = await getFolders(user.user_id);
+        allFolders = data.folders || [];
+        renderFolderOptions();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderFolderOptions() {
+      const targetDivisionId = divisionSelect.value || user.division_id || "";
+      const relevant = allFolders.filter(f => {
+        if (f.type === "shared") return true;
+        return f.division_id === targetDivisionId;
+      });
+
+      const options = relevant.map(f => {
+        const label = f.type === "shared" ? `[Shared] ${f.nama}` :
+                      f.type === "system" ? `[${f.div_nama || "Divisi"}] ${f.nama}` :
+                      f.nama;
+        return `<option value="${f.id}">${label}</option>`;
+      }).join("");
+
+      folderSelect.innerHTML = `<option value="">Otomatis saja</option>` + options;
+      updateDestinationSummary();
+    }
+
+    function updateDestinationSummary() {
+      const divName = divisionSelect.value
+        ? divisionSelect.options[divisionSelect.selectedIndex].textContent
+        : "divisimu sendiri";
+      const folderName = folderSelect.value
+        ? folderSelect.options[folderSelect.selectedIndex].textContent
+        : null;
+
+      summaryText.textContent = folderName
+        ? `Aset akan masuk ke folder "${folderName}" (${divName}), plus folder otomatis & tag terkait.`
+        : `Aset akan otomatis masuk ke folder ${divName} dan tag terkait.`;
+    }
+
+    divisionSelect.addEventListener("change", renderFolderOptions);
+    folderSelect.addEventListener("change", updateDestinationSummary);
+
+    async function loadRecentUploads() {
+      const wrap = document.getElementById("recent-uploads");
+      try {
+        const data   = await getMyAssets(user.user_id);
+        const recent = (data.assets || []).slice(0, 5);
+        if (recent.length === 0) {
+          wrap.innerHTML = `<div class="side-empty">Belum ada upload.</div>`;
+          return;
+        }
+        wrap.innerHTML = recent.map(a => {
+          const isImage = (a.tipe_file || "").startsWith("image");
+          const thumb = isImage
+            ? `<img class="recent-item-thumb" src="${a.url}" alt="">`
+            : `<div class="recent-item-icon"><i data-lucide="file"></i></div>`;
+          return `
+          <div class="recent-item">
+            ${thumb}
+            <div class="recent-item-info">
+              <div class="recent-item-name">${a.nama_file}</div>
+              <div class="recent-item-date">${formatDate(a.created_at)}</div>
+            </div>
+          </div>`;
+        }).join("");
+        lucide.createIcons();
+      } catch (e) {
+        wrap.innerHTML = `<div class="side-empty">Gagal memuat upload terakhir.</div>`;
+      }
     }
 
     let selectedFiles = [];
     let fileStatuses  = [];   // 'pending' | 'uploading' | 'done' | 'error'
     let fileTags      = [];   // hasil tag per file (untuk restore saat render ulang)
+    let filePreviews  = [];   // object URL untuk thumbnail gambar
     let isUploading   = false;
 
     const dropzone  = document.getElementById("dropzone");
@@ -252,6 +557,7 @@
         selectedFiles.push(f);
         fileStatuses.push("pending");
         fileTags.push(null);
+        filePreviews.push(f.type.startsWith("image") ? URL.createObjectURL(f) : null);
       });
       renderFileList();
     }
@@ -278,9 +584,13 @@
         const label    = statusLabel(status);
         const pct      = status === "done" ? 100 : 0;
         const tagsHtml = (fileTags[i] || []).map(t => `<span class="tag-pill">${t}</span>`).join("");
+        const thumb    = filePreviews[i]
+          ? `<img class="file-item-thumb" src="${filePreviews[i]}" alt="">`
+          : `<div class="file-item-icon"><i data-lucide="file"></i></div>`;
         return `
         <div class="file-item" id="file-item-${i}">
           <div class="file-item-header">
+            ${thumb}
             <span class="file-item-name">${f.name}</span>
             <span class="file-item-size">${formatFileSize(f.size)}</span>
           </div>
@@ -295,6 +605,7 @@
         </div>`;
       }).join("");
 
+      lucide.createIcons();
       updateUploadButton();
     }
 
@@ -320,6 +631,7 @@
       selectedFiles = [];
       fileStatuses  = [];
       fileTags      = [];
+      filePreviews  = [];
       renderFileList();
     }
 
@@ -335,6 +647,9 @@
       btnUpload.disabled    = true;
       btnUpload.textContent = "Mengupload...";
 
+      const targetDiv    = divisionSelect.value || "";
+      const targetFolder = folderSelect.value || "";
+
       for (const i of indices) {
         const file     = selectedFiles[i];
         const statusEl = document.getElementById(`status-${i}`);
@@ -349,12 +664,17 @@
         tagsEl.innerHTML = "";
 
         try {
-          const targetDiv = document.getElementById("upload-target-division")
-            ? document.getElementById("upload-target-division").value
-            : "";
           const result = await uploadAsset(user.user_id, file, (pct) => {
             progEl.style.width = pct + "%";
           }, 3, 4000, targetDiv || null);
+
+          if (targetFolder && result.asset && result.asset.id) {
+            try {
+              await addAssetToFolder(targetFolder, result.asset.id, user.user_id);
+            } catch (folderErr) {
+              console.error("Gagal menambahkan ke folder pilihan:", folderErr);
+            }
+          }
 
           progEl.style.width  = "100%";
           fileStatuses[i]     = "done";
@@ -385,6 +705,8 @@
       } else {
         showToast(`${doneCount} berhasil, ${errorCount} gagal diupload`, "warning");
       }
+
+      if (doneCount > 0) loadRecentUploads();
 
       updateUploadButton();
     }

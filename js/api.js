@@ -51,6 +51,10 @@ async function getAssets(user_id) {
   return apiCall(`/assets/by-division?user_id=${user_id}`);
 }
 
+async function getMyAssets(user_id) {
+  return apiCall(`/assets?user_id=${user_id}`);
+}
+
 async function getAssetDetail(asset_id) {
   return apiCall(`/assets/${asset_id}`);
 }
@@ -87,6 +91,12 @@ async function moveAssetToFolder(asset_id, to_folder_id, from_folder_id, user_id
 async function removeAssetFromFolder(folder_id, asset_id, user_id) {
   return apiCall(`/folders/${folder_id}/assets/${asset_id}?user_id=${user_id}`, {
     method: "DELETE",
+  });
+}
+
+async function addAssetToFolder(folder_id, asset_id, user_id) {
+  return apiCall(`/folders/${folder_id}/add-asset?asset_id=${asset_id}&user_id=${user_id}`, {
+    method: "POST",
   });
 }
 
