@@ -1521,11 +1521,32 @@
         </div>`;
     }
 
+    function getAssetDivisionName(asset) {
+      if (!asset) return "—";
+
+      // Prioritaskan nama divisi yang memang sudah dikirim backend.
+      if (asset.div_nama) return asset.div_nama;
+      if (asset.uploader_divisi) return asset.uploader_divisi;
+      if (asset.division_nama) return asset.division_nama;
+
+      // Sebagian endpoint hanya mengirim division_id. Gallery sudah memuat
+      // daftar divisi, jadi resolve nama divisi di frontend agar List View
+      // tidak menampilkan "—".
+      if (asset.division_id) {
+        const division = allDivisions.find(item => item.id === asset.division_id);
+        if (division?.nama) return division.nama;
+      }
+
+      // Untuk asset yang dibagikan, sumber tetap berasal dari divisi pemilik asset.
+      // Jika data divisi tidak tersedia sama sekali, baru tampilkan placeholder.
+      return "—";
+    }
+
     function renderAssetRow(asset) {
       const key = itemKey("asset", asset.id);
       const checked = selectedItems.has(key);
       const owner = asset.shared_by ? `Shared · ${asset.shared_by}` : (asset.uploader || "—");
-      const division = asset.div_nama || asset.uploader_divisi || "—";
+      const division = getAssetDivisionName(asset);
 
       return `
         <div class="list-row list-item ${checked ? "selected" : ""}" onclick="openDetailPanel('${asset.id}', 'onAssetDeletedGallery')">
