@@ -574,14 +574,6 @@
       }
     }
 
-    function escapeHtmlAttr(value) {
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
-    }
-
     function getUserDivisionInfo(u) {
       /*
        * Response /divisions/users berbentuk:
@@ -736,9 +728,7 @@
                 type="button"
                 class="btn-icon"
                 title="Edit staff"
-                data-user-action="edit"
-                data-user-id="${u.id}"
-                data-user-name="${escapeHtmlAttr(String(u.nama || ""))}"
+                data-edit-user-id="${u.id}"
               >
                 <i data-lucide="pencil" style="width:13px;height:13px;"></i>
               </button>
@@ -748,9 +738,7 @@
                   type="button"
                   class="btn-icon danger"
                   title="Hapus akun"
-                  data-user-action="delete"
-                  data-user-id="${u.id}"
-                  data-user-name="${escapeHtmlAttr(String(u.nama || ""))}"
+                  data-delete-user-id="${u.id}"
                 >
                   <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
                 </button>
@@ -766,6 +754,45 @@
 
       renderStaffPagination(totalPages, start, end, total);
       lucide.createIcons();
+      bindUserActionButtons();
+    }
+
+    function bindUserActionButtons() {
+      document.querySelectorAll("[data-edit-user-id]").forEach(button => {
+        button.addEventListener("click", () => {
+          const targetUser = allUsers.find(
+            item => item.id === button.dataset.editUserId
+          );
+
+          if (!targetUser) {
+            showToast("Data user tidak ditemukan", "error");
+            return;
+          }
+
+          bukaModalUbah(
+            targetUser.id,
+            targetUser.nama || "Staff"
+          );
+        });
+      });
+
+      document.querySelectorAll("[data-delete-user-id]").forEach(button => {
+        button.addEventListener("click", () => {
+          const targetUser = allUsers.find(
+            item => item.id === button.dataset.deleteUserId
+          );
+
+          if (!targetUser) {
+            showToast("Data user tidak ditemukan", "error");
+            return;
+          }
+
+          hapusStaff(
+            targetUser.id,
+            targetUser.nama || "Staff"
+          );
+        });
+      });
     }
 
     function renderStaffPagination(totalPages, start, end, total) {
@@ -868,25 +895,6 @@
         () => applyStaffFilters(true)
       );
 
-    document
-      .getElementById("user-list")
-      .addEventListener("click", event => {
-        const button = event.target.closest("[data-user-action]");
-        if (!button) return;
-
-        const action = button.dataset.userAction;
-        const userId = button.dataset.userId;
-        const userName = button.dataset.userName || "";
-
-        if (action === "edit") {
-          bukaModalUbah(userId, userName);
-          return;
-        }
-
-        if (action === "delete") {
-          hapusStaff(userId, userName);
-        }
-      });
 
     function bukaModalBuatAkun() {
       document.getElementById("modal-buat").classList.add("open");
@@ -903,9 +911,28 @@
     }
 
     function bukaModalUbah(user_id, nama) {
+      const targetUser = allUsers.find(item => item.id === user_id);
+
+      if (!targetUser) {
+        showToast("Data user tidak ditemukan", "error");
+        return;
+      }
+
       selectedUser = user_id;
-      document.getElementById("ubah-user-nama").textContent = `Mengubah divisi untuk: ${nama}`;
+
+      document.getElementById("ubah-user-nama").textContent =
+        `Mengubah data untuk: ${nama}`;
+
+      document.getElementById("ubah-nama").value =
+        targetUser.nama || "";
+
+      document.getElementById("ubah-division").value =
+        targetUser.division?.division_id || "";
+
+      document.getElementById("ubah-password").value = "";
+      document.getElementById("ubah-error").style.display = "none";
       document.getElementById("modal-ubah").classList.add("open");
+
       lucide.createIcons();
     }
 
