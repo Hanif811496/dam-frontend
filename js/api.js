@@ -18,21 +18,34 @@ async function apiCall(endpoint, options = {}, maxRetries = 3, retryDelayMs = 40
       if (res.ok) return data;
 
       if (res.status >= 500 && attempt < maxRetries) {
-        lastError = new Error(data.detail || `Server error ${res.status}`);
+        lastError = new Error(
+          data.detail || `Server error ${res.status}`
+        );
       } else {
-        throw new Error(data.detail || "Terjadi kesalahan");
+        throw new Error(
+          data.detail || "Terjadi kesalahan"
+        );
       }
     } catch (err) {
       lastError = err;
     }
 
     if (attempt < maxRetries) {
-      if (!toastShown && typeof showToast === "function") {
+      if (
+        !toastShown &&
+        typeof showToast === "function"
+      ) {
         toastShown = true;
-        showToast("Menghubungkan ke server, mohon tunggu sebentar...", "warning");
+
+        showToast(
+          "Menghubungkan ke server, mohon tunggu sebentar...",
+          "warning"
+        );
       }
 
-      await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+      await new Promise(resolve =>
+        setTimeout(resolve, retryDelayMs)
+      );
     }
   }
 
@@ -115,7 +128,10 @@ async function logDownload(asset_id, user_id) {
       }
     );
   } catch (err) {
-    console.error("Gagal mencatat aktivitas download:", err);
+    console.error(
+      "Gagal mencatat aktivitas download:",
+      err
+    );
   }
 }
 
@@ -127,7 +143,10 @@ async function searchAssets(user_id, query) {
 }
 
 
-async function setAssetPermissions(asset_id, division_ids) {
+async function setAssetPermissions(
+  asset_id,
+  division_ids
+) {
   return apiCall("/assets/permissions", {
     method: "POST",
     body: JSON.stringify({
@@ -215,7 +234,10 @@ async function uploadAsset(
         formData.append("file", file);
 
         if (target_division_id) {
-          formData.append("target_division_id", target_division_id);
+          formData.append(
+            "target_division_id",
+            target_division_id
+          );
         }
 
         const xhr = new XMLHttpRequest();
@@ -245,7 +267,10 @@ async function uploadAsset(
             data = JSON.parse(xhr.responseText);
           } catch (err) {}
 
-          if (xhr.status >= 200 && xhr.status < 300) {
+          if (
+            xhr.status >= 200 &&
+            xhr.status < 300
+          ) {
             resolve(data);
             return;
           }
@@ -258,6 +283,7 @@ async function uploadAsset(
                 `Server error ${xhr.status}`
               ),
             });
+
             return;
           }
 
@@ -273,21 +299,27 @@ async function uploadAsset(
         xhr.onerror = () => {
           reject({
             retryable: true,
-            error: new Error("Koneksi gagal"),
+            error: new Error(
+              "Koneksi gagal"
+            ),
           });
         };
 
         xhr.ontimeout = () => {
           reject({
             retryable: true,
-            error: new Error("Waktu koneksi habis"),
+            error: new Error(
+              "Waktu koneksi habis"
+            ),
           });
         };
 
         xhr.send(formData);
       });
+
     } catch (rejection) {
-      lastError = rejection.error || rejection;
+      lastError =
+        rejection.error || rejection;
 
       if (
         rejection.retryable === false ||
@@ -296,7 +328,9 @@ async function uploadAsset(
         throw lastError;
       }
 
-      if (typeof onProgress === "function") {
+      if (
+        typeof onProgress === "function"
+      ) {
         onProgress(0);
       }
 
@@ -333,7 +367,10 @@ async function getFolders(user_id) {
 }
 
 
-async function getFolderAssets(folder_id, user_id) {
+async function getFolderAssets(
+  folder_id,
+  user_id
+) {
   return apiCall(
     `/folders/${encodeURIComponent(folder_id)}/assets?user_id=${encodeURIComponent(user_id)}`
   );
@@ -376,13 +413,21 @@ async function createSmartFolder({
 }
 
 
-async function deleteFolder(folder_id) {
-  return apiCall(
-    `/folders/${encodeURIComponent(folder_id)}`,
-    {
-      method: "DELETE",
-    }
-  );
+async function deleteFolder(
+  folder_id,
+  user_id = null
+) {
+  let endpoint =
+    `/folders/${encodeURIComponent(folder_id)}`;
+
+  if (user_id) {
+    endpoint +=
+      `?user_id=${encodeURIComponent(user_id)}`;
+  }
+
+  return apiCall(endpoint, {
+    method: "DELETE",
+  });
 }
 
 
@@ -398,22 +443,12 @@ async function moveFolder(
   return apiCall(
     `/folders/${encodeURIComponent(folder_id)}/move`,
     {
-      method: "POST",
+      method: "PUT",
       body: JSON.stringify({
         user_id,
         parent_id,
       }),
     }
-  );
-}
-
-
-async function getFolderChildren(
-  folder_id,
-  user_id
-) {
-  return apiCall(
-    `/folders/${encodeURIComponent(folder_id)}/children?user_id=${encodeURIComponent(user_id)}`
   );
 }
 
@@ -535,7 +570,9 @@ async function removeFolderAccess(
 // FOLDER DIVISION ACCESS
 // ======================================================
 
-async function getFolderDivisions(folder_id) {
+async function getFolderDivisions(
+  folder_id
+) {
   return apiCall(
     `/folders/${encodeURIComponent(folder_id)}/divisions`
   );
@@ -564,10 +601,19 @@ async function setFolderDivisions(
 // AUTO ASSIGN RULES
 // ======================================================
 
-async function getFolderRules(user_id) {
-  return apiCall(
-    `/folders/rules?user_id=${encodeURIComponent(user_id)}`
-  );
+async function getFolderRules(
+  user_id,
+  folder_id = null
+) {
+  let endpoint =
+    `/folders/rules?user_id=${encodeURIComponent(user_id)}`;
+
+  if (folder_id) {
+    endpoint +=
+      `&folder_id=${encodeURIComponent(folder_id)}`;
+  }
+
+  return apiCall(endpoint);
 }
 
 
@@ -576,18 +622,42 @@ async function createFolderRule(
   keyword,
   folder_id
 ) {
-  return apiCall("/folders/rules", {
-    method: "POST",
-    body: JSON.stringify({
-      user_id,
-      keyword,
-      folder_id,
-    }),
-  });
+  return apiCall(
+    "/folders/rules",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        user_id,
+        keyword,
+        folder_id,
+      }),
+    }
+  );
 }
 
 
-async function deleteFolderRule(rule_id) {
+async function createFolderRulesBatch(
+  user_id,
+  keywords,
+  folder_id
+) {
+  return apiCall(
+    "/folders/rules/batch",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        user_id,
+        keywords,
+        folder_id,
+      }),
+    }
+  );
+}
+
+
+async function deleteFolderRule(
+  rule_id
+) {
   return apiCall(
     `/folders/rules/${encodeURIComponent(rule_id)}`,
     {
@@ -598,9 +668,11 @@ async function deleteFolderRule(rule_id) {
 
 
 function parseRuleKeywords(rawValue) {
-  if (!rawValue) return [];
+  if (!rawValue) {
+    return [];
+  }
 
-  const values = rawValue
+  const values = String(rawValue)
     .split(/[,\s;\n]+/)
     .map(value =>
       value
@@ -609,7 +681,9 @@ function parseRuleKeywords(rawValue) {
     )
     .filter(Boolean);
 
-  return [...new Set(values)];
+  return [
+    ...new Set(values)
+  ];
 }
 
 
@@ -620,51 +694,122 @@ async function createMultipleFolderRules(
 ) {
   const keywords =
     Array.isArray(rawKeywords)
-      ? [...new Set(
+      ? [
+          ...new Set(
+            rawKeywords
+              .map(value =>
+                String(value)
+                  .trim()
+                  .toLowerCase()
+              )
+              .filter(Boolean)
+          ),
+        ]
+      : parseRuleKeywords(
           rawKeywords
-            .map(v =>
-              String(v)
-                .trim()
-                .toLowerCase()
-            )
-            .filter(Boolean)
-        )]
-      : parseRuleKeywords(rawKeywords);
+        );
 
   if (!keywords.length) {
     return {
       created: [],
+      skipped: [],
       failed: [],
     };
   }
 
-  const created = [];
-  const failed = [];
-
-  for (const keyword of keywords) {
-    try {
-      const result = await createFolderRule(
+  /*
+   * Backend terbaru sudah menyediakan endpoint batch.
+   * Kita coba endpoint batch dulu agar lebih cepat.
+   */
+  try {
+    const result =
+      await createFolderRulesBatch(
         user_id,
-        keyword,
+        keywords,
         folder_id
       );
 
-      created.push({
-        keyword,
-        result,
-      });
-    } catch (err) {
-      failed.push({
-        keyword,
-        error: err.message,
-      });
-    }
-  }
+    return {
+      created:
+        result.rules || [],
+      skipped:
+        result.skipped || [],
+      failed: [],
+      result,
+    };
 
-  return {
-    created,
-    failed,
-  };
+  } catch (batchError) {
+    /*
+     * Fallback untuk backend lama:
+     * buat rule satu per satu.
+     */
+    const created = [];
+    const skipped = [];
+    const failed = [];
+
+    for (const keyword of keywords) {
+      try {
+        const result =
+          await createFolderRule(
+            user_id,
+            keyword,
+            folder_id
+          );
+
+        if (result?.duplicate) {
+          skipped.push(keyword);
+        } else {
+          created.push({
+            keyword,
+            result,
+          });
+        }
+
+      } catch (err) {
+        failed.push({
+          keyword,
+          error:
+            err?.message ||
+            "Gagal menambahkan rule",
+        });
+      }
+    }
+
+    return {
+      created,
+      skipped,
+      failed,
+      batchError:
+        batchError?.message || null,
+    };
+  }
+}
+
+
+/*
+ * Compatibility helper.
+ *
+ * folders.html versi explorer memanggil addFolderRules().
+ * Fungsi ini menjadi alias ke implementation bulk rule di atas,
+ * sehingga input:
+ *
+ * jpg, png
+ *
+ * akan diproses sebagai:
+ *
+ * jpg
+ * png
+ */
+async function addFolderRules(
+  user_id,
+  rawKeywords,
+  folder_id
+) {
+  return createMultipleFolderRules(
+    user_id,
+    rawKeywords,
+    folder_id
+  );
 }
 
 
@@ -693,11 +838,15 @@ async function predictAssetFolders(
 // ======================================================
 
 async function getDivisions() {
-  return apiCall("/divisions");
+  return apiCall(
+    "/divisions"
+  );
 }
 
 
-async function getUserDivision(user_id) {
+async function getUserDivision(
+  user_id
+) {
   return apiCall(
     `/divisions/user/${encodeURIComponent(user_id)}`
   );
@@ -777,16 +926,20 @@ async function deleteAssetTag(
   nama_tag,
   user_id = null
 ) {
-  let url =
+  let endpoint =
     `/assets/${encodeURIComponent(asset_id)}/tags/${encodeURIComponent(nama_tag)}`;
 
   if (user_id) {
-    url += `?user_id=${encodeURIComponent(user_id)}`;
+    endpoint +=
+      `?user_id=${encodeURIComponent(user_id)}`;
   }
 
-  return apiCall(url, {
-    method: "DELETE",
-  });
+  return apiCall(
+    endpoint,
+    {
+      method: "DELETE",
+    }
+  );
 }
 
 
@@ -852,7 +1005,9 @@ async function adminUpdateUser(
 }
 
 
-async function adminDeleteUser(user_id) {
+async function adminDeleteUser(
+  user_id
+) {
   return apiCall(
     `/admin/users/${encodeURIComponent(user_id)}`,
     {
@@ -862,20 +1017,27 @@ async function adminDeleteUser(user_id) {
 }
 
 
-async function getAdminActivity(params = {}) {
-  const query = new URLSearchParams();
+async function getAdminActivity(
+  params = {}
+) {
+  const query =
+    new URLSearchParams();
 
-  Object.entries(params).forEach(
-    ([key, value]) => {
-      if (
-        value !== undefined &&
-        value !== null &&
-        value !== ""
-      ) {
-        query.append(key, value);
+  Object.entries(params)
+    .forEach(
+      ([key, value]) => {
+        if (
+          value !== undefined &&
+          value !== null &&
+          value !== ""
+        ) {
+          query.append(
+            key,
+            value
+          );
+        }
       }
-    }
-  );
+    );
 
   const suffix =
     query.toString()
