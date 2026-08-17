@@ -39,21 +39,54 @@
     .destination-card .card-title i { width: 15px; height: 15px; color: var(--primary); }
 
     .destination-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    @media (max-width: 520px) {
-      .destination-row { grid-template-columns: 1fr; }
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .destination-field label {
       display: block;
       font-size: 12px;
       color: var(--text-muted);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
+
+    .destination-field .field-hint {
+      font-size: 11px;
+      color: var(--text-light);
+      margin-top: 6px;
+    }
+
+    .division-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .division-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      border: 1.5px solid var(--border-dark);
+      border-radius: var(--radius-full);
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      user-select: none;
+    }
+
+    .division-chip input { accent-color: var(--primary); cursor: pointer; }
+
+    .division-chip.checked {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .folder-field { max-width: 340px; }
 
     .destination-summary {
       margin-top: 12px;
@@ -337,12 +370,11 @@
           <div class="card-title"><i data-lucide="map-pin"></i> Tujuan Upload</div>
           <div class="destination-row">
             <div class="destination-field" id="division-field" style="display:none;">
-              <label>Divisi</label>
-              <select class="input" id="upload-target-division">
-                <option value="">Divisi saya sendiri</option>
-              </select>
+              <label>Bagikan ke divisi (bisa pilih lebih dari satu)</label>
+              <div class="division-picker" id="division-picker"></div>
+              <div class="field-hint">Tidak pilih apa pun = upload ke divisimu sendiri saja.</div>
             </div>
-            <div class="destination-field">
+            <div class="destination-field folder-field">
               <label>Simpan ke folder</label>
               <select class="input" id="upload-target-folder">
                 <option value="">Otomatis saja</option>
@@ -389,7 +421,7 @@
             </div>
             <div class="info-row" id="info-manager" style="display:none;">
               <i data-lucide="shield-check"></i>
-              <span>Sebagai Manager, kamu bisa upload ke divisi lain dan pilih folder tujuannya langsung.</span>
+              <span>Sebagai Manager, kamu bisa pilih satu atau beberapa divisi sekaligus sebagai tujuan upload.</span>
             </div>
           </div>
         </div>
@@ -420,11 +452,13 @@
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
 
-    const divisionSelect = document.getElementById("upload-target-division");
+    const divisionPicker = document.getElementById("division-picker");
     const folderSelect   = document.getElementById("upload-target-folder");
     const summaryText    = document.getElementById("destination-summary-text");
 
-    let allFolders = [];
+    let allFolders   = [];
+    let allDivisions = [];
+    let selectedDivisions = new Set();
 
     if (isManager()) {
       document.getElementById("division-field").style.display = "block";
@@ -439,9 +473,23 @@
       try {
         const res  = await fetch(`${API_BASE_URL}/divisions`);
         const data = await res.json();
-        divisionSelect.innerHTML = `<option value="">Divisi saya sendiri</option>` +
-          data.divisions.map(d => `<option value="${d.id}">${d.nama}</option>`).join("");
+        allDivisions = data.divisions || [];
+        divisionPicker.innerHTML = allDivisions.map(d => `
+          <label class="division-chip" data-div-id="${d.id}">
+            <input type="checkbox" value="${d.id}" onchange="toggleDivision('${d.id}', this.checked)">
+            ${d.nama}
+          </label>`).join("");
       } catch (e) { console.error(e); }
+    }
+
+    function toggleDivision(divId, checked) {
+      if (checked) selectedDivisions.add(divId);
+      else selectedDivisions.delete(divId);
+
+      const chip = divisionPicker.querySelector(`.division-chip[data-div-id="${divId}"]`);
+      if (chip) chip.classList.toggle("checked", checked);
+
+      renderFolderOptions();
     }
 
     async function loadFoldersForUpload() {
@@ -455,10 +503,13 @@
     }
 
     function renderFolderOptions() {
-      const targetDivisionId = divisionSelect.value || user.division_id || "";
+      const targetIds = selectedDivisions.size > 0
+        ? Array.from(selectedDivisions)
+        : [user.division_id || ""];
+
       const relevant = allFolders.filter(f => {
         if (f.type === "shared") return true;
-        return f.division_id === targetDivisionId;
+        return targetIds.includes(f.division_id);
       });
 
       const options = relevant.map(f => {
@@ -473,19 +524,26 @@
     }
 
     function updateDestinationSummary() {
-      const divName = divisionSelect.value
-        ? divisionSelect.options[divisionSelect.selectedIndex].textContent
-        : "divisimu sendiri";
+      let divText;
+      if (selectedDivisions.size === 0) {
+        divText = "divisimu sendiri";
+      } else if (selectedDivisions.size === 1) {
+        const d = allDivisions.find(d => selectedDivisions.has(d.id));
+        divText = d ? d.nama : "divisi terpilih";
+      } else {
+        const names = allDivisions.filter(d => selectedDivisions.has(d.id)).map(d => d.nama);
+        divText = `${names.length} divisi (${names.join(", ")})`;
+      }
+
       const folderName = folderSelect.value
         ? folderSelect.options[folderSelect.selectedIndex].textContent
         : null;
 
       summaryText.textContent = folderName
-        ? `Aset akan masuk ke folder "${folderName}" (${divName}), plus folder otomatis & tag terkait.`
-        : `Aset akan otomatis masuk ke folder ${divName} dan tag terkait.`;
+        ? `Aset akan masuk ke folder "${folderName}" (${divText}), plus folder otomatis & tag terkait.`
+        : `Aset akan otomatis masuk ke folder ${divText} dan tag terkait.`;
     }
 
-    divisionSelect.addEventListener("change", renderFolderOptions);
     folderSelect.addEventListener("change", updateDestinationSummary);
 
     async function loadRecentUploads() {
@@ -647,8 +705,9 @@
       btnUpload.disabled    = true;
       btnUpload.textContent = "Mengupload...";
 
-      const targetDiv    = divisionSelect.value || "";
       const targetFolder = folderSelect.value || "";
+      const divisionIds  = Array.from(selectedDivisions);
+      const primaryDiv   = divisionIds[0] || "";
 
       for (const i of indices) {
         const file     = selectedFiles[i];
@@ -664,13 +723,32 @@
         tagsEl.innerHTML = "";
 
         try {
-          const result = await uploadAsset(user.user_id, file, (pct) => {
+          const result  = await uploadAsset(user.user_id, file, (pct) => {
             progEl.style.width = pct + "%";
-          }, 3, 4000, targetDiv || null);
+          }, 3, 4000, primaryDiv || null);
+          const assetId = result.asset && result.asset.id;
 
-          if (targetFolder && result.asset && result.asset.id) {
+          // Kalau dipilih 2+ divisi, set visibility aset ke semua divisi itu
+          // dan masukkan ke folder system divisi tambahan (selain primaryDiv
+          // yang sudah otomatis ditangani oleh endpoint upload).
+          if (assetId && divisionIds.length >= 2) {
             try {
-              await addAssetToFolder(targetFolder, result.asset.id, user.user_id);
+              await setAssetPermissions(assetId, divisionIds);
+              const extraDivs = divisionIds.slice(1);
+              for (const divId of extraDivs) {
+                const sysFolder = allFolders.find(f => f.type === "system" && f.division_id === divId);
+                if (sysFolder) {
+                  await addAssetToFolder(sysFolder.id, assetId, user.user_id);
+                }
+              }
+            } catch (multiDivErr) {
+              console.error("Gagal set visibility multi-divisi:", multiDivErr);
+            }
+          }
+
+          if (assetId && targetFolder) {
+            try {
+              await addAssetToFolder(targetFolder, assetId, user.user_id);
             } catch (folderErr) {
               console.error("Gagal menambahkan ke folder pilihan:", folderErr);
             }

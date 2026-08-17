@@ -100,6 +100,13 @@ async function addAssetToFolder(folder_id, asset_id, user_id) {
   });
 }
 
+async function setAssetPermissions(asset_id, division_ids) {
+  return apiCall(`/assets/permissions`, {
+    method: "POST",
+    body: JSON.stringify({ asset_id, division_ids }),
+  });
+}
+
 async function uploadAsset(user_id, file, onProgress, maxRetries = 3, retryDelayMs = 4000, target_division_id = null) {
   let lastError;
   let toastShown = false;
