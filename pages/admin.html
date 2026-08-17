@@ -574,6 +574,14 @@
       }
     }
 
+    function escapeHtmlAttr(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
     function getUserDivisionInfo(u) {
       /*
        * Response /divisions/users berbentuk:
@@ -724,22 +732,28 @@
             </span>
 
             <div class="user-actions">
-              <div
+              <button
+                type="button"
                 class="btn-icon"
                 title="Edit staff"
-                onclick="bukaModalUbah('${u.id}', ${JSON.stringify(String(u.nama || ""))})"
+                data-user-action="edit"
+                data-user-id="${u.id}"
+                data-user-name="${escapeHtmlAttr(String(u.nama || ""))}"
               >
                 <i data-lucide="pencil" style="width:13px;height:13px;"></i>
-              </div>
+              </button>
 
               ${!isSelf ? `
-                <div
+                <button
+                  type="button"
                   class="btn-icon danger"
                   title="Hapus akun"
-                  onclick="hapusStaff('${u.id}', ${JSON.stringify(String(u.nama || ""))})"
+                  data-user-action="delete"
+                  data-user-id="${u.id}"
+                  data-user-name="${escapeHtmlAttr(String(u.nama || ""))}"
                 >
                   <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
-                </div>
+                </button>
               ` : ""}
             </div>
           </div>`;
@@ -853,6 +867,26 @@
         "change",
         () => applyStaffFilters(true)
       );
+
+    document
+      .getElementById("user-list")
+      .addEventListener("click", event => {
+        const button = event.target.closest("[data-user-action]");
+        if (!button) return;
+
+        const action = button.dataset.userAction;
+        const userId = button.dataset.userId;
+        const userName = button.dataset.userName || "";
+
+        if (action === "edit") {
+          bukaModalUbah(userId, userName);
+          return;
+        }
+
+        if (action === "delete") {
+          hapusStaff(userId, userName);
+        }
+      });
 
     function bukaModalBuatAkun() {
       document.getElementById("modal-buat").classList.add("open");
