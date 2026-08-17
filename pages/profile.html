@@ -10,87 +10,388 @@
   <link rel="stylesheet" href="../css/layout.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    .profile-wrap {
-      max-width: 560px;
+    .profile-page {
+      width: 100%;
+      max-width: 1220px;
     }
 
-    .profile-header {
+    .profile-page-head {
       display: flex;
-      align-items: center;
-      gap: 16px;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .profile-page-title {
+      font-size: 24px;
+      line-height: 1.2;
+      font-weight: 800;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .profile-page-subtitle {
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .profile-hero {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 24px;
-      margin-bottom: 20px;
+      padding: 22px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    .profile-identity {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
     }
 
     .profile-avatar {
-      width: 60px;
-      height: 60px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
       background: var(--primary);
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 25px;
       font-weight: 800;
       flex-shrink: 0;
+      box-shadow: 0 0 0 5px var(--primary-light);
+    }
+
+    .profile-identity-main {
+      min-width: 0;
+    }
+
+    .profile-name-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
     }
 
     .profile-info-name {
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 19px;
+      line-height: 1.2;
+      font-weight: 750;
+      color: var(--text);
     }
 
     .profile-info-email {
-      font-size: 13px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .profile-info-email i {
+      width: 13px;
+      height: 13px;
+    }
+
+    .profile-division-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .profile-division-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.9);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .profile-div-manager  { background:#FCEBEB; color:#D42B2B; }
+    .profile-div-design   { background:#E6F1FB; color:#1A6BBF; }
+    .profile-div-3d       { background:#EEEDFE; color:#3C3489; }
+    .profile-div-animator { background:#E1F5EE; color:#085041; }
+    .profile-div-editor   { background:#FAEEDA; color:#8C5A00; }
+    .profile-div-render   { background:#F1EFE8; color:#444441; }
+    .profile-div-generic  { background:#F3F4F6; color:#5F6368; }
+
+    .profile-account-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(130px, 1fr));
+      gap: 10px;
+      width: min(390px, 100%);
+      flex-shrink: 0;
+    }
+
+    .meta-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      padding: 11px 12px;
+      min-width: 0;
+    }
+
+    .meta-card-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      font-weight: 650;
+    }
+
+    .meta-card-label i {
+      width: 13px;
+      height: 13px;
+    }
+
+    .meta-card-value {
+      font-size: 12.5px;
+      font-weight: 650;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .profile-settings-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .settings-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .settings-card-head {
+      padding: 17px 19px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .settings-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .settings-icon i {
+      width: 16px;
+      height: 16px;
+    }
+
+    .settings-icon.name {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .settings-icon.password {
+      background: #E6F1FB;
+      color: var(--accent-blue);
+    }
+
+    .settings-title {
+      font-size: 14px;
+      font-weight: 750;
+      color: var(--text);
+    }
+
+    .settings-description {
+      font-size: 11px;
       color: var(--text-muted);
       margin-top: 2px;
     }
 
-    .profile-info-div {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
+    .settings-card-body {
+      padding: 19px;
+    }
+
+    .profile-form .form-group:last-of-type {
+      margin-bottom: 16px;
+    }
+
+    .profile-form label {
       font-size: 12px;
       font-weight: 600;
-      background: var(--primary-light);
-      color: var(--primary);
-      padding: 3px 10px;
-      border-radius: var(--radius-full);
-      margin-top: 6px;
+      color: var(--text-muted);
+      display: inline-block;
+      margin-bottom: 7px;
     }
 
-    .section-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      margin-bottom: 16px;
+    .profile-form .input {
+      height: 42px;
+      width: 100%;
     }
 
-    .section-title {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 16px;
+    .password-field-wrap {
+      position: relative;
+    }
+
+    .password-field-wrap .input {
+      padding-right: 42px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 7px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+
+    .password-toggle:hover {
+      background: var(--surface-2);
       color: var(--text);
     }
 
+    .password-toggle i {
+      width: 15px;
+      height: 15px;
+    }
+
+    .settings-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+
+    .profile-save-btn {
+      min-width: 142px;
+      justify-content: center;
+    }
+
     .alert {
-      padding: 10px 14px;
+      padding: 10px 12px;
       border-radius: var(--radius-md);
-      font-size: 13px;
-      margin-bottom: 12px;
+      font-size: 12px;
+      margin-bottom: 14px;
       display: none;
     }
 
-    .alert-success { background: var(--success-light); color: #085041; border: 1px solid rgba(29,158,117,0.2); }
-    .alert-error   { background: var(--danger-light);  color: var(--danger); border: 1px solid rgba(212,43,43,0.2); }
+    .alert-success {
+      background: var(--success-light);
+      color: #085041;
+      border: 1px solid rgba(29,158,117,.2);
+    }
+
+    .alert-error {
+      background: var(--danger-light);
+      color: var(--danger);
+      border: 1px solid rgba(212,43,43,.2);
+    }
+
+    .password-hint {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 10px 11px;
+      color: var(--text-muted);
+      font-size: 11px;
+      line-height: 1.45;
+      margin-bottom: 16px;
+    }
+
+    .password-hint i {
+      width: 14px;
+      height: 14px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 980px) {
+      .profile-hero {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .profile-account-meta {
+        width: 100%;
+      }
+
+      .profile-settings-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .profile-page-head {
+        margin-bottom: 16px;
+      }
+
+      .profile-hero {
+        padding: 18px;
+      }
+
+      .profile-account-meta {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-avatar {
+        width: 54px;
+        height: 54px;
+        font-size: 21px;
+      }
+
+      .settings-card-head,
+      .settings-card-body {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+
+      .settings-actions {
+        justify-content: stretch;
+      }
+
+      .profile-save-btn {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -131,59 +432,138 @@
   </aside>
 
   <main class="main-content">
-    <div class="page-title">Profil Saya</div>
-
-    <div class="profile-wrap">
-      <!-- Header profil -->
-      <div class="profile-header">
-        <div class="profile-avatar" id="profile-initial">?</div>
+    <div class="profile-page">
+      <div class="profile-page-head">
         <div>
-          <div class="profile-info-name" id="profile-name">—</div>
-          <div class="profile-info-email" id="profile-email">—</div>
-          <div class="profile-info-div" id="profile-div">—</div>
+          <h1 class="profile-page-title">Profil Saya</h1>
+          <div class="profile-page-subtitle">Kelola identitas akun dan keamanan password.</div>
         </div>
       </div>
 
-      <!-- Ubah nama -->
-      <div class="section-box">
-        <div class="section-title">
-          <i data-lucide="user" style="width:16px;height:16px;color:var(--primary);"></i>
-          Ubah Nama
+      <section class="profile-hero">
+        <div class="profile-identity">
+          <div class="profile-avatar" id="profile-initial">?</div>
+          <div class="profile-identity-main">
+            <div class="profile-name-row">
+              <div class="profile-info-name" id="profile-name">—</div>
+              <span class="profile-division-badge profile-div-generic" id="profile-div-badge">
+                <span class="profile-division-icon" id="profile-div-mark">?</span>
+                <span id="profile-div">—</span>
+              </span>
+            </div>
+            <div class="profile-info-email">
+              <i data-lucide="mail"></i>
+              <span id="profile-email">—</span>
+            </div>
+          </div>
         </div>
-        <div class="alert alert-success" id="nama-success">Nama berhasil diupdate</div>
-        <div class="alert alert-error"   id="nama-error"></div>
-        <div class="form-group">
-          <label>Nama baru</label>
-          <input type="text" class="input" id="input-nama" placeholder="Nama lengkap">
-        </div>
-        <button class="btn btn-primary" onclick="updateNama()">
-          <i data-lucide="save" style="width:14px;height:14px;"></i> Simpan Nama
-        </button>
-      </div>
 
-      <!-- Ubah password -->
-      <div class="section-box">
-        <div class="section-title">
-          <i data-lucide="lock" style="width:16px;height:16px;color:var(--accent-blue);"></i>
-          Ubah Password
+        <div class="profile-account-meta">
+          <div class="meta-card">
+            <div class="meta-card-label">
+              <i data-lucide="layers"></i>
+              Divisi
+            </div>
+            <div class="meta-card-value" id="profile-div-meta">—</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-card-label">
+              <i data-lucide="shield-check"></i>
+              Status akun
+            </div>
+            <div class="meta-card-value">Aktif</div>
+          </div>
         </div>
-        <div class="alert alert-success" id="pw-success">Password berhasil diupdate</div>
-        <div class="alert alert-error"   id="pw-error"></div>
-        <div class="form-group">
-          <label>Password lama</label>
-          <input type="password" class="input" id="pw-lama" placeholder="Password saat ini">
-        </div>
-        <div class="form-group">
-          <label>Password baru</label>
-          <input type="password" class="input" id="pw-baru" placeholder="Minimal 6 karakter">
-        </div>
-        <div class="form-group">
-          <label>Konfirmasi password baru</label>
-          <input type="password" class="input" id="pw-konfirm" placeholder="Ulangi password baru">
-        </div>
-        <button class="btn btn-primary" style="background:var(--accent-blue);" onclick="updatePassword()">
-          <i data-lucide="lock" style="width:14px;height:14px;"></i> Simpan Password
-        </button>
+      </section>
+
+      <div class="profile-settings-grid">
+        <section class="settings-card">
+          <div class="settings-card-head">
+            <div class="settings-icon name">
+              <i data-lucide="user-round-pen"></i>
+            </div>
+            <div>
+              <div class="settings-title">Informasi Profil</div>
+              <div class="settings-description">Perbarui nama yang tampil di DAM System.</div>
+            </div>
+          </div>
+
+          <div class="settings-card-body profile-form">
+            <div class="alert alert-success" id="nama-success">Nama berhasil diupdate</div>
+            <div class="alert alert-error" id="nama-error"></div>
+
+            <div class="form-group">
+              <label for="input-nama">Nama lengkap</label>
+              <input type="text" class="input" id="input-nama" placeholder="Nama lengkap">
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn btn-primary profile-save-btn" onclick="updateNama()">
+                <i data-lucide="save" style="width:14px;height:14px;"></i>
+                Simpan perubahan
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <div class="settings-card-head">
+            <div class="settings-icon password">
+              <i data-lucide="shield-check"></i>
+            </div>
+            <div>
+              <div class="settings-title">Keamanan Akun</div>
+              <div class="settings-description">Ganti password akun untuk menjaga akses tetap aman.</div>
+            </div>
+          </div>
+
+          <div class="settings-card-body profile-form">
+            <div class="alert alert-success" id="pw-success">Password berhasil diupdate</div>
+            <div class="alert alert-error" id="pw-error"></div>
+
+            <div class="password-hint">
+              <i data-lucide="info"></i>
+              <span>Password baru minimal 6 karakter dan harus dikonfirmasi sebelum disimpan.</span>
+            </div>
+
+            <div class="form-group">
+              <label for="pw-lama">Password saat ini</label>
+              <div class="password-field-wrap">
+                <input type="password" class="input" id="pw-lama" placeholder="Masukkan password saat ini">
+                <button class="password-toggle" type="button" onclick="togglePassword('pw-lama', this)" title="Tampilkan password">
+                  <i data-lucide="eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="pw-baru">Password baru</label>
+              <div class="password-field-wrap">
+                <input type="password" class="input" id="pw-baru" placeholder="Minimal 6 karakter">
+                <button class="password-toggle" type="button" onclick="togglePassword('pw-baru', this)" title="Tampilkan password">
+                  <i data-lucide="eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="pw-konfirm">Konfirmasi password baru</label>
+              <div class="password-field-wrap">
+                <input type="password" class="input" id="pw-konfirm" placeholder="Ulangi password baru">
+                <button class="password-toggle" type="button" onclick="togglePassword('pw-konfirm', this)" title="Tampilkan password">
+                  <i data-lucide="eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn btn-primary profile-save-btn" onclick="updatePassword()">
+                <i data-lucide="lock-keyhole" style="width:14px;height:14px;"></i>
+                Ganti password
+              </button>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </main>
@@ -195,119 +575,185 @@
   <script>
     requireAuth();
     initSidebarToggle();
+
     const user = getUser();
     hydrateTopbarUser();
 
     if (isManager()) {
       document.getElementById("sidebar-admin-label").style.display = "block";
-      document.getElementById("sidebar-users").style.display     = "flex";
+      document.getElementById("sidebar-users").style.display = "flex";
       document.getElementById("sidebar-dashboard").style.display = "flex";
     }
 
-    // Isi data profil
-    document.getElementById("profile-initial").textContent = user.nama.charAt(0).toUpperCase();
-    document.getElementById("profile-name").textContent    = user.nama;
-    document.getElementById("input-nama").value            = user.nama;
+    const PROFILE_DIVISION_META = {
+      "Manager":       { className: "profile-div-manager",  mark: "M" },
+      "Design Artist": { className: "profile-div-design",   mark: "DA" },
+      "3D Modeler":    { className: "profile-div-3d",       mark: "3D" },
+      "Animator":      { className: "profile-div-animator", mark: "A" },
+      "Editor":        { className: "profile-div-editor",   mark: "E" },
+      "Render Artist": { className: "profile-div-render",   mark: "RA" },
+    };
+
+    function renderProfileDivision(divisionName) {
+      const name = divisionName || "Belum ada divisi";
+      const meta = PROFILE_DIVISION_META[name] || {
+        className: "profile-div-generic",
+        mark: String(name).trim().slice(0, 2).toUpperCase() || "?"
+      };
+
+      const badge = document.getElementById("profile-div-badge");
+      badge.className = `profile-division-badge ${meta.className}`;
+
+      document.getElementById("profile-div-mark").textContent = meta.mark;
+      document.getElementById("profile-div").textContent = name;
+      document.getElementById("profile-div-meta").textContent = name;
+    }
+
+    document.getElementById("profile-initial").textContent =
+      (user.nama || "?").charAt(0).toUpperCase();
+    document.getElementById("profile-name").textContent = user.nama || "—";
+    document.getElementById("input-nama").value = user.nama || "";
+    renderProfileDivision(user.division_nama || "");
 
     async function loadProfile() {
       try {
-        const res  = await fetch(`${API_BASE_URL}/divisions/user/${user.user_id}`);
-        const data = await res.json();
-        if (data.division) {
-          document.getElementById("profile-div").textContent   = data.division.divisions?.nama || "—";
-          document.getElementById("profile-email").textContent =
-            (await fetch(`${API_BASE_URL}/divisions/users`).then(r => r.json()))
-            .users.find(u => u.id === user.user_id)?.email || "—";
+        const [divisionRes, usersRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/divisions/user/${user.user_id}`),
+          fetch(`${API_BASE_URL}/divisions/users`)
+        ]);
+
+        const divisionData = await divisionRes.json();
+        const usersData = await usersRes.json();
+
+        const currentUser = (usersData.users || []).find(u => u.id === user.user_id);
+        document.getElementById("profile-email").textContent = currentUser?.email || "—";
+
+        const divisionName =
+          divisionData.division?.divisions?.nama ||
+          user.division_nama ||
+          "Belum ada divisi";
+
+        renderProfileDivision(divisionName);
+
+        const storedUser = getUser();
+        if (storedUser && divisionName !== "Belum ada divisi") {
+          storedUser.division_nama = divisionName;
+          saveUser(storedUser);
+          renderTopbarUser(storedUser);
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        document.getElementById("profile-email").textContent = "—";
+        renderProfileDivision(user.division_nama || "Belum ada divisi");
+      }
+    }
+
+    function togglePassword(inputId, button) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+
+      const showing = input.type === "text";
+      input.type = showing ? "password" : "text";
+      button.innerHTML = `<i data-lucide="${showing ? "eye" : "eye-off"}"></i>`;
+      button.title = showing ? "Tampilkan password" : "Sembunyikan password";
+      lucide.createIcons();
     }
 
     async function updateNama() {
-      const nama      = document.getElementById("input-nama").value.trim();
+      const nama = document.getElementById("input-nama").value.trim();
       const successEl = document.getElementById("nama-success");
-      const errorEl   = document.getElementById("nama-error");
+      const errorEl = document.getElementById("nama-error");
 
       successEl.style.display = "none";
-      errorEl.style.display   = "none";
+      errorEl.style.display = "none";
 
       if (!nama) {
-        errorEl.textContent   = "Nama tidak boleh kosong";
+        errorEl.textContent = "Nama tidak boleh kosong";
         errorEl.style.display = "block";
         return;
       }
 
       try {
-        const res  = await fetch(`${API_BASE_URL}/profile/${user.user_id}`, {
+        const res = await fetch(`${API_BASE_URL}/profile/${user.user_id}`, {
           method: "PUT",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({nama})
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nama })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail);
 
-        // Update localStorage
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Gagal mengubah nama");
+
         const u = getUser();
-        u.nama  = nama;
+        u.nama = nama;
         saveUser(u);
 
         renderTopbarUser(u);
         document.getElementById("profile-name").textContent = nama;
-        document.getElementById("profile-initial").textContent = nama.charAt(0).toUpperCase();
+        document.getElementById("profile-initial").textContent =
+          nama.charAt(0).toUpperCase();
 
         successEl.style.display = "block";
         showToast("Nama berhasil diupdate");
       } catch (err) {
-        errorEl.textContent   = err.message;
+        errorEl.textContent = err.message;
         errorEl.style.display = "block";
       }
     }
 
     async function updatePassword() {
-      const lama    = document.getElementById("pw-lama").value;
-      const baru    = document.getElementById("pw-baru").value;
+      const lama = document.getElementById("pw-lama").value;
+      const baru = document.getElementById("pw-baru").value;
       const konfirm = document.getElementById("pw-konfirm").value;
 
       const successEl = document.getElementById("pw-success");
-      const errorEl   = document.getElementById("pw-error");
+      const errorEl = document.getElementById("pw-error");
 
       successEl.style.display = "none";
-      errorEl.style.display   = "none";
+      errorEl.style.display = "none";
 
       if (!lama || !baru || !konfirm) {
-        errorEl.textContent   = "Semua field wajib diisi";
+        errorEl.textContent = "Semua field wajib diisi";
         errorEl.style.display = "block";
         return;
       }
 
       if (baru.length < 6) {
-        errorEl.textContent   = "Password baru minimal 6 karakter";
+        errorEl.textContent = "Password baru minimal 6 karakter";
         errorEl.style.display = "block";
         return;
       }
 
       if (baru !== konfirm) {
-        errorEl.textContent   = "Password baru dan konfirmasi tidak sama";
+        errorEl.textContent = "Password baru dan konfirmasi tidak sama";
         errorEl.style.display = "block";
         return;
       }
 
       try {
-        const res  = await fetch(`${API_BASE_URL}/profile/${user.user_id}/password`, {
+        const res = await fetch(`${API_BASE_URL}/profile/${user.user_id}/password`, {
           method: "PUT",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({password_lama: lama, password_baru: baru})
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            password_lama: lama,
+            password_baru: baru
+          })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail);
 
-        document.getElementById("pw-lama").value    = "";
-        document.getElementById("pw-baru").value    = "";
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Gagal mengubah password");
+
+        document.getElementById("pw-lama").value = "";
+        document.getElementById("pw-baru").value = "";
         document.getElementById("pw-konfirm").value = "";
+
+        ["pw-lama", "pw-baru", "pw-konfirm"].forEach(id => {
+          document.getElementById(id).type = "password";
+        });
 
         successEl.style.display = "block";
         showToast("Password berhasil diupdate");
       } catch (err) {
-        errorEl.textContent   = err.message;
+        errorEl.textContent = err.message;
         errorEl.style.display = "block";
       }
     }
