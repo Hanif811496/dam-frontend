@@ -229,7 +229,7 @@ function renderDetailPanel() {
     </div>
 
     <div class="info-section action-row">
-      <a href="${a.url}" download="${a.nama_file}" class="btn btn-primary" style="justify-content:center;">
+      <a href="${a.url}" download="${a.nama_file}" class="btn btn-primary" style="justify-content:center;" onclick="logDownload('${detailPanelAssetId}', user.user_id)">
         <i data-lucide="download" style="width:15px;height:15px;"></i> Download
       </a>
       <button class="btn btn-danger" style="justify-content:center;" onclick="hapusAsetPanel()">
@@ -329,7 +329,7 @@ async function tambahTagPanel() {
 
 async function hapusTagPanel(nama_tag) {
   try {
-    await fetchWithRetry(`${API_BASE_URL}/assets/${detailPanelAssetId}/tags/${encodeURIComponent(nama_tag)}`, {
+    await fetchWithRetry(`${API_BASE_URL}/assets/${detailPanelAssetId}/tags/${encodeURIComponent(nama_tag)}?user_id=${encodeURIComponent(user.user_id)}`, {
       method: "DELETE"
     });
     await loadDetailPanel();
@@ -343,7 +343,7 @@ async function hapusAsetPanel() {
   if (!confirm("Yakin ingin menghapus aset ini? Tindakan tidak bisa dibatalkan.")) return;
   const deletedId = detailPanelAssetId;
   try {
-    await deleteAsset(deletedId);
+    await deleteAsset(deletedId, user.user_id);
     showToast("Aset dihapus");
     closeDetailPanel();
     if (detailPanelRefreshFn && typeof window[detailPanelRefreshFn] === "function") {

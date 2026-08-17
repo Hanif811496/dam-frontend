@@ -55,8 +55,18 @@ async function getAssetDetail(asset_id) {
   return apiCall(`/assets/${asset_id}`);
 }
 
-async function deleteAsset(asset_id) {
-  return apiCall(`/assets/${asset_id}`, { method: "DELETE" });
+async function deleteAsset(asset_id, user_id) {
+  return apiCall(`/assets/${asset_id}?user_id=${encodeURIComponent(user_id || "")}`, { method: "DELETE" });
+}
+
+async function logDownload(asset_id, user_id) {
+  // fire-and-forget: kalau gagal, tidak perlu mengganggu proses download
+  try {
+    return await apiCall(`/assets/${asset_id}/log-download`, {
+      method: "POST",
+      body: JSON.stringify({ asset_id, user_id }),
+    });
+  } catch (e) { console.error("Gagal mencatat aktivitas download:", e); }
 }
 
 async function searchAssets(user_id, q) {

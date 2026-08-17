@@ -200,6 +200,9 @@
     .activity-icon.upload { background: var(--primary-light); color: var(--primary); }
     .activity-icon.share  { background: var(--accent-blue-light); color: var(--accent-blue); }
     .activity-icon.tag    { background: #FDF3D9; color: var(--accent-yellow); }
+    .activity-icon.download { background: var(--accent-blue-light); color: var(--accent-blue); }
+    .activity-icon.delete   { background: #FCE4E4; color: var(--danger); }
+    .activity-icon.move     { background: #EAE4FB; color: #8E44AD; }
 
     .activity-info { flex: 1; min-width: 0; }
 
@@ -512,11 +515,37 @@
         </div>
       </div>
       <div class="section-panel-body" id="body-activity">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-          <div style="font-size:13px;color:var(--text-muted);">30 aktivitas terbaru dari seluruh staff</div>
+        <div class="report-toolbar">
+          <select class="input" id="activity-filter-type" style="width:170px;">
+            <option value="">Semua aktivitas</option>
+            <option value="upload">Upload</option>
+            <option value="download">Download</option>
+            <option value="delete">Hapus Aset</option>
+            <option value="move">Pindah Folder</option>
+            <option value="remove_from_folder">Keluar dari Folder</option>
+            <option value="tag_added">Tambah Tag</option>
+            <option value="tag_removed">Hapus Tag</option>
+            <option value="share">Share</option>
+          </select>
+          <select class="input" id="activity-filter-user" style="width:170px;">
+            <option value="">Semua user</option>
+          </select>
+          <select class="input" id="activity-filter-divisi" style="width:170px;">
+            <option value="">Semua divisi</option>
+          </select>
+          <input type="date" class="input" id="activity-filter-from" style="width:150px;" title="Dari tanggal">
+          <input type="date" class="input" id="activity-filter-to" style="width:150px;" title="Sampai tanggal">
+          <select class="input" id="activity-filter-sort" style="width:150px;">
+            <option value="desc">Terbaru dulu</option>
+            <option value="asc">Terlama dulu</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="resetActivityFilters()">Reset</button>
           <button class="export-btn" onclick="exportActivityCSV()">
             <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
           </button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div style="font-size:13px;color:var(--text-muted);" id="activity-count-info">Memuat aktivitas...</div>
         </div>
         <div class="activity-list" id="activity-list">
           <div style="display:flex;justify-content:center;padding:30px;background:var(--surface);">
@@ -686,17 +715,73 @@
     }
 
     // ── Load Activity ─────────────────────────────────
+    let activityFiltersLoaded = false;
+
+    async function loadActivityFilterOptions() {
+      if (activityFiltersLoaded) return;
+      activityFiltersLoaded = true;
+      try {
+        const [usersRes, divRes] = await Promise.all([
+          fetchWithRetry(`${API_BASE_URL}/divisions/users`),
+          fetchWithRetry(`${API_BASE_URL}/divisions`)
+        ]);
+        const userSel = document.getElementById("activity-filter-user");
+        userSel.innerHTML = `<option value="">Semua user</option>` +
+          usersRes.users.map(u => `<option value="${u.id}">${u.nama}</option>`).join("");
+
+        const divSel = document.getElementById("activity-filter-divisi");
+        divSel.innerHTML = `<option value="">Semua divisi</option>` +
+          divRes.divisions.map(d => `<option value="${d.id}">${d.nama}</option>`).join("");
+      } catch (e) { console.error(e); }
+    }
+
+    function buildActivityQuery() {
+      const params = new URLSearchParams();
+      params.set("limit", "200");
+      const type = document.getElementById("activity-filter-type").value;
+      const user = document.getElementById("activity-filter-user").value;
+      const div  = document.getElementById("activity-filter-divisi").value;
+      const from = document.getElementById("activity-filter-from").value;
+      const to   = document.getElementById("activity-filter-to").value;
+      const sort = document.getElementById("activity-filter-sort").value;
+      if (type) params.set("type", type);
+      if (user) params.set("user_id", user);
+      if (div)  params.set("division_id", div);
+      if (from) params.set("date_from", from);
+      if (to)   params.set("date_to", to);
+      if (sort) params.set("sort", sort);
+      return params.toString();
+    }
+
     async function loadActivity() {
+      await loadActivityFilterOptions();
       showLoading("activity-list");
       try {
-        const data = await fetchWithRetry(`${API_BASE_URL}/admin/activity?limit=30`);
+        const data = await fetchWithRetry(`${API_BASE_URL}/admin/activity?${buildActivityQuery()}`);
         allActivityData = data.activities;
+        document.getElementById("activity-count-info").textContent =
+          `Menampilkan ${allActivityData.length} dari ${data.total} aktivitas`;
         renderActivity(allActivityData);
       } catch (e) {
         document.getElementById("activity-list").innerHTML =
           `<div style="background:var(--surface);padding:20px;text-align:center;color:var(--danger);">Gagal memuat aktivitas</div>`;
       }
     }
+
+    function resetActivityFilters() {
+      document.getElementById("activity-filter-type").value   = "";
+      document.getElementById("activity-filter-user").value   = "";
+      document.getElementById("activity-filter-divisi").value = "";
+      document.getElementById("activity-filter-from").value   = "";
+      document.getElementById("activity-filter-to").value     = "";
+      document.getElementById("activity-filter-sort").value   = "desc";
+      loadActivity();
+    }
+
+    ["activity-filter-type", "activity-filter-user", "activity-filter-divisi",
+     "activity-filter-from", "activity-filter-to", "activity-filter-sort"].forEach(id => {
+      document.getElementById(id).addEventListener("change", loadActivity);
+    });
 
     function renderActivity(activities) {
       const el = document.getElementById("activity-list");
@@ -712,11 +797,36 @@
           iconClass = "upload";
           text      = `<strong>${a.user}</strong> mengupload <strong>${a.file}</strong>`;
           meta      = `${a.division} · ${formatFileSize(a.ukuran)}`;
+        } else if (a.type === "download") {
+          icon      = `<i data-lucide="download" style="width:16px;height:16px;"></i>`;
+          iconClass = "download";
+          text      = `<strong>${a.user}</strong> mendownload <strong>${a.file}</strong>`;
+          meta      = a.division || "";
+        } else if (a.type === "delete") {
+          icon      = `<i data-lucide="trash-2" style="width:16px;height:16px;"></i>`;
+          iconClass = "delete";
+          text      = `<strong>${a.user}</strong> menghapus <strong>${a.file}</strong>`;
+          meta      = `${a.division || "—"}${a.ukuran ? " · " + formatFileSize(a.ukuran) : ""}`;
+        } else if (a.type === "move") {
+          icon      = `<i data-lucide="folder-input" style="width:16px;height:16px;"></i>`;
+          iconClass = "move";
+          text      = `<strong>${a.user}</strong> memindahkan <strong>${a.file}</strong>`;
+          meta      = a.from_folder ? `${a.from_folder} → ${a.to_folder}` : `ke folder ${a.to_folder || "—"}`;
+        } else if (a.type === "remove_from_folder") {
+          icon      = `<i data-lucide="folder-minus" style="width:16px;height:16px;"></i>`;
+          iconClass = "move";
+          text      = `<strong>${a.user}</strong> mengeluarkan <strong>${a.file}</strong> dari folder`;
+          meta      = a.folder || "—";
         } else if (a.type === "tag_added") {
           icon      = `<i data-lucide="tag" style="width:16px;height:16px;"></i>`;
           iconClass = "tag";
           text      = `<strong>${a.user}</strong> menambahkan <strong>${a.count} tag</strong> pada <strong>${a.file}</strong>`;
           meta      = `Tag: ${(a.tags || []).join(", ")}`;
+        } else if (a.type === "tag_removed") {
+          icon      = `<i data-lucide="tag" style="width:16px;height:16px;"></i>`;
+          iconClass = "tag";
+          text      = `<strong>${a.user}</strong> menghapus tag <strong>${a.tag}</strong> dari <strong>${a.file}</strong>`;
+          meta      = a.division || "";
         } else {
           icon      = `<i data-lucide="share-2" style="width:16px;height:16px;"></i>`;
           iconClass = "share";
@@ -737,14 +847,36 @@
       lucide.createIcons();
     }
 
+    const ACTIVITY_TYPE_LABEL = {
+      upload:             "Upload",
+      download:           "Download",
+      delete:             "Hapus Aset",
+      move:               "Pindah Folder",
+      remove_from_folder: "Keluar dari Folder",
+      tag_added:          "Tambah Tag",
+      tag_removed:        "Hapus Tag",
+      share:              "Share"
+    };
+
+    function activityDetailText(a) {
+      switch (a.type) {
+        case "upload":             return formatFileSize(a.ukuran);
+        case "delete":             return a.ukuran ? formatFileSize(a.ukuran) : "";
+        case "move":               return a.from_folder ? `${a.from_folder} → ${a.to_folder}` : (a.to_folder || "");
+        case "remove_from_folder": return a.folder || "";
+        case "tag_added":          return `${a.count} tag: ${(a.tags || []).join(", ")}`;
+        case "tag_removed":        return a.tag || "";
+        case "share":              return a.catatan || "";
+        default:                   return "";
+      }
+    }
+
     function exportActivityCSV() {
       const headers = ["Tipe","User","Divisi","File","Detail","Tanggal"];
       const rows    = allActivityData.map(a => [
-        a.type === "upload" ? "Upload" : a.type === "tag_added" ? "Tambah Tag" : "Share",
+        ACTIVITY_TYPE_LABEL[a.type] || a.type,
         a.user, a.division, a.file,
-        a.type === "upload" ? formatFileSize(a.ukuran)
-          : a.type === "tag_added" ? `${a.count} tag: ${(a.tags || []).join(", ")}`
-          : (a.catatan || ""),
+        activityDetailText(a),
         a.created_at
       ]);
       downloadCSV("laporan_aktivitas.csv", headers, rows);
