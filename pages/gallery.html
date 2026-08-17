@@ -287,8 +287,7 @@
     </a>
     <a href="upload.html" class="sidebar-item">
       <i data-lucide="upload-cloud"></i> Upload Aset
-    </a>
-    <a href="folders.html" class="sidebar-item">
+    </a>    <a href="folders.html" class="sidebar-item">
       <i data-lucide="folder"></i> Smart Folder
     </a>
     <a href="profile.html" class="sidebar-item">
@@ -380,6 +379,7 @@
   <script src="../js/auth.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/utils.js"></script>
+  <script src="../js/detail-panel.js"></script>
   <script>
     requireAuth();
     const user = getUser();
@@ -559,7 +559,7 @@
           const preview = isImage
             ? `<div class="asset-preview"><img src="${a.url}" alt="${a.nama_file}" loading="lazy"></div>`
             : `<div class="asset-preview">${getFileIcon(a.tipe_file)}</div>`;
-          return `<div class="asset-card" onclick="window.location.href='detail.html?id=${a.id}'">
+          return `<div class="asset-card" onclick="openDetailPanel('${a.id}', 'onAssetDeletedGallery')">
             ${preview}
             <div class="asset-card-body">
               <div class="asset-card-name">${a.nama_file}</div>
@@ -668,6 +668,13 @@
       }
     }
 
+    // Dipanggil oleh detail-panel.js setelah aset berhasil dihapus dari panel,
+    // supaya kartunya langsung hilang dari grid tanpa reload semua data.
+    function onAssetDeletedGallery(assetId) {
+      allAssets = allAssets.filter(a => a.id !== assetId);
+      render();
+    }
+
     async function loadAll() {
       try {
         const [assetData, folderData] = await Promise.all([
@@ -677,6 +684,7 @@
         allAssets  = assetData.assets;
         allFolders = folderData.folders;
         render();
+        initDetailPanelFromURL();
       } catch (err) {
         document.getElementById("content-area").innerHTML =
           `<div class="empty-state">

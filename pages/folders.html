@@ -210,8 +210,7 @@
     </a>
     <a href="upload.html" class="sidebar-item">
       <i data-lucide="upload-cloud"></i> Upload Aset
-    </a>
-    <a href="folders.html" class="sidebar-item active">
+    </a>    <a href="folders.html" class="sidebar-item active">
       <i data-lucide="folder"></i> Smart Folder
     </a>
     <a href="profile.html" class="sidebar-item">
@@ -316,6 +315,7 @@
   <script src="../js/auth.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/utils.js"></script>
+  <script src="../js/detail-panel.js"></script>
   <script>
     requireAuth();
     const user = getUser();
@@ -327,6 +327,7 @@
 
     let folders      = [];
     let activeFolder = null;
+    let activeFolderNama = null;
     let allUsers     = [];
     let allDivisions = [];
     let shareModalFolderId = null;
@@ -544,8 +545,15 @@
       }
     }
 
+    // Dipanggil oleh detail-panel.js setelah aset berhasil dihapus dari panel,
+    // supaya folder yang sedang dibuka otomatis di-refresh.
+    function onAssetDeletedFolder() {
+      if (activeFolder) lihatFolder(activeFolder, activeFolderNama);
+    }
+
     async function lihatFolder(folder_id, nama) {
-      activeFolder = folder_id;
+      activeFolder     = folder_id;
+      activeFolderNama = nama;
       renderFolders();
       const previewEl = document.getElementById("folder-preview");
       previewEl.innerHTML = `<div style="display:flex;justify-content:center;padding:30px;"><div class="spinner"></div></div>`;
@@ -574,7 +582,7 @@
               const preview = isImage
                 ? `<div class="asset-preview-sm"><img src="${a.url}" loading="lazy"></div>`
                 : `<div class="asset-preview-sm">${getFileIcon(a.tipe_file)}</div>`;
-              return `<div class="asset-card-sm" onclick="window.location.href='detail.html?id=${a.id}'">
+              return `<div class="asset-card-sm" onclick="openDetailPanel('${a.id}', 'onAssetDeletedFolder')">
                 ${preview}
                 <div class="asset-name-sm">${a.nama_file}</div>
               </div>`;
@@ -645,6 +653,7 @@
     loadFolders();
     loadRules();
     lucide.createIcons();
+    initDetailPanelFromURL();
   </script>
 </body>
 </html>
