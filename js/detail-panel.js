@@ -3,17 +3,23 @@
 // tidak perlu pindah halaman ke detail.html.
 //
 // Cara pakai di halaman host:
-//   <div onclick="openDetailPanel('ASSET_ID', 'namaFungsiRefresh')">...</div>
+//   <div onclick="openDetailPanel('ASSET_ID', 'namaFungsiRefresh', 'FOLDER_ID')">...</div>
 //
 // 'namaFungsiRefresh' (opsional) adalah nama fungsi global (string) yang
-// akan dipanggil dengan parameter asset_id setelah aset berhasil dihapus,
-// supaya halaman host bisa memperbarui tampilannya sendiri (hapus dari
-// grid, reload folder, dll) tanpa reload penuh.
+// akan dipanggil dengan parameter asset_id setelah aset berhasil dihapus/
+// dipindahkan/dikeluarkan dari folder, supaya halaman host bisa memperbarui
+// tampilannya sendiri (hapus dari grid, reload folder, dll) tanpa reload penuh.
+//
+// 'FOLDER_ID' (opsional) diisi kalau panel dibuka dari dalam konteks sebuah
+// folder (mis. dari folders.html) — ini yang bikin tombol "Keluarkan dari
+// folder ini" muncul dan jadi acuan folder asal saat memindahkan aset.
 
 let detailPanelAssetId      = null;
 let detailPanelRefreshFn    = null;
 let detailPanelCurrentAsset = null;
 let detailPanelCurrentTags  = [];
+let detailPanelFolderId     = null; // folder tempat panel ini dibuka (null kalau dari Gallery umum)
+let detailPanelFolderList   = null; // cache daftar folder yang bisa diakses user
 
 function ensureDetailPanelDOM() {
   if (document.getElementById("detail-panel-overlay")) return;
@@ -63,10 +69,11 @@ function getFileIconDetail(tipe) {
   return "📁";
 }
 
-async function openDetailPanel(assetId, refreshFnName) {
+async function openDetailPanel(assetId, refreshFnName, folderId) {
   ensureDetailPanelDOM();
   detailPanelAssetId   = assetId;
   detailPanelRefreshFn = refreshFnName || null;
+  detailPanelFolderId  = folderId || null;
 
   document.getElementById("detail-panel-overlay").classList.add("open");
   document.getElementById("detail-panel-body").innerHTML =
@@ -89,7 +96,8 @@ async function openDetailPanelSilent(assetId) {
 function closeDetailPanel(skipHistory) {
   const overlay = document.getElementById("detail-panel-overlay");
   if (overlay) overlay.classList.remove("open");
-  detailPanelAssetId = null;
+  detailPanelAssetId  = null;
+  detailPanelFolderId = null;
 
   const url = new URL(window.location);
   if (url.searchParams.has("id")) {
@@ -204,6 +212,22 @@ function renderDetailPanel() {
       </div>
     </div>
 
+    <div class="info-section">
+      <div class="info-section-title">Folder</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <select class="input" id="dp-folder-select" style="flex:1;min-width:160px;">
+          <option value="">Memuat folder...</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="pindahkanAsetPanel()">
+          <i data-lucide="folder-input" style="width:14px;height:14px;"></i> Pindahkan
+        </button>
+      </div>
+      ${detailPanelFolderId ? `
+        <button class="btn btn-outline btn-sm" style="margin-top:8px;width:100%;justify-content:center;color:var(--danger);border-color:var(--danger);" onclick="keluarkanAsetPanel()">
+          <i data-lucide="folder-minus" style="width:14px;height:14px;"></i> Keluarkan dari folder ini
+        </button>` : ""}
+    </div>
+
     <div class="info-section action-row">
       <a href="${a.url}" download="${a.nama_file}" class="btn btn-primary" style="justify-content:center;">
         <i data-lucide="download" style="width:15px;height:15px;"></i> Download
@@ -217,7 +241,67 @@ function renderDetailPanel() {
   const tagInput = document.getElementById("dp-new-tag");
   tagInput.addEventListener("keydown", (e) => { if (e.key === "Enter") tambahTagPanel(); });
 
+  loadFolderPickerPanel();
   lucide.createIcons();
+}
+
+async function loadFolderPickerPanel() {
+  const sel = document.getElementById("dp-folder-select");
+  if (!sel) return;
+  try {
+    if (!detailPanelFolderList) {
+      const data = await getFolders(user.user_id);
+      detailPanelFolderList = data.folders;
+    }
+    const options = detailPanelFolderList
+      .filter(f => f.id !== detailPanelFolderId)
+      .map(f => {
+        const label = f.type === "shared" ? `[Shared] ${f.nama}` :
+                      f.type === "system" ? `[${f.div_nama || "Divisi"}] ${f.nama}` :
+                      `[Smart] ${f.nama}`;
+        return `<option value="${f.id}">${label}</option>`;
+      }).join("");
+    sel.innerHTML = `<option value="">Pilih folder tujuan...</option>` + (options || "");
+    if (!options) sel.innerHTML = `<option value="">Tidak ada folder tujuan</option>`;
+  } catch (err) {
+    sel.innerHTML = `<option value="">Gagal memuat folder</option>`;
+  }
+}
+
+async function pindahkanAsetPanel() {
+  const sel = document.getElementById("dp-folder-select");
+  const toFolderId = sel ? sel.value : "";
+  if (!toFolderId) {
+    showToast("Pilih folder tujuan dulu", "warning");
+    return;
+  }
+  try {
+    await moveAssetToFolder(detailPanelAssetId, toFolderId, detailPanelFolderId, user.user_id);
+    showToast(detailPanelFolderId ? "Aset dipindahkan ke folder baru" : "Aset ditambahkan ke folder");
+    const movedId = detailPanelAssetId;
+    closeDetailPanel();
+    if (detailPanelRefreshFn && typeof window[detailPanelRefreshFn] === "function") {
+      window[detailPanelRefreshFn](movedId);
+    }
+  } catch (err) {
+    showToast("Gagal memindahkan: " + err.message, "error");
+  }
+}
+
+async function keluarkanAsetPanel() {
+  if (!detailPanelFolderId) return;
+  if (!confirm("Keluarkan aset ini dari folder? Aset tetap ada di sistem, hanya dicabut dari folder ini.")) return;
+  try {
+    await removeAssetFromFolder(detailPanelFolderId, detailPanelAssetId, user.user_id);
+    showToast("Aset dikeluarkan dari folder");
+    const removedId = detailPanelAssetId;
+    closeDetailPanel();
+    if (detailPanelRefreshFn && typeof window[detailPanelRefreshFn] === "function") {
+      window[detailPanelRefreshFn](removedId);
+    }
+  } catch (err) {
+    showToast("Gagal mengeluarkan: " + err.message, "error");
+  }
 }
 
 async function tambahTagPanel() {

@@ -63,6 +63,23 @@ async function searchAssets(user_id, q) {
   return apiCall(`/assets/${user_id}/search?q=${encodeURIComponent(q)}`);
 }
 
+async function getFolders(user_id) {
+  return apiCall(`/folders?user_id=${user_id}`);
+}
+
+async function moveAssetToFolder(asset_id, to_folder_id, from_folder_id, user_id) {
+  return apiCall(`/assets/${asset_id}/move-folder`, {
+    method: "POST",
+    body: JSON.stringify({ user_id, to_folder_id, from_folder_id: from_folder_id || null }),
+  });
+}
+
+async function removeAssetFromFolder(folder_id, asset_id, user_id) {
+  return apiCall(`/folders/${folder_id}/assets/${asset_id}?user_id=${user_id}`, {
+    method: "DELETE",
+  });
+}
+
 async function uploadAsset(user_id, file, onProgress, maxRetries = 3, retryDelayMs = 4000) {
   let lastError;
   let toastShown = false;

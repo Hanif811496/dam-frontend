@@ -545,8 +545,8 @@
       }
     }
 
-    // Dipanggil oleh detail-panel.js setelah aset berhasil dihapus dari panel,
-    // supaya folder yang sedang dibuka otomatis di-refresh.
+    // Dipanggil oleh detail-panel.js setelah aset berhasil dihapus/dipindahkan/
+    // dikeluarkan dari panel, supaya folder yang sedang dibuka otomatis di-refresh.
     function onAssetDeletedFolder() {
       if (activeFolder) lihatFolder(activeFolder, activeFolderNama);
     }
@@ -582,7 +582,7 @@
               const preview = isImage
                 ? `<div class="asset-preview-sm"><img src="${a.url}" loading="lazy"></div>`
                 : `<div class="asset-preview-sm">${getFileIcon(a.tipe_file)}</div>`;
-              return `<div class="asset-card-sm" onclick="openDetailPanel('${a.id}', 'onAssetDeletedFolder')">
+              return `<div class="asset-card-sm" onclick="openDetailPanel('${a.id}', 'onAssetDeletedFolder', '${folder_id}')">
                 ${preview}
                 <div class="asset-name-sm">${a.nama_file}</div>
               </div>`;
