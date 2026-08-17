@@ -27,6 +27,85 @@
   gap: 12px;
 }
 
+
+/* Current user identity + division badge */
+.navbar-user-identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.navbar-user-name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.navbar-division-badge {
+  --division-bg: #F3F4F6;
+  --division-color: #5F6368;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 10px 4px 6px;
+  border-radius: var(--radius-full);
+  background: var(--division-bg);
+  color: var(--division-color);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--division-color) 10%, transparent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.navbar-division-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+
+.navbar-division-logo svg,
+.navbar-division-logo i {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.2;
+}
+
+.navbar-div-manager  { --division-bg:#FCEBEB; --division-color:#D42B2B; }
+.navbar-div-design   { --division-bg:#E6F1FB; --division-color:#1A6BBF; }
+.navbar-div-3d       { --division-bg:#EEEDFE; --division-color:#3C3489; }
+.navbar-div-animator { --division-bg:#E1F5EE; --division-color:#085041; }
+.navbar-div-editor   { --division-bg:#FAEEDA; --division-color:#633806; }
+.navbar-div-render   { --division-bg:#F1EFE8; --division-color:#444441; }
+.navbar-div-custom   { --division-bg:#F3F4F6; --division-color:#5F6368; }
+.navbar-div-generic  { --division-bg:#F3F4F6; --division-color:#5F6368; }
+
+@media (max-width: 640px) {
+  .navbar {
+    padding-left: 14px;
+    padding-right: 14px;
+    gap: 10px;
+  }
+
+  .navbar-right { gap: 8px; }
+  .navbar-user-identity { gap: 6px; }
+  .navbar-user-name { max-width: 100px; font-size: 12px; }
+  .navbar-division-badge { min-height: 26px; padding: 3px 8px 3px 5px; font-size: 10px; }
+  .navbar-division-logo { width: 19px; height: 19px; border-radius: 5px; }
+}
+
 .sidebar-toggle-btn {
   display: flex;
   align-items: center;

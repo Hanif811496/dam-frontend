@@ -196,7 +196,7 @@
     requireAuth();
     initSidebarToggle();
     const user = getUser();
-    document.getElementById("user-name").textContent = user.nama;
+    hydrateTopbarUser();
 
     if (isManager()) {
       document.getElementById("sidebar-admin-label").style.display = "block";
@@ -250,7 +250,7 @@
         u.nama  = nama;
         saveUser(u);
 
-        document.getElementById("user-name").textContent    = nama;
+        renderTopbarUser(u);
         document.getElementById("profile-name").textContent = nama;
         document.getElementById("profile-initial").textContent = nama.charAt(0).toUpperCase();
 

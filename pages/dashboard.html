@@ -1078,7 +1078,7 @@
     requireManager();
     initSidebarToggle();
     const user = getUser();
-    document.getElementById("user-name").textContent = user.nama;
+    hydrateTopbarUser();
     document.getElementById("last-update").textContent = "Update: " + new Date().toLocaleTimeString("id-ID");
 
     let allReportAssets = [];

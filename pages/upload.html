@@ -570,7 +570,7 @@
     }
 
     const user = getUser();
-    document.getElementById("user-name").textContent = user.nama;
+    hydrateTopbarUser();
 
     const divisionPicker = document.getElementById("division-picker");
     const summaryText    = document.getElementById("destination-summary-text");

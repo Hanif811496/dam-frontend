@@ -1108,7 +1108,7 @@
     initSidebarToggle();
 
     const user = getUser();
-    document.getElementById("user-name").textContent = user.nama;
+    hydrateTopbarUser();
 
     if (isManager()) {
       document.getElementById("sidebar-admin-label").style.display = "block";

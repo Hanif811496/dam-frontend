@@ -481,7 +481,7 @@
     requireAuth();
     initSidebarToggle();
     const user = getUser();
-    document.getElementById("user-name").textContent = user.nama;
+    hydrateTopbarUser();
 
     if (!isManager()) {
       showToast("Akses ditolak — hanya Manager", "error");
