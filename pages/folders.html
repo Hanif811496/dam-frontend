@@ -234,7 +234,7 @@
     </div>
 
     <div class="info-banner">
-      <strong>Cara kerja:</strong> Folder Shared bisa diakses semua divisi. Folder Divisi hanya untuk divisinya masing-masing. Smart Folder otomatis mengisi aset berdasarkan rule keyword tag saat upload. Manager bisa membuat Smart Folder untuk beberapa divisi sekaligus (mis. Editor & Animator), dan mengatur ulang divisi mana saja yang boleh akses lewat ikon <i data-lucide="building-2" style="width:12px;height:12px;vertical-align:middle;"></i>. Smart Folder juga bisa dibagikan ke user tertentu lewat ikon <i data-lucide="user-plus" style="width:12px;height:12px;vertical-align:middle;"></i> di sebelah namanya.
+      <strong>Cara kerja:</strong> Folder Shared bisa diakses semua divisi. Folder Divisi hanya untuk divisinya masing-masing. Smart Folder otomatis mengisi aset berdasarkan rule keyword tag saat upload. Gunakan ikon <i data-lucide="share-2" style="width:12px;height:12px;vertical-align:middle;"></i> untuk membagikan Smart Folder ke divisi lain; penerima akan melihatnya di bagian <strong>Dibagikan ke Saya</strong> beserta nama pemberi share. Manager tetap bisa mengatur akses multi-divisi lewat ikon <i data-lucide="building-2" style="width:12px;height:12px;vertical-align:middle;"></i>, dan folder juga bisa dibagikan ke user tertentu lewat ikon <i data-lucide="user-plus" style="width:12px;height:12px;vertical-align:middle;"></i>.
     </div>
 
     <div class="folders-wrap">
@@ -335,6 +335,24 @@
     </div>
   </div>
 
+
+  <div class="modal-overlay" id="folder-division-share-modal">
+    <div class="modal-box">
+      <div class="modal-title">Bagikan Folder ke Divisi</div>
+      <div class="modal-subtitle" id="folder-division-share-subtitle">Pilih divisi tujuan.</div>
+      <select class="input" id="folder-division-share-select">
+        <option value="">Pilih divisi...</option>
+      </select>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.5;">
+        Folder akan muncul sebagai <strong>Dibagikan ke Saya</strong> untuk anggota divisi tujuan dan menampilkan siapa yang membagikannya.
+      </div>
+      <div class="modal-actions" style="margin-top:14px;">
+        <button class="btn btn-outline btn-sm" onclick="closeFolderDivisionShareModal()">Batal</button>
+        <button class="btn btn-primary btn-sm" id="folder-division-share-submit" onclick="submitFolderDivisionShare()">Bagikan</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../js/config.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/api.js"></script>
@@ -360,6 +378,7 @@
     let shareModalSelected = new Set();
     let divisionModalFolderId = null;
     let divisionModalSelected = new Set();
+    let shareDivisionFolderId = null;
 
     if (isManager()) {
       document.getElementById("new-folder-label").textContent = "Buat Smart Folder baru (pilih divisi yang boleh akses):";
@@ -417,17 +436,19 @@
             const canDelete    = f.type === "smart" && (isOwner || isManager());
             const canShare     = f.type === "smart" && (isOwner || isManager());
             const canShareDiv  = f.type === "smart" && isManager();
+            const canShareToDivision = f.type === "smart" && (isOwner || isManager());
             const subtitle     = f.type === "system" ? f.div_nama || "" :
                               f.type === "shared"  ? "Semua divisi" :
-                              f.shared_to_me ? `Dibagikan • ${f.div_nama || ""}` :
+                              f.shared_to_me ? `Dibagikan oleh ${f.shared_by || f.owner || "-"}` :
                               f.owner || "";
             return `
               <div class="folder-item ${isActive ? 'active' : ''}" onclick="lihatFolder('${f.id}', '${f.nama}')">
                 <i data-lucide="folder" style="width:16px;height:16px;color:${color};flex-shrink:0;"></i>
                 <span class="folder-item-name">${f.nama}</span>
                 <span style="font-size:10px;color:var(--text-muted);margin-right:4px;">${subtitle}</span>
+                ${canShareToDivision ? `<i data-lucide="share-2" class="folder-share" style="width:14px;height:14px;" title="Bagikan ke divisi lain" onclick="event.stopPropagation();openFolderDivisionShareModal('${f.id}','${f.nama.replace(/'/g, "\\'")}')"></i>` : ""}
                 ${canShareDiv ? `<i data-lucide="building-2" class="folder-share" style="width:14px;height:14px;" title="Atur divisi yang bisa akses" onclick="event.stopPropagation();openDivisionModal('${f.id}','${f.nama.replace(/'/g, "\\'")}')"></i>` : ""}
-                ${canShare ? `<i data-lucide="user-plus" class="folder-share" style="width:14px;height:14px;" title="Bagikan folder" onclick="event.stopPropagation();openShareModal('${f.id}','${f.nama.replace(/'/g, "\\'")}')"></i>` : ""}
+                ${canShare ? `<i data-lucide="user-plus" class="folder-share" style="width:14px;height:14px;" title="Bagikan folder ke user tertentu" onclick="event.stopPropagation();openShareModal('${f.id}','${f.nama.replace(/'/g, "\\'")}')"></i>` : ""}
                 ${canDelete ? `<i data-lucide="trash-2" class="folder-delete" style="width:14px;height:14px;" onclick="event.stopPropagation();hapusFolder('${f.id}')"></i>` : ""}
               </div>`;
           }).join("")}`;
@@ -554,6 +575,47 @@
         showToast("Akses folder disimpan");
       } catch (e) {
         showToast("Gagal menyimpan akses", "error");
+      }
+    }
+
+    async function openFolderDivisionShareModal(folder_id, folder_nama) {
+      shareDivisionFolderId = folder_id;
+      document.getElementById("folder-division-share-subtitle").textContent = `Folder: ${folder_nama}`;
+      document.getElementById("folder-division-share-modal").classList.add("open");
+
+      if (!allDivisions.length) await loadDivisionsForForm();
+      const select = document.getElementById("folder-division-share-select");
+      const options = allDivisions
+        .filter(d => d.id !== user.division_id)
+        .map(d => `<option value="${d.id}">${d.nama}</option>`)
+        .join("");
+      select.innerHTML = `<option value="">Pilih divisi...</option>${options}`;
+    }
+
+    function closeFolderDivisionShareModal() {
+      document.getElementById("folder-division-share-modal").classList.remove("open");
+      shareDivisionFolderId = null;
+    }
+
+    async function submitFolderDivisionShare() {
+      const division_id = document.getElementById("folder-division-share-select").value;
+      if (!shareDivisionFolderId || !division_id) {
+        showToast("Pilih divisi tujuan", "warning");
+        return;
+      }
+      const btn = document.getElementById("folder-division-share-submit");
+      btn.disabled = true;
+      btn.textContent = "Membagikan...";
+      try {
+        const result = await shareFolderToDivision(shareDivisionFolderId, user.user_id, division_id);
+        closeFolderDivisionShareModal();
+        await loadFolders();
+        showToast(`Folder dibagikan ke ${result.division?.nama || "divisi tujuan"}`);
+      } catch (e) {
+        showToast("Gagal membagikan folder: " + e.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Bagikan";
       }
     }
 

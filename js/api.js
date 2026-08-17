@@ -81,6 +81,28 @@ async function getFolders(user_id) {
   return apiCall(`/folders?user_id=${user_id}`);
 }
 
+async function getDivisions() {
+  return apiCall(`/divisions`);
+}
+
+async function getSharedAssets(user_id) {
+  return apiCall(`/assets/shared-to-me?user_id=${encodeURIComponent(user_id)}`);
+}
+
+async function shareAssetToDivision(asset_id, from_user_id, to_division_id, catatan = null) {
+  return apiCall(`/assets/share`, {
+    method: "POST",
+    body: JSON.stringify({ asset_id, from_user_id, to_division_id, catatan }),
+  });
+}
+
+async function shareFolderToDivision(folder_id, from_user_id, to_division_id) {
+  return apiCall(`/folders/${folder_id}/share`, {
+    method: "POST",
+    body: JSON.stringify({ from_user_id, to_division_id }),
+  });
+}
+
 async function moveAssetToFolder(asset_id, to_folder_id, from_folder_id, user_id) {
   return apiCall(`/assets/${asset_id}/move-folder`, {
     method: "POST",
