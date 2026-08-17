@@ -969,7 +969,7 @@
 
       <div class="explorer-pane">
         <div class="toolbar">
-          <input type="text" class="input" id="search-input" placeholder="Cari file atau folder...">
+          <input type="text" class="input" id="search-input" placeholder="Cari nama file, folder, atau tag...">
           <div class="view-toggle" aria-label="Mode tampilan">
             <button class="view-btn active" id="btn-grid" type="button" onclick="setView('grid')">
               <i data-lucide="grid-2x2" style="width:14px;height:14px;"></i> Grid
@@ -1123,6 +1123,8 @@
     let activeTipe = "";
     let activeTag = "";
     let tagAssetIds = null;
+    let searchTagAssetIds = null;
+    let searchRequestSeq = 0;
     let viewMode = localStorage.getItem("dam_gallery_view") || "grid";
     let navStack = [];
     let currentRawAssets = [];
@@ -1349,7 +1351,9 @@
       });
 
       visibleAssets = currentRawAssets.filter(asset => {
-        const matchQ = !q || normalizeName(asset.nama_file).includes(q);
+        const matchName = !q || normalizeName(asset.nama_file).includes(q);
+        const matchSearchTag = !q || (searchTagAssetIds || []).includes(asset.id);
+        const matchQ = !q || matchName || matchSearchTag;
         const matchTipe = activeTipe ? String(asset.tipe_file || "").includes(activeTipe) : true;
         const matchTag = activeTag ? (tagAssetIds || []).includes(asset.id) : true;
         return matchQ && matchTipe && matchTag;
@@ -2315,9 +2319,44 @@
       }
     }
 
-    document.getElementById("search-input").addEventListener("input", debounce(() => {
+    async function updateGallerySearch() {
+      const input = document.getElementById("search-input");
+      const q = input.value.trim().toLowerCase();
+      const requestSeq = ++searchRequestSeq;
+
+      if (!q) {
+        searchTagAssetIds = null;
+        applyFiltersAndRender();
+        return;
+      }
+
+      // Nama file/folder langsung difilter tanpa menunggu backend.
+      searchTagAssetIds = [];
       applyFiltersAndRender();
-    }, 250));
+
+      try {
+        const data = await apiCall(
+          `/search/gallery?user_id=${encodeURIComponent(user.user_id)}&q=${encodeURIComponent(q)}`
+        );
+
+        // Abaikan response lama kalau user sudah mengetik query baru.
+        if (requestSeq !== searchRequestSeq) return;
+
+        searchTagAssetIds = data.asset_ids || [];
+        applyFiltersAndRender();
+      } catch (error) {
+        if (requestSeq !== searchRequestSeq) return;
+
+        searchTagAssetIds = [];
+        console.error("Gallery tag search gagal:", error);
+        applyFiltersAndRender();
+      }
+    }
+
+    document.getElementById("search-input").addEventListener(
+      "input",
+      debounce(updateGallerySearch, 250)
+    );
 
     document.getElementById("sort-by").addEventListener("change", () => {
       applyFiltersAndRender();
