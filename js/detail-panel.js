@@ -199,7 +199,7 @@ function renderDetailPanel() {
       <div class="info-section-title">Tag Manual (${manualTags.length})</div>
       <div id="dp-manual-tags-wrap">${manualTagsHtml}</div>
       <div class="tag-add-row">
-        <input type="text" class="input" id="dp-new-tag" placeholder="Tambah tag manual...">
+        <input type="text" class="input" id="dp-new-tag" placeholder="Tambah tag (pisah pakai koma/spasi)...">
         <button class="btn btn-primary btn-sm" onclick="tambahTagPanel()">Tambah</button>
       </div>
     </div>
@@ -222,17 +222,22 @@ function renderDetailPanel() {
 
 async function tambahTagPanel() {
   const input = document.getElementById("dp-new-tag");
-  const nama  = input.value.trim().toLowerCase();
+  const nama  = input.value.trim();
   if (!nama) return;
   try {
-    await fetchWithRetry(`${API_BASE_URL}/assets/${detailPanelAssetId}/tags`, {
+    const result = await fetchWithRetry(`${API_BASE_URL}/assets/${detailPanelAssetId}/tags`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({nama_tag: nama, sumber: "manual", user_id: user.user_id})
     });
     input.value = "";
     await loadDetailPanel();
-    showToast("Tag ditambahkan");
+    const count = (result.added || []).length;
+    if (count === 0) {
+      showToast("Tag sudah ada sebelumnya", "warning");
+    } else {
+      showToast(`${count} tag ditambahkan`);
+    }
   } catch (err) {
     showToast("Gagal menambah tag", "error");
   }

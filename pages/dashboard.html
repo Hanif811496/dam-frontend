@@ -199,6 +199,7 @@
 
     .activity-icon.upload { background: var(--primary-light); color: var(--primary); }
     .activity-icon.share  { background: var(--accent-blue-light); color: var(--accent-blue); }
+    .activity-icon.tag    { background: #FDF3D9; color: var(--accent-yellow); }
 
     .activity-info { flex: 1; min-width: 0; }
 
@@ -704,19 +705,28 @@
         return;
       }
       el.innerHTML = activities.map(a => {
-        const isUpload = a.type === "upload";
-        const icon     = isUpload
-          ? `<i data-lucide="upload-cloud" style="width:16px;height:16px;"></i>`
-          : `<i data-lucide="share-2" style="width:16px;height:16px;"></i>`;
-        const text = isUpload
-          ? `<strong>${a.user}</strong> mengupload <strong>${a.file}</strong>`
-          : `<strong>${a.user}</strong> membagikan <strong>${a.file}</strong> ke divisi <strong>${a.division}</strong>`;
-        const meta = isUpload
-          ? `${a.division} · ${formatFileSize(a.ukuran)}`
-          : a.catatan ? `Catatan: ${a.catatan}` : "Tanpa catatan";
+        let icon, text, meta, iconClass;
+
+        if (a.type === "upload") {
+          icon      = `<i data-lucide="upload-cloud" style="width:16px;height:16px;"></i>`;
+          iconClass = "upload";
+          text      = `<strong>${a.user}</strong> mengupload <strong>${a.file}</strong>`;
+          meta      = `${a.division} · ${formatFileSize(a.ukuran)}`;
+        } else if (a.type === "tag_added") {
+          icon      = `<i data-lucide="tag" style="width:16px;height:16px;"></i>`;
+          iconClass = "tag";
+          text      = `<strong>${a.user}</strong> menambahkan <strong>${a.count} tag</strong> pada <strong>${a.file}</strong>`;
+          meta      = `Tag: ${(a.tags || []).join(", ")}`;
+        } else {
+          icon      = `<i data-lucide="share-2" style="width:16px;height:16px;"></i>`;
+          iconClass = "share";
+          text      = `<strong>${a.user}</strong> membagikan <strong>${a.file}</strong> ke divisi <strong>${a.division}</strong>`;
+          meta      = a.catatan ? `Catatan: ${a.catatan}` : "Tanpa catatan";
+        }
+
         return `
           <div class="activity-item">
-            <div class="activity-icon ${isUpload ? 'upload' : 'share'}">${icon}</div>
+            <div class="activity-icon ${iconClass}">${icon}</div>
             <div class="activity-info">
               <div class="activity-text">${text}</div>
               <div class="activity-meta">${meta}</div>
@@ -730,9 +740,11 @@
     function exportActivityCSV() {
       const headers = ["Tipe","User","Divisi","File","Detail","Tanggal"];
       const rows    = allActivityData.map(a => [
-        a.type === "upload" ? "Upload" : "Share",
+        a.type === "upload" ? "Upload" : a.type === "tag_added" ? "Tambah Tag" : "Share",
         a.user, a.division, a.file,
-        a.type === "upload" ? formatFileSize(a.ukuran) : (a.catatan || ""),
+        a.type === "upload" ? formatFileSize(a.ukuran)
+          : a.type === "tag_added" ? `${a.count} tag: ${(a.tags || []).join(", ")}`
+          : (a.catatan || ""),
         a.created_at
       ]);
       downloadCSV("laporan_aktivitas.csv", headers, rows);
