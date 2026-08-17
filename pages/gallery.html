@@ -12,7 +12,7 @@
   <style>
     .gallery-wrap {
       display: grid;
-      grid-template-columns: 220px 1fr;
+      grid-template-columns: 220px minmax(0, 1fr);
       gap: 24px;
       align-items: start;
     }
@@ -47,10 +47,20 @@
       justify-content: space-between;
     }
 
-    .filter-clear { font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 500; }
+    .filter-clear {
+      font-size: 11px;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
     .filter-clear:hover { text-decoration: underline; }
 
-    .tipe-list { display: flex; flex-direction: column; gap: 4px; }
+    .tipe-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
     .tipe-item {
       display: flex;
@@ -95,6 +105,18 @@
     .tag-filter-item.active { background: var(--accent-yellow-light); color: #7a600a; font-weight: 600; }
     .tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-yellow); flex-shrink: 0; }
 
+    .explorer-pane { min-width: 0; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar .input { flex: 1; min-width: 220px; }
+
     .view-toggle {
       display: flex;
       background: var(--surface-2);
@@ -102,10 +124,13 @@
       border-radius: var(--radius-md);
       padding: 3px;
       gap: 2px;
+      flex-shrink: 0;
     }
 
     .view-btn {
-      padding: 6px 12px;
+      border: 0;
+      background: transparent;
+      padding: 7px 10px;
       border-radius: var(--radius-sm);
       font-size: 12px;
       font-weight: 500;
@@ -124,18 +149,84 @@
       box-shadow: var(--shadow-sm);
     }
 
-    .toolbar {
+    .division-zone { margin-bottom: 18px; }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .division-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+      gap: 10px;
+    }
+
+    .division-card {
+      appearance: none;
+      width: 100%;
+      text-align: left;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 13px 12px;
+      cursor: pointer;
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s, background 0.15s;
+      color: var(--text);
     }
 
-    .toolbar .input { flex: 1; min-width: 180px; }
-    .result-info { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+    .division-card:hover {
+      border-color: var(--accent-blue);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
 
-    .active-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .division-card.active {
+      border-color: var(--accent-blue);
+      background: rgba(33, 118, 214, 0.06);
+    }
+
+    .division-card.shared:hover { border-color: #2e7d32; }
+    .division-card.shared.active {
+      border-color: #2e7d32;
+      background: rgba(46, 125, 50, 0.06);
+    }
+
+    .division-card-info { min-width: 0; flex: 1; }
+
+    .division-card-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .division-card-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
 
     .active-filter-badge {
       display: inline-flex;
@@ -156,243 +247,365 @@
       align-items: center;
       gap: 6px;
       font-size: 13px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
     }
 
-    .breadcrumb-item { color: var(--primary); cursor: pointer; font-weight: 500; }
-    .breadcrumb-item:hover { text-decoration: underline; }
-    .breadcrumb-sep { color: var(--text-muted); }
-    .breadcrumb-current { color: var(--text-muted); }
-
-    .folder-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .folder-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 16px 14px;
+    .breadcrumb-item {
+      color: var(--primary);
       cursor: pointer;
-      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .folder-card:hover { border-color: var(--accent-yellow); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-    .folder-card-icon { flex-shrink: 0; }
-
-    .folder-card-info { flex: 1; min-width: 0; }
-
-    .folder-card-name {
-      font-size: 13px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .folder-card-count { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
-    .drive-section-title {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .asset-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 14px;
-    }
-
-    .asset-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
-    }
-
-    .asset-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-
-    .asset-preview {
-      width: 100%;
-      height: 130px;
-      background: var(--surface-2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      overflow: hidden;
-    }
-
-    .asset-preview img { width: 100%; height: 130px; object-fit: cover; }
-    .asset-card-body { padding: 11px 12px; }
-
-    .asset-card-name {
-      font-size: 13px;
       font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 3px;
-    }
-
-    .asset-card-meta { font-size: 11px; color: var(--text-muted); }
-
-    .asset-card-uploader {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 4px;
     }
 
+    .breadcrumb-item:hover { text-decoration: underline; }
+    .breadcrumb-sep { color: var(--text-light); }
+    .breadcrumb-current { color: var(--text-muted); font-weight: 600; }
 
-
-    .asset-card { position: relative; }
-    .asset-card.selected {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px var(--primary-light), var(--shadow-md);
-    }
-
-    .asset-select-wrap {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      z-index: 3;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.94);
-      border: 1px solid var(--border-dark);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .asset-select-wrap input { width: 16px; height: 16px; cursor: pointer; }
-
-    .selection-toolbar {
-      display: flex;
+    .bulk-toolbar {
+      display: none;
       align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
       background: var(--surface);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-dark);
       border-radius: var(--radius-lg);
-      padding: 9px 10px;
-      margin-bottom: 14px;
+      padding: 9px 10px 9px 14px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-sm);
+      flex-wrap: wrap;
     }
 
-    .selection-toolbar label {
+    .bulk-toolbar.visible { display: flex; }
+
+    .bulk-count {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-right: auto;
+      white-space: nowrap;
+    }
+
+    .bulk-btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: var(--radius-md);
+      padding: 7px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .bulk-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .bulk-btn.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+    .bulk-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+
+    .result-row {
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .result-info { font-size: 12px; color: var(--text-muted); }
+
+    .select-all-label {
       display: inline-flex;
       align-items: center;
       gap: 7px;
       font-size: 12px;
       color: var(--text-muted);
       cursor: pointer;
-      padding-right: 4px;
+      user-select: none;
     }
 
-    .selection-toolbar input { cursor: pointer; }
-    .selection-count { font-size: 12px; color: var(--text-muted); margin-right: auto; }
-    .bulk-actions { display: none; align-items: center; gap: 7px; flex-wrap: wrap; }
-    .bulk-actions.active { display: flex; }
-
-    .folder-card { position: relative; }
-    .folder-share-action {
-      margin-left: auto;
-      flex-shrink: 0;
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
-      border: 1px solid transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      background: transparent;
+    .select-all-label input,
+    .item-checkbox,
+    .list-checkbox {
+      accent-color: var(--primary);
       cursor: pointer;
     }
-    .folder-share-action:hover {
-      color: var(--primary);
-      border-color: var(--border-dark);
-      background: var(--surface-2);
+
+    .drive-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
     }
 
-    .shared-by-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      width: fit-content;
-      margin-top: 6px;
-      padding: 3px 7px;
-      border-radius: var(--radius-full);
-      background: #f4ecfb;
-      color: #7b3fa0;
-      font-size: 10px;
-      font-weight: 600;
-    }
-
-    .gallery-modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 120;
-      background: rgba(0,0,0,0.45);
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-    .gallery-modal-overlay.open { display: flex; }
-
-    .gallery-modal-box {
-      width: 430px;
-      max-width: 100%;
-      max-height: 82vh;
-      overflow-y: auto;
+    .drive-card {
+      position: relative;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s, background 0.15s;
+      min-width: 0;
+    }
+
+    .drive-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .drive-card.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+      background: rgba(216, 35, 42, 0.02);
+    }
+
+    .item-checkbox-wrap {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      z-index: 4;
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: rgba(255,255,255,0.94);
+      border: 1px solid rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .item-checkbox { width: 15px; height: 15px; margin: 0; }
+
+    .asset-preview {
+      width: 100%;
+      height: 132px;
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+      overflow: hidden;
+    }
+
+    .asset-preview img { width: 100%; height: 132px; object-fit: cover; }
+
+    .folder-preview {
+      height: 132px;
+      background: linear-gradient(180deg, var(--surface-2), var(--surface));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .smart-badge {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: var(--radius-full);
+      padding: 3px 7px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #7a600a;
+      background: var(--accent-yellow-light);
+      border: 1px solid rgba(244, 184, 0, 0.35);
+    }
+
+    .drive-card-body { padding: 11px 12px 12px; }
+
+    .drive-card-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .drive-card-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .drive-card-owner {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .drive-list {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .list-row {
+      display: grid;
+      grid-template-columns: 34px minmax(260px, 1.5fr) minmax(120px, 0.7fr) minmax(120px, 0.7fr) 100px 110px;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .list-row:last-child { border-bottom: 0; }
+
+    .list-head {
+      min-height: 42px;
+      background: var(--surface-2);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: default;
+    }
+
+    .list-item { cursor: pointer; transition: background 0.12s; }
+    .list-item:hover { background: var(--surface-2); }
+    .list-item.selected { background: var(--primary-light); }
+
+    .list-name {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .list-name-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+    }
+
+    .list-muted {
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-state {
+      padding: 55px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px dashed var(--border-dark);
+      border-radius: var(--radius-lg);
+    }
+
+    .dam-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0,0,0,0.36);
+      display: none;
+      align-items: center;
+      justify-content: center;
       padding: 20px;
     }
 
-    .gallery-modal-title { font-size: 16px; font-weight: 700; margin-bottom: 5px; }
-    .gallery-modal-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; }
-    .gallery-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-    .gallery-modal-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
-    .gallery-modal-field { margin-bottom: 12px; }
+    .dam-modal-backdrop.open { display: flex; }
 
-    .shared-folder-card {
-      border-color: rgba(126, 87, 194, 0.35);
-      background: linear-gradient(135deg, var(--surface), #faf7ff);
+    .dam-modal {
+      width: min(460px, 100%);
+      background: var(--surface);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+      overflow: hidden;
+    }
+
+    .dam-modal-head {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .dam-modal-title { font-size: 17px; font-weight: 700; }
+
+    .modal-close {
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-muted);
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover { background: var(--surface-2); }
+
+    .dam-modal-body { padding: 18px 20px; }
+    .dam-modal-foot {
+      padding: 12px 20px 18px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .modal-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+    }
+
+    .modal-help {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .modal-field + .modal-field { margin-top: 14px; }
+
+    @media (max-width: 1100px) {
+      .list-row {
+        grid-template-columns: 34px minmax(220px, 1.5fr) minmax(110px, 0.7fr) 90px 100px;
+      }
+      .list-col-division { display: none; }
     }
 
     @media (max-width: 768px) {
       .gallery-wrap { grid-template-columns: 1fr; }
       .filter-panel { position: static; }
+      .division-grid { grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); }
+      .drive-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .list-row { grid-template-columns: 30px minmax(180px, 1fr) 90px; }
+      .list-col-owner, .list-col-division, .list-col-date { display: none; }
+      .bulk-count { width: 100%; margin-right: 0; }
     }
   </style>
 </head>
 <body>
-
   <nav class="navbar">
     <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Tampilkan/sembunyikan sidebar">
       <i data-lucide="panel-left"></i>
@@ -429,7 +642,7 @@
   </aside>
 
   <main class="main-content">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;">
       <div class="page-title" style="margin:0;">Gallery</div>
       <a href="upload.html" class="btn btn-primary">
         <i data-lucide="upload-cloud" style="width:15px;height:15px;"></i> Upload
@@ -476,51 +689,64 @@
             <option value="oldest">Terlama</option>
             <option value="largest">Terbesar</option>
             <option value="smallest">Terkecil</option>
+            <option value="name">Nama A–Z</option>
           </select>
         </div>
       </div>
 
-      <div>
+      <div class="explorer-pane">
         <div class="toolbar">
-          <input type="text" class="input" id="search-input" placeholder="Cari nama file...">
-          <div class="view-toggle">
-            <div class="view-btn active" id="btn-drive" onclick="setView('drive')">
-              <i data-lucide="layout-grid" style="width:13px;height:13px;"></i> Drive
-            </div>
-            <div class="view-btn" id="btn-grid" onclick="setView('grid')">
-              <i data-lucide="image" style="width:13px;height:13px;"></i> Semua
-            </div>
+          <input type="text" class="input" id="search-input" placeholder="Cari file atau folder...">
+          <div class="view-toggle" aria-label="Mode tampilan">
+            <button class="view-btn active" id="btn-grid" type="button" onclick="setView('grid')">
+              <i data-lucide="grid-2x2" style="width:14px;height:14px;"></i> Grid
+            </button>
+            <button class="view-btn" id="btn-list" type="button" onclick="setView('list')">
+              <i data-lucide="list" style="width:14px;height:14px;"></i> List
+            </button>
           </div>
         </div>
 
-
-
-        <div class="selection-toolbar" id="selection-toolbar">
-          <label>
-            <input type="checkbox" id="select-all-visible" onchange="toggleSelectAllVisible(this.checked)">
-            Pilih semua yang tampil
-          </label>
-          <span class="selection-count" id="selection-count">0 aset dipilih</span>
-          <div class="bulk-actions" id="bulk-actions">
-            <button class="btn btn-outline btn-sm" onclick="openAssetShareModalForSelection()">
-              <i data-lucide="share-2" style="width:13px;height:13px;"></i> Share
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="openBulkMoveModal()">
-              <i data-lucide="folder-input" style="width:13px;height:13px;"></i> Move
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="downloadSelectedAssets()">
-              <i data-lucide="download" style="width:13px;height:13px;"></i> Download
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="deleteSelectedAssets()">
-              <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Delete
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="clearSelection()">Batal pilih</button>
+        <div class="division-zone">
+          <div class="section-title">
+            <i data-lucide="layers" style="width:14px;height:14px;color:var(--accent-blue);"></i>
+            Folder Divisi
+          </div>
+          <div class="division-grid" id="division-grid">
+            <div style="font-size:12px;color:var(--text-muted);">Memuat folder divisi...</div>
           </div>
         </div>
 
         <div class="active-filters" id="active-filters"></div>
-        <div class="breadcrumb" id="breadcrumb" style="display:none;"></div>
-        <div class="result-info" id="result-info"></div>
+        <div class="breadcrumb" id="breadcrumb"></div>
+
+        <div class="bulk-toolbar" id="bulk-toolbar">
+          <div class="bulk-count" id="bulk-count">0 dipilih</div>
+          <button class="bulk-btn" id="bulk-share" type="button" onclick="openShareModal()">
+            <i data-lucide="share-2" style="width:14px;height:14px;"></i> Share
+          </button>
+          <button class="bulk-btn" id="bulk-move" type="button" onclick="openMoveModal()">
+            <i data-lucide="folder-input" style="width:14px;height:14px;"></i> Move
+          </button>
+          <button class="bulk-btn" id="bulk-download" type="button" onclick="bulkDownload()">
+            <i data-lucide="download" style="width:14px;height:14px;"></i> Download
+          </button>
+          <button class="bulk-btn danger" id="bulk-delete" type="button" onclick="bulkDelete()">
+            <i data-lucide="trash-2" style="width:14px;height:14px;"></i> Delete
+          </button>
+          <button class="bulk-btn" type="button" onclick="clearSelection()" title="Batalkan pilihan">
+            <i data-lucide="x" style="width:14px;height:14px;"></i>
+          </button>
+        </div>
+
+        <div class="result-row">
+          <div class="result-info" id="result-info"></div>
+          <label class="select-all-label" id="select-all-wrap" style="display:none;">
+            <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)">
+            Pilih semua
+          </label>
+        </div>
+
         <div id="content-area">
           <div style="display:flex;justify-content:center;padding:40px;">
             <div class="spinner"></div>
@@ -530,42 +756,50 @@
     </div>
   </main>
 
-
-
-  <div class="gallery-modal-overlay" id="share-division-modal" onclick="if(event.target===this) closeShareDivisionModal()">
-    <div class="gallery-modal-box">
-      <div class="gallery-modal-title" id="share-division-title">Bagikan</div>
-      <div class="gallery-modal-subtitle" id="share-division-subtitle">Pilih divisi tujuan.</div>
-      <div class="gallery-modal-field">
-        <div class="gallery-modal-label">Divisi tujuan</div>
-        <select class="input" id="share-division-select">
-          <option value="">Pilih divisi...</option>
-        </select>
+  <div class="dam-modal-backdrop" id="share-modal" onclick="backdropClose(event, 'share-modal')">
+    <div class="dam-modal" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
+      <div class="dam-modal-head">
+        <div class="dam-modal-title" id="share-modal-title">Bagikan item</div>
+        <button class="modal-close" type="button" onclick="closeModal('share-modal')">
+          <i data-lucide="x" style="width:18px;height:18px;"></i>
+        </button>
       </div>
-      <div class="gallery-modal-field" id="share-note-wrap">
-        <div class="gallery-modal-label">Catatan (opsional)</div>
-        <textarea class="input" id="share-note" rows="3" placeholder="Contoh: untuk dipakai di campaign Agustus"></textarea>
+      <div class="dam-modal-body">
+        <div class="modal-help" id="share-summary"></div>
+        <div class="modal-field">
+          <label class="modal-label" for="share-division">Bagikan ke divisi</label>
+          <select class="input" id="share-division"></select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="share-note">Catatan untuk aset <span style="font-weight:400;">(opsional)</span></label>
+          <textarea class="input" id="share-note" rows="3" placeholder="Tambahkan konteks singkat..."></textarea>
+        </div>
       </div>
-      <div class="gallery-modal-actions">
-        <button class="btn btn-outline btn-sm" onclick="closeShareDivisionModal()">Batal</button>
-        <button class="btn btn-primary btn-sm" id="share-submit-btn" onclick="submitShareToDivision()">Bagikan</button>
+      <div class="dam-modal-foot">
+        <button class="btn btn-outline" type="button" onclick="closeModal('share-modal')">Batal</button>
+        <button class="btn btn-primary" id="share-submit" type="button" onclick="executeShare()">Bagikan</button>
       </div>
     </div>
   </div>
 
-  <div class="gallery-modal-overlay" id="bulk-move-modal" onclick="if(event.target===this) closeBulkMoveModal()">
-    <div class="gallery-modal-box">
-      <div class="gallery-modal-title">Move Aset</div>
-      <div class="gallery-modal-subtitle" id="bulk-move-subtitle">Pilih folder tujuan untuk aset yang dipilih.</div>
-      <div class="gallery-modal-field">
-        <div class="gallery-modal-label">Folder tujuan</div>
-        <select class="input" id="bulk-move-folder-select">
-          <option value="">Pilih folder...</option>
-        </select>
+  <div class="dam-modal-backdrop" id="move-modal" onclick="backdropClose(event, 'move-modal')">
+    <div class="dam-modal" role="dialog" aria-modal="true" aria-labelledby="move-modal-title">
+      <div class="dam-modal-head">
+        <div class="dam-modal-title" id="move-modal-title">Pindahkan aset</div>
+        <button class="modal-close" type="button" onclick="closeModal('move-modal')">
+          <i data-lucide="x" style="width:18px;height:18px;"></i>
+        </button>
       </div>
-      <div class="gallery-modal-actions">
-        <button class="btn btn-outline btn-sm" onclick="closeBulkMoveModal()">Batal</button>
-        <button class="btn btn-primary btn-sm" onclick="submitBulkMove()">Move</button>
+      <div class="dam-modal-body">
+        <div class="modal-help" id="move-summary"></div>
+        <div class="modal-field">
+          <label class="modal-label" for="move-destination">Folder tujuan</label>
+          <select class="input" id="move-destination"></select>
+        </div>
+      </div>
+      <div class="dam-modal-foot">
+        <button class="btn btn-outline" type="button" onclick="closeModal('move-modal')">Batal</button>
+        <button class="btn btn-primary" id="move-submit" type="button" onclick="executeMove()">Pindahkan</button>
       </div>
     </div>
   </div>
@@ -578,29 +812,30 @@
   <script>
     requireAuth();
     initSidebarToggle();
+
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
+
     if (isManager()) {
       document.getElementById("sidebar-admin-label").style.display = "block";
-      document.getElementById("sidebar-users").style.display     = "flex";
+      document.getElementById("sidebar-users").style.display = "flex";
       document.getElementById("sidebar-dashboard").style.display = "flex";
     }
 
-    let allAssets       = [];
-    let allFolders      = [];
-    let allDivisions    = [];
-    let sharedAssets    = [];
-    let activeTipe      = "";
-    let activeTag       = "";
-    let tagAssetIds     = null;
-    let viewMode        = "drive";
-    let currentFolderId = null;
-    let currentVisibleAssets = [];
-    let currentContext  = "drive-root";
-    let selectedAssetIds = new Set();
-    let shareModalMode  = null;
-    let shareModalAssetIds = [];
-    let shareModalFolderId = null;
+    let allAssets = [];
+    let allFolders = [];
+    let allDivisions = [];
+    let sharedAssetShares = [];
+    let activeTipe = "";
+    let activeTag = "";
+    let tagAssetIds = null;
+    let viewMode = localStorage.getItem("dam_gallery_view") || "grid";
+    let navStack = [];
+    let currentRawAssets = [];
+    let currentRawFolders = [];
+    let visibleAssets = [];
+    let visibleFolders = [];
+    const selectedItems = new Map();
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -611,662 +846,834 @@
         .replaceAll("'", "&#039;");
     }
 
+    function normalizeName(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function isCustomFolder(folder) {
+      return folder.type === "system" && normalizeName(folder.nama) === "custom";
+    }
+
+    function getSystemFolders() {
+      return allFolders
+        .filter(folder => folder.type === "system" && !isCustomFolder(folder))
+        .sort((a, b) => a.nama.localeCompare(b.nama, "id"));
+    }
+
+    function getSmartFolders() {
+      return allFolders.filter(folder => folder.type === "smart");
+    }
+
+    function getLegacySharedFolders() {
+      return allFolders.filter(folder => folder.type === "shared");
+    }
+
+    function getSharedSmartFolders() {
+      return getSmartFolders().filter(folder => folder.shared_to_me === true);
+    }
+
+    function currentLocation() {
+      return navStack.length ? navStack[navStack.length - 1] : { type: "root", name: "Gallery" };
+    }
+
+    function itemKey(kind, id) {
+      return `${kind}:${id}`;
+    }
+
     function getFileIcon(tipe = "") {
       if (tipe.includes("image")) return "🖼️";
       if (tipe.includes("video")) return "🎬";
-      if (tipe.includes("pdf"))   return "📄";
+      if (tipe.includes("pdf")) return "📄";
       if (tipe.includes("word") || tipe.includes("document")) return "📝";
       if (tipe.includes("spreadsheet") || tipe.includes("excel")) return "📊";
-      return "📁";
+      return "📦";
     }
 
     function setView(mode) {
       viewMode = mode;
-      document.getElementById("btn-drive").classList.toggle("active", mode === "drive");
-      document.getElementById("btn-grid").classList.toggle("active",  mode === "grid");
-      document.getElementById("breadcrumb").style.display = "none";
-      clearSelection(false);
-      lucide.createIcons();
-      render();
+      localStorage.setItem("dam_gallery_view", mode);
+      document.getElementById("btn-grid").classList.toggle("active", mode === "grid");
+      document.getElementById("btn-list").classList.toggle("active", mode === "list");
+      renderVisibleItems();
     }
 
-    function ensureGridView() {
-      if (viewMode !== "grid") setView("grid");
-    }
+    function renderDivisionStrip() {
+      const grid = document.getElementById("division-grid");
+      const location = currentLocation();
+      const sharedCount = sharedAssetShares.length + getSharedSmartFolders().length;
 
-    function render() {
-      if (viewMode === "drive") renderDrive();
-      else applyFilters(false);
-    }
+      const sharedCard = `
+        <button class="division-card shared ${location.type === "shared" ? "active" : ""}" type="button" onclick="openShared()">
+          <i data-lucide="users-round" style="width:27px;height:27px;color:#2e7d32;flex-shrink:0;"></i>
+          <span class="division-card-info">
+            <span class="division-card-name">Shared with me</span>
+            <span class="division-card-subtitle">${sharedCount} item dibagikan</span>
+          </span>
+        </button>`;
 
-    function canShareFolder(folder) {
-      return folder.type === "smart" && (folder.user_id === user.user_id || isManager());
-    }
+      const folderCards = getSystemFolders().map(folder => {
+        const active = location.type === "folder" && location.id === folder.id;
+        return `
+          <button class="division-card ${active ? "active" : ""}" type="button" onclick="openDivision('${folder.id}')">
+            <i data-lucide="folder" style="width:27px;height:27px;color:var(--accent-blue);flex-shrink:0;"></i>
+            <span class="division-card-info">
+              <span class="division-card-name">${escapeHtml(folder.nama)}</span>
+              <span class="division-card-subtitle">${escapeHtml(folder.div_nama || "Division")}</span>
+            </span>
+          </button>`;
+      }).join("");
 
-    function folderCardHTML(f, iconColor) {
-      const subtitle = f.type === "system" ? f.div_nama || "Divisi" :
-                       f.type === "shared"  ? "Semua divisi" :
-                       f.shared_to_me ? `Dibagikan oleh ${f.shared_by || f.owner || "-"}` :
-                       `Smart · ${f.owner || "-"}`;
-      const shareButton = canShareFolder(f)
-        ? `<button class="folder-share-action" title="Bagikan folder ke divisi lain" onclick="event.stopPropagation();openFolderShareModal('${f.id}')">
-             <i data-lucide="share-2" style="width:15px;height:15px;"></i>
-           </button>`
-        : "";
-      return `
-        <div class="folder-card" onclick="bukaFolder('${f.id}')">
-          <i data-lucide="folder" class="folder-card-icon" style="width:28px;height:28px;color:${iconColor};"></i>
-          <div class="folder-card-info">
-            <div class="folder-card-name">${escapeHtml(f.nama)}</div>
-            <div class="folder-card-count">${escapeHtml(subtitle)}</div>
-          </div>
-          ${shareButton}
-        </div>`;
-    }
-
-    function sharedWithMeCardHTML() {
-      return `
-        <div class="folder-card shared-folder-card" onclick="renderSharedWithMe()">
-          <i data-lucide="inbox" class="folder-card-icon" style="width:28px;height:28px;color:#7E57C2;"></i>
-          <div class="folder-card-info">
-            <div class="folder-card-name">Shared with me</div>
-            <div class="folder-card-count">${sharedAssets.length} aset dibagikan ke divisi kamu</div>
-          </div>
-        </div>`;
-    }
-
-    function setVisibleAssets(assets, context, folderId = null) {
-      currentVisibleAssets = assets;
-      currentContext = context;
-      currentFolderId = folderId;
-      updateSelectionUI();
-    }
-
-    async function renderDrive(folder_id = null) {
-      const contentEl  = document.getElementById("content-area");
-      const breadcrumb = document.getElementById("breadcrumb");
-      const resultInfo = document.getElementById("result-info");
-
-      clearSelection(false);
-      contentEl.innerHTML = `<div style="display:flex;justify-content:center;padding:40px;"><div class="spinner"></div></div>`;
-
-      if (!folder_id) {
-        breadcrumb.style.display = "none";
-        resultInfo.textContent   = "";
-
-        const sharedFolders = allFolders.filter(f => f.type === "shared");
-        const systemFolders = allFolders.filter(f => f.type === "system");
-        const sharedToMeFolders = allFolders.filter(f => f.type === "smart" && f.shared_to_me);
-        const smartFolders  = allFolders.filter(f => f.type === "smart" && !f.shared_to_me);
-
-        let html = "";
-
-        if (sharedAssets.length || sharedToMeFolders.length) {
-          html += `<div class="drive-section-title">
-            <i data-lucide="inbox" style="width:14px;height:14px;color:#7E57C2;"></i>
-            Dibagikan ke Saya
-          </div>
-          <div class="folder-grid">
-            ${sharedAssets.length ? sharedWithMeCardHTML() : ""}
-            ${sharedToMeFolders.map(f => folderCardHTML(f, "#7E57C2")).join("")}
-          </div>`;
-        }
-
-        if (sharedFolders.length) {
-          html += `<div class="drive-section-title" style="margin-top:16px;">
-            <i data-lucide="globe" style="width:14px;height:14px;color:#2E7D32;"></i>
-            Shared — Semua Divisi
-          </div>
-          <div class="folder-grid">
-            ${sharedFolders.map(f => folderCardHTML(f, "#2E7D32")).join("")}
-          </div>`;
-        }
-
-        if (systemFolders.length) {
-          html += `<div class="drive-section-title" style="margin-top:16px;">
-            <i data-lucide="layers" style="width:14px;height:14px;color:var(--accent-blue);"></i>
-            Folder Divisi
-          </div>
-          <div class="folder-grid">
-            ${systemFolders.map(f => folderCardHTML(f, "var(--accent-blue)")).join("")}
-          </div>`;
-        }
-
-        if (smartFolders.length) {
-          html += `<div class="drive-section-title" style="margin-top:16px;">
-            <i data-lucide="zap" style="width:14px;height:14px;color:var(--accent-yellow);"></i>
-            Smart Folder
-          </div>
-          <div class="folder-grid">
-            ${smartFolders.map(f => folderCardHTML(f, "var(--accent-yellow)")).join("")}
-          </div>`;
-        }
-
-        if (!html) {
-          html = `<div class="empty-state">
-            <i data-lucide="folder-open" style="width:48px;height:48px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
-            <p>Belum ada folder tersedia</p>
-          </div>`;
-        }
-
-        const latestAssets = allAssets.slice(0, 8);
-        setVisibleAssets(latestAssets, "drive-root", null);
-        html += `<div class="drive-section-title" style="margin-top:20px;">
-          <i data-lucide="image" style="width:14px;height:14px;color:var(--primary);"></i>
-          Aset Terbaru
-        </div>`;
-        html += renderAssetGrid(latestAssets);
-
-        contentEl.innerHTML = html;
-        updateSelectionUI();
-        lucide.createIcons();
-        return;
-      }
-
-      breadcrumb.style.display = "flex";
-      const folder = allFolders.find(f => f.id === folder_id);
-      const folderNama = folder?.nama || "Folder";
-      breadcrumb.innerHTML = `
-        <span class="breadcrumb-item" onclick="renderDrive(null)">
-          <i data-lucide="home" style="width:13px;height:13px;vertical-align:middle;"></i> Gallery
-        </span>
-        <span class="breadcrumb-sep">/</span>
-        <span class="breadcrumb-current">${escapeHtml(folderNama)}</span>`;
-
-      try {
-        const data   = await fetchWithRetry(`${API_BASE_URL}/folders/${folder_id}/assets?user_id=${user.user_id}`);
-        const assets = data.assets;
-        resultInfo.textContent = `${assets.length} aset di folder ini`;
-        setVisibleAssets(assets, "folder", folder_id);
-
-        if (assets.length === 0) {
-          contentEl.innerHTML = `
-            <div class="empty-state">
-              <i data-lucide="folder-open" style="width:48px;height:48px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
-              <p>Folder kosong.</p>
-            </div>`;
-        } else {
-          contentEl.innerHTML = renderAssetGrid(assets);
-        }
-        lucide.createIcons();
-      } catch (e) {
-        setVisibleAssets([], "folder", folder_id);
-        contentEl.innerHTML = `
-          <div class="empty-state">
-            <i data-lucide="wifi-off" style="width:40px;height:40px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
-            <p style="color:var(--danger);">Gagal memuat folder: ${escapeHtml(e.message)}</p>
-            <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="renderDrive('${folder_id}')">Coba Lagi</button>
-          </div>`;
-        lucide.createIcons();
-      }
-    }
-
-    function bukaFolder(folder_id) {
-      renderDrive(folder_id);
-    }
-
-    function renderSharedWithMe() {
-      clearSelection(false);
-      const contentEl  = document.getElementById("content-area");
-      const breadcrumb = document.getElementById("breadcrumb");
-      const resultInfo = document.getElementById("result-info");
-
-      breadcrumb.style.display = "flex";
-      breadcrumb.innerHTML = `
-        <span class="breadcrumb-item" onclick="renderDrive(null)">
-          <i data-lucide="home" style="width:13px;height:13px;vertical-align:middle;"></i> Gallery
-        </span>
-        <span class="breadcrumb-sep">/</span>
-        <span class="breadcrumb-current">Shared with me</span>`;
-
-      resultInfo.textContent = `${sharedAssets.length} aset dibagikan ke divisi kamu`;
-      setVisibleAssets(sharedAssets, "shared", null);
-      contentEl.innerHTML = renderAssetGrid(sharedAssets);
+      grid.innerHTML = sharedCard + folderCards;
       lucide.createIcons();
     }
 
-    function renderAssetGrid(assets) {
-      if (assets.length === 0) {
-        return `<div class="empty-state">
-          <i data-lucide="image-off" style="width:48px;height:48px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
-          <p>Tidak ada aset</p>
-        </div>`;
-      }
+    function renderBreadcrumb() {
+      const el = document.getElementById("breadcrumb");
+      let html = `
+        <span class="breadcrumb-item" onclick="goHome()">
+          <i data-lucide="home" style="width:13px;height:13px;"></i> Gallery
+        </span>`;
 
-      return `<div class="asset-grid">` + assets.map(a => {
-        const isImage = (a.tipe_file || "").includes("image");
-        const preview = isImage
-          ? `<div class="asset-preview"><img src="${escapeHtml(a.url)}" alt="${escapeHtml(a.nama_file)}" loading="lazy"></div>`
-          : `<div class="asset-preview">${getFileIcon(a.tipe_file || "")}</div>`;
-        const selected = selectedAssetIds.has(a.id);
-        const sharedMeta = a._shared ? `
-          <div class="shared-by-badge">
-            <i data-lucide="share-2" style="width:10px;height:10px;"></i>
-            Dibagikan oleh ${escapeHtml(a.shared_by || "-")}
-          </div>` : "";
-        const uploaderLine = a._shared
-          ? `${a.share_note ? `<div class="asset-card-uploader" title="Catatan share"><i data-lucide="message-square" style="width:10px;height:10px;"></i>${escapeHtml(a.share_note)}</div>` : ""}`
-          : `<div class="asset-card-uploader">
-              <i data-lucide="user" style="width:10px;height:10px;"></i>
-              ${escapeHtml(a.uploader || "-")}
-            </div>`;
-
-        return `<div class="asset-card ${selected ? "selected" : ""}" data-asset-card="${a.id}" onclick="openDetailPanel('${a.id}', 'onAssetDeletedGallery', ${currentFolderId ? `'${currentFolderId}'` : 'null'})">
-          <label class="asset-select-wrap" onclick="event.stopPropagation();" title="Pilih aset">
-            <input type="checkbox" data-asset-select="${a.id}" ${selected ? "checked" : ""} onchange="toggleAssetSelection('${a.id}', this.checked)">
-          </label>
-          ${preview}
-          <div class="asset-card-body">
-            <div class="asset-card-name">${escapeHtml(a.nama_file)}</div>
-            <div class="asset-card-meta">${formatFileSize(a.ukuran || 0)} · ${formatDate(a.created_at)}</div>
-            ${uploaderLine}
-            ${sharedMeta}
-          </div>
-        </div>`;
-      }).join("") + `</div>`;
-    }
-
-    function getSelectedAssetObjects() {
-      const lookup = new Map();
-      [...allAssets, ...sharedAssets, ...currentVisibleAssets].forEach(a => {
-        if (a?.id) lookup.set(a.id, a);
-      });
-      return Array.from(selectedAssetIds).map(id => lookup.get(id)).filter(Boolean);
-    }
-
-    function toggleAssetSelection(assetId, checked) {
-      if (checked) selectedAssetIds.add(assetId);
-      else selectedAssetIds.delete(assetId);
-      updateSelectionUI();
-    }
-
-    function toggleSelectAllVisible(checked) {
-      currentVisibleAssets.forEach(a => {
-        if (checked) selectedAssetIds.add(a.id);
-        else selectedAssetIds.delete(a.id);
-      });
-      updateSelectionUI();
-    }
-
-    function clearSelection(update = true) {
-      selectedAssetIds.clear();
-      if (update) updateSelectionUI();
-      else {
-        const selectAll = document.getElementById("select-all-visible");
-        if (selectAll) {
-          selectAll.checked = false;
-          selectAll.indeterminate = false;
-        }
-        const countEl = document.getElementById("selection-count");
-        if (countEl) countEl.textContent = "0 aset dipilih";
-        document.getElementById("bulk-actions")?.classList.remove("active");
-      }
-    }
-
-    function updateSelectionUI() {
-      document.getElementById("selection-count").textContent = `${selectedAssetIds.size} aset dipilih`;
-      document.getElementById("bulk-actions").classList.toggle("active", selectedAssetIds.size > 0);
-
-      document.querySelectorAll("[data-asset-select]").forEach(cb => {
-        const id = cb.getAttribute("data-asset-select");
-        cb.checked = selectedAssetIds.has(id);
-      });
-      document.querySelectorAll("[data-asset-card]").forEach(card => {
-        card.classList.toggle("selected", selectedAssetIds.has(card.getAttribute("data-asset-card")));
+      navStack.forEach((item, index) => {
+        const isLast = index === navStack.length - 1;
+        html += `<span class="breadcrumb-sep">/</span>`;
+        html += isLast
+          ? `<span class="breadcrumb-current">${escapeHtml(item.name)}</span>`
+          : `<span class="breadcrumb-item" onclick="goBreadcrumb(${index})">${escapeHtml(item.name)}</span>`;
       });
 
-      const visibleIds = currentVisibleAssets.map(a => a.id);
-      const selectedVisible = visibleIds.filter(id => selectedAssetIds.has(id)).length;
-      const selectAll = document.getElementById("select-all-visible");
-      if (selectAll) {
-        selectAll.checked = visibleIds.length > 0 && selectedVisible === visibleIds.length;
-        selectAll.indeterminate = selectedVisible > 0 && selectedVisible < visibleIds.length;
-      }
+      el.innerHTML = html;
       lucide.createIcons();
     }
 
     function renderActiveFilters() {
       const el = document.getElementById("active-filters");
       let html = "";
+
       if (activeTipe) {
-        const label = {image:"Gambar",video:"Video",pdf:"PDF"}[activeTipe] || activeTipe;
+        const label = { image: "Gambar", video: "Video", pdf: "PDF" }[activeTipe] || activeTipe;
         html += `<div class="active-filter-badge">Tipe: ${escapeHtml(label)} <span onclick="clearTipe()">×</span></div>`;
       }
+
       if (activeTag) {
         html += `<div class="active-filter-badge">Tag: ${escapeHtml(activeTag)} <span onclick="clearTag()">×</span></div>`;
       }
+
       el.innerHTML = html;
     }
 
-    function applyFilters(resetSelection = true) {
-      if (resetSelection) clearSelection(false);
-      const q    = document.getElementById("search-input").value.toLowerCase();
+    function normalizeSharedAsset(share) {
+      if (!share || !share.assets) return null;
+      const sender = share.users?.nama || share.from_user?.nama || share.shared_by || "—";
+      return {
+        ...share.assets,
+        shared_by: sender,
+        shared_note: share.catatan || "",
+        share_id: share.id,
+        is_shared_asset: true,
+      };
+    }
+
+    function dedupeAssets(assets) {
+      const map = new Map();
+      assets.filter(Boolean).forEach(asset => {
+        if (!map.has(asset.id)) map.set(asset.id, asset);
+      });
+      return Array.from(map.values());
+    }
+
+    async function loadLocationData() {
+      const content = document.getElementById("content-area");
+      content.innerHTML = `<div style="display:flex;justify-content:center;padding:40px;"><div class="spinner"></div></div>`;
+      document.getElementById("select-all-wrap").style.display = "none";
+
+      const location = currentLocation();
+
+      try {
+        if (location.type === "root") {
+          currentRawAssets = [...allAssets];
+          currentRawFolders = getSmartFolders().filter(folder => !folder.shared_to_me && !folder.parent_id);
+        } else if (location.type === "shared") {
+          const directShared = sharedAssetShares.map(normalizeSharedAsset).filter(Boolean);
+          const legacyFolders = getLegacySharedFolders();
+          const legacyResponses = await Promise.allSettled(
+            legacyFolders.map(folder => getFolderAssets(folder.id, user.user_id))
+          );
+          const legacyAssets = legacyResponses.flatMap(result =>
+            result.status === "fulfilled" ? (result.value.assets || []) : []
+          );
+
+          currentRawAssets = dedupeAssets([...directShared, ...legacyAssets]);
+          currentRawFolders = getSharedSmartFolders();
+        } else if (location.type === "folder") {
+          const response = await getFolderAssets(location.id, user.user_id);
+          currentRawAssets = response.assets || [];
+
+          if (location.folderType === "system") {
+            currentRawFolders = getSmartFolders().filter(folder =>
+              !folder.shared_to_me &&
+              !folder.parent_id &&
+              folder.division_id === location.division_id
+            );
+          } else {
+            currentRawFolders = getSmartFolders().filter(folder => folder.parent_id === location.id);
+          }
+        }
+
+        applyFiltersAndRender();
+      } catch (error) {
+        currentRawAssets = [];
+        currentRawFolders = [];
+        content.innerHTML = `
+          <div class="empty-state">
+            <i data-lucide="wifi-off" style="width:42px;height:42px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
+            <p style="color:var(--danger);">Gagal memuat isi: ${escapeHtml(error.message)}</p>
+            <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="loadLocationData()">Coba Lagi</button>
+          </div>`;
+        document.getElementById("result-info").textContent = "";
+        lucide.createIcons();
+      }
+    }
+
+    function applyFiltersAndRender() {
+      const q = document.getElementById("search-input").value.trim().toLowerCase();
       const sort = document.getElementById("sort-by").value;
 
-      let filtered = allAssets.filter(a => {
-        const matchQ    = (a.nama_file || "").toLowerCase().includes(q);
-        const matchTipe = activeTipe ? (a.tipe_file || "").includes(activeTipe) : true;
-        const matchTag  = activeTag ? (tagAssetIds || []).includes(a.id) : true;
+      visibleFolders = currentRawFolders.filter(folder => {
+        if (!q) return true;
+        return normalizeName(folder.nama).includes(q);
+      });
+
+      visibleAssets = currentRawAssets.filter(asset => {
+        const matchQ = !q || normalizeName(asset.nama_file).includes(q);
+        const matchTipe = activeTipe ? String(asset.tipe_file || "").includes(activeTipe) : true;
+        const matchTag = activeTag ? (tagAssetIds || []).includes(asset.id) : true;
         return matchQ && matchTipe && matchTag;
       });
 
-      if (sort === "oldest")   filtered.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-      if (sort === "largest")  filtered.sort((a,b) => b.ukuran - a.ukuran);
-      if (sort === "smallest") filtered.sort((a,b) => a.ukuran - b.ukuran);
+      visibleFolders.sort((a, b) => a.nama.localeCompare(b.nama, "id"));
 
-      setVisibleAssets(filtered, "grid", null);
-      document.getElementById("result-info").textContent = `Menampilkan ${filtered.length} dari ${allAssets.length} aset`;
-      document.getElementById("content-area").innerHTML  = renderAssetGrid(filtered);
+      if (sort === "oldest") visibleAssets.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      if (sort === "newest") visibleAssets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      if (sort === "largest") visibleAssets.sort((a, b) => (b.ukuran || 0) - (a.ukuran || 0));
+      if (sort === "smallest") visibleAssets.sort((a, b) => (a.ukuran || 0) - (b.ukuran || 0));
+      if (sort === "name") visibleAssets.sort((a, b) => a.nama_file.localeCompare(b.nama_file, "id"));
+
+      reconcileSelection();
       renderActiveFilters();
-      updateSelectionUI();
+      renderVisibleItems();
+    }
+
+    function reconcileSelection() {
+      const visibleKeys = new Set([
+        ...visibleFolders.map(folder => itemKey("folder", folder.id)),
+        ...visibleAssets.map(asset => itemKey("asset", asset.id)),
+      ]);
+
+      for (const key of selectedItems.keys()) {
+        if (!visibleKeys.has(key)) selectedItems.delete(key);
+      }
+    }
+
+    function renderVisibleItems() {
+      const content = document.getElementById("content-area");
+      const total = visibleFolders.length + visibleAssets.length;
+      const location = currentLocation();
+
+      document.getElementById("btn-grid").classList.toggle("active", viewMode === "grid");
+      document.getElementById("btn-list").classList.toggle("active", viewMode === "list");
+      document.getElementById("result-info").textContent = `${visibleFolders.length} folder · ${visibleAssets.length} aset`;
+      document.getElementById("select-all-wrap").style.display = total ? "inline-flex" : "none";
+
+      if (!total) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <i data-lucide="folder-open" style="width:48px;height:48px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
+            <p>${location.type === "shared" ? "Belum ada item yang dibagikan ke divisi kamu." : "Tidak ada file atau folder di lokasi ini."}</p>
+          </div>`;
+        updateBulkToolbar();
+        lucide.createIcons();
+        return;
+      }
+
+      content.innerHTML = viewMode === "grid" ? renderGrid() : renderList();
+      syncSelectAllCheckbox();
+      updateBulkToolbar();
       lucide.createIcons();
+    }
+
+    function renderGrid() {
+      const folderHtml = visibleFolders.map(folder => renderFolderCard(folder)).join("");
+      const assetHtml = visibleAssets.map(asset => renderAssetCard(asset)).join("");
+      return `<div class="drive-grid">${folderHtml}${assetHtml}</div>`;
+    }
+
+    function renderFolderCard(folder) {
+      const key = itemKey("folder", folder.id);
+      const checked = selectedItems.has(key);
+      const subtitle = folder.shared_by
+        ? `Dibagikan oleh ${folder.shared_by}`
+        : `Smart Folder${folder.div_nama ? ` · ${folder.div_nama}` : ""}`;
+
+      return `
+        <div class="drive-card ${checked ? "selected" : ""}" onclick="openSmartFolder('${folder.id}')">
+          <label class="item-checkbox-wrap" onclick="event.stopPropagation();">
+            <input class="item-checkbox" type="checkbox" ${checked ? "checked" : ""}
+              onchange="toggleSelection('folder','${folder.id}',this.checked)" aria-label="Pilih folder ${escapeHtml(folder.nama)}">
+          </label>
+          <div class="folder-preview">
+            <span class="smart-badge"><i data-lucide="zap" style="width:10px;height:10px;"></i> SMART</span>
+            <i data-lucide="folder" style="width:58px;height:58px;color:var(--accent-yellow);"></i>
+          </div>
+          <div class="drive-card-body">
+            <div class="drive-card-name">${escapeHtml(folder.nama)}</div>
+            <div class="drive-card-meta">${escapeHtml(subtitle)}</div>
+            <div class="drive-card-owner">
+              <i data-lucide="user" style="width:10px;height:10px;"></i>
+              ${escapeHtml(folder.owner || folder.shared_by || "—")}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderAssetCard(asset) {
+      const key = itemKey("asset", asset.id);
+      const checked = selectedItems.has(key);
+      const isImage = String(asset.tipe_file || "").includes("image");
+      const preview = isImage
+        ? `<div class="asset-preview"><img src="${escapeHtml(asset.url)}" alt="${escapeHtml(asset.nama_file)}" loading="lazy"></div>`
+        : `<div class="asset-preview">${getFileIcon(asset.tipe_file || "")}</div>`;
+      const owner = asset.shared_by ? `Dibagikan oleh ${asset.shared_by}` : (asset.uploader || "—");
+
+      return `
+        <div class="drive-card ${checked ? "selected" : ""}" onclick="openDetailPanel('${asset.id}', 'onAssetDeletedGallery')">
+          <label class="item-checkbox-wrap" onclick="event.stopPropagation();">
+            <input class="item-checkbox" type="checkbox" ${checked ? "checked" : ""}
+              onchange="toggleSelection('asset','${asset.id}',this.checked)" aria-label="Pilih aset ${escapeHtml(asset.nama_file)}">
+          </label>
+          ${preview}
+          <div class="drive-card-body">
+            <div class="drive-card-name">${escapeHtml(asset.nama_file)}</div>
+            <div class="drive-card-meta">${formatFileSize(asset.ukuran || 0)} · ${formatDate(asset.created_at)}</div>
+            <div class="drive-card-owner">
+              <i data-lucide="user" style="width:10px;height:10px;"></i>
+              ${escapeHtml(owner)}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderList() {
+      const allVisibleSelected = isAllVisibleSelected();
+      const folderRows = visibleFolders.map(folder => renderFolderRow(folder)).join("");
+      const assetRows = visibleAssets.map(asset => renderAssetRow(asset)).join("");
+
+      return `
+        <div class="drive-list">
+          <div class="list-row list-head">
+            <div><input class="list-checkbox" type="checkbox" ${allVisibleSelected ? "checked" : ""} onchange="toggleSelectAll(this.checked)"></div>
+            <div>Nama</div>
+            <div class="list-col-owner">Pemilik</div>
+            <div class="list-col-division">Divisi / Sumber</div>
+            <div>Ukuran</div>
+            <div class="list-col-date">Diubah</div>
+          </div>
+          ${folderRows}${assetRows}
+        </div>`;
+    }
+
+    function renderFolderRow(folder) {
+      const key = itemKey("folder", folder.id);
+      const checked = selectedItems.has(key);
+      const source = folder.shared_by ? `Shared · ${folder.shared_by}` : (folder.div_nama || "Smart Folder");
+
+      return `
+        <div class="list-row list-item ${checked ? "selected" : ""}" onclick="openSmartFolder('${folder.id}')">
+          <div onclick="event.stopPropagation();">
+            <input class="list-checkbox" type="checkbox" ${checked ? "checked" : ""} onchange="toggleSelection('folder','${folder.id}',this.checked)">
+          </div>
+          <div class="list-name">
+            <i data-lucide="folder" style="width:19px;height:19px;color:var(--accent-yellow);flex-shrink:0;"></i>
+            <span class="list-name-text">${escapeHtml(folder.nama)} ⚡</span>
+          </div>
+          <div class="list-muted list-col-owner">${escapeHtml(folder.owner || "—")}</div>
+          <div class="list-muted list-col-division">${escapeHtml(source)}</div>
+          <div class="list-muted">—</div>
+          <div class="list-muted list-col-date">${folder.created_at ? formatDate(folder.created_at) : "—"}</div>
+        </div>`;
+    }
+
+    function renderAssetRow(asset) {
+      const key = itemKey("asset", asset.id);
+      const checked = selectedItems.has(key);
+      const owner = asset.shared_by ? `Shared · ${asset.shared_by}` : (asset.uploader || "—");
+      const division = asset.div_nama || asset.uploader_divisi || "—";
+
+      return `
+        <div class="list-row list-item ${checked ? "selected" : ""}" onclick="openDetailPanel('${asset.id}', 'onAssetDeletedGallery')">
+          <div onclick="event.stopPropagation();">
+            <input class="list-checkbox" type="checkbox" ${checked ? "checked" : ""} onchange="toggleSelection('asset','${asset.id}',this.checked)">
+          </div>
+          <div class="list-name">
+            <span style="font-size:18px;line-height:1;">${getFileIcon(asset.tipe_file || "")}</span>
+            <span class="list-name-text">${escapeHtml(asset.nama_file)}</span>
+          </div>
+          <div class="list-muted list-col-owner">${escapeHtml(owner)}</div>
+          <div class="list-muted list-col-division">${escapeHtml(division)}</div>
+          <div class="list-muted">${formatFileSize(asset.ukuran || 0)}</div>
+          <div class="list-muted list-col-date">${formatDate(asset.created_at)}</div>
+        </div>`;
+    }
+
+    function findVisibleItem(kind, id) {
+      if (kind === "asset") return visibleAssets.find(asset => asset.id === id);
+      if (kind === "folder") return visibleFolders.find(folder => folder.id === id);
+      return null;
+    }
+
+    function toggleSelection(kind, id, checked) {
+      const key = itemKey(kind, id);
+      const data = findVisibleItem(kind, id);
+      if (!data) return;
+
+      if (checked) selectedItems.set(key, { kind, data });
+      else selectedItems.delete(key);
+
+      renderVisibleItems();
+    }
+
+    function isAllVisibleSelected() {
+      const keys = [
+        ...visibleFolders.map(folder => itemKey("folder", folder.id)),
+        ...visibleAssets.map(asset => itemKey("asset", asset.id)),
+      ];
+      return keys.length > 0 && keys.every(key => selectedItems.has(key));
+    }
+
+    function toggleSelectAll(checked) {
+      const items = [
+        ...visibleFolders.map(data => ({ kind: "folder", data })),
+        ...visibleAssets.map(data => ({ kind: "asset", data })),
+      ];
+
+      items.forEach(item => {
+        const key = itemKey(item.kind, item.data.id);
+        if (checked) selectedItems.set(key, item);
+        else selectedItems.delete(key);
+      });
+
+      renderVisibleItems();
+    }
+
+    function syncSelectAllCheckbox() {
+      const checkbox = document.getElementById("select-all-checkbox");
+      if (checkbox) checkbox.checked = isAllVisibleSelected();
+    }
+
+    function clearSelection(rerender = true) {
+      selectedItems.clear();
+      if (rerender) renderVisibleItems();
+      else updateBulkToolbar();
+    }
+
+    function selectedAssets() {
+      return Array.from(selectedItems.values()).filter(item => item.kind === "asset").map(item => item.data);
+    }
+
+    function selectedFolders() {
+      return Array.from(selectedItems.values()).filter(item => item.kind === "folder").map(item => item.data);
+    }
+
+    function updateBulkToolbar() {
+      const toolbar = document.getElementById("bulk-toolbar");
+      const total = selectedItems.size;
+      const assets = selectedAssets();
+      const folders = selectedFolders();
+
+      toolbar.classList.toggle("visible", total > 0);
+      document.getElementById("bulk-count").textContent = `${total} item dipilih`;
+
+      const assetOnly = assets.length > 0 && folders.length === 0;
+      const deleteAllowed = assetOnly && (isManager() || assets.every(asset => asset.user_id === user.user_id));
+
+      const shareAllowed = total > 0 && (isManager() || folders.every(folder => folder.user_id === user.user_id));
+
+      document.getElementById("bulk-share").disabled = !shareAllowed;
+      document.getElementById("bulk-share").title = shareAllowed
+        ? "Bagikan item terpilih ke divisi lain"
+        : "Folder yang dibagikan ke kamu tidak bisa dibagikan ulang";
+      document.getElementById("bulk-move").disabled = !assetOnly;
+      document.getElementById("bulk-download").disabled = !assetOnly;
+      document.getElementById("bulk-delete").disabled = !deleteAllowed;
+
+      document.getElementById("bulk-move").title = folders.length ? "Move massal hanya untuk aset" : "Pindahkan aset terpilih";
+      document.getElementById("bulk-download").title = folders.length ? "Download massal hanya untuk aset" : "Download aset terpilih";
+      document.getElementById("bulk-delete").title = folders.length
+        ? "Delete massal di Gallery ini hanya untuk aset"
+        : (!deleteAllowed && assets.length ? "User biasa hanya bisa menghapus aset miliknya sendiri" : "Hapus aset terpilih");
+
+      lucide.createIcons();
+    }
+
+    function goHome() {
+      navStack = [];
+      clearSelection(false);
+      renderDivisionStrip();
+      renderBreadcrumb();
+      loadLocationData();
+    }
+
+    function goBreadcrumb(index) {
+      navStack = navStack.slice(0, index + 1);
+      clearSelection(false);
+      renderDivisionStrip();
+      renderBreadcrumb();
+      loadLocationData();
+    }
+
+    function openDivision(folderId) {
+      const folder = allFolders.find(item => item.id === folderId);
+      if (!folder) return;
+
+      navStack = [{
+        type: "folder",
+        id: folder.id,
+        name: folder.nama,
+        folderType: folder.type,
+        division_id: folder.division_id,
+      }];
+
+      clearSelection(false);
+      renderDivisionStrip();
+      renderBreadcrumb();
+      loadLocationData();
+    }
+
+    function openShared() {
+      navStack = [{ type: "shared", id: "shared-with-me", name: "Shared with me" }];
+      clearSelection(false);
+      renderDivisionStrip();
+      renderBreadcrumb();
+      loadLocationData();
+    }
+
+    function openSmartFolder(folderId) {
+      const folder = allFolders.find(item => item.id === folderId);
+      if (!folder) return;
+
+      const current = currentLocation();
+      const node = {
+        type: "folder",
+        id: folder.id,
+        name: folder.nama,
+        folderType: folder.type,
+        division_id: folder.division_id,
+      };
+
+      if (current.type === "root") {
+        navStack = [node];
+      } else if (current.type === "shared") {
+        navStack = [current, node];
+      } else {
+        navStack = [...navStack, node];
+      }
+
+      clearSelection(false);
+      renderDivisionStrip();
+      renderBreadcrumb();
+      loadLocationData();
     }
 
     function setTipe(el, tipe) {
       activeTipe = tipe;
-      document.querySelectorAll(".tipe-item").forEach(i => i.classList.remove("active"));
+      document.querySelectorAll(".tipe-item").forEach(item => item.classList.remove("active"));
       el.classList.add("active");
-      ensureGridView();
-      applyFilters();
+      applyFiltersAndRender();
     }
 
     function clearTipe() {
       activeTipe = "";
-      document.querySelectorAll(".tipe-item").forEach(i => i.classList.remove("active"));
+      document.querySelectorAll(".tipe-item").forEach(item => item.classList.remove("active"));
       document.querySelector(".tipe-item[data-tipe='']")?.classList.add("active");
-      ensureGridView();
-      applyFilters();
+      applyFiltersAndRender();
     }
 
     async function setTag(nama) {
       activeTag = activeTag === nama ? "" : nama;
-      document.querySelectorAll(".tag-filter-item").forEach(i => i.classList.remove("active"));
+      document.querySelectorAll(".tag-filter-item").forEach(item => item.classList.remove("active"));
+
       if (activeTag) {
         document.querySelector(`.tag-filter-item[data-tag="${CSS.escape(nama)}"]`)?.classList.add("active");
         try {
-          const data = await fetchWithRetry(`${API_BASE_URL}/search/by-tag?user_id=${user.user_id}&tag=${encodeURIComponent(activeTag)}`);
-          tagAssetIds = data.asset_ids;
-        } catch (e) {
+          const data = await apiCall(`/search/by-tag?user_id=${encodeURIComponent(user.user_id)}&tag=${encodeURIComponent(activeTag)}`);
+          tagAssetIds = data.asset_ids || [];
+        } catch (error) {
           tagAssetIds = [];
           showToast("Gagal memuat filter tag", "error");
         }
       } else {
         tagAssetIds = null;
       }
-      ensureGridView();
-      applyFilters();
+
+      applyFiltersAndRender();
     }
 
     function clearTag() {
-      activeTag   = "";
+      activeTag = "";
       tagAssetIds = null;
-      document.querySelectorAll(".tag-filter-item").forEach(i => i.classList.remove("active"));
-      ensureGridView();
-      applyFilters();
+      document.querySelectorAll(".tag-filter-item").forEach(item => item.classList.remove("active"));
+      applyFiltersAndRender();
     }
 
     async function loadTags() {
       try {
-        const data = await fetchWithRetry(`${API_BASE_URL}/tags?user_id=${user.user_id}`);
-        const listEl = document.getElementById("tag-filter-list");
-        if (!data.tags.length) {
-          listEl.innerHTML = `<div style="font-size:12px;color:var(--text-light);padding:6px 10px;">Belum ada tag</div>`;
+        const data = await apiCall(`/tags?user_id=${encodeURIComponent(user.user_id)}`);
+        const list = document.getElementById("tag-filter-list");
+
+        if (!data.tags?.length) {
+          list.innerHTML = `<div style="font-size:12px;color:var(--text-light);padding:6px 10px;">Belum ada tag</div>`;
           return;
         }
-        listEl.innerHTML = data.tags.map(t => `
-          <div class="tag-filter-item" data-tag="${escapeHtml(t.nama)}" onclick='setTag(${JSON.stringify(t.nama)})'>
-            <div class="tag-dot"></div>${escapeHtml(t.nama)}
+
+        list.innerHTML = data.tags.map(tag => `
+          <div class="tag-filter-item" data-tag="${escapeHtml(tag.nama)}" onclick="setTag('${String(tag.nama).replaceAll("'", "\\'")}')">
+            <div class="tag-dot"></div>${escapeHtml(tag.nama)}
           </div>`).join("");
-      } catch (e) {
+      } catch (error) {
         document.getElementById("tag-filter-list").innerHTML =
           `<div style="font-size:12px;color:var(--danger);padding:6px 10px;">Gagal memuat tag</div>`;
       }
     }
 
-    function mapSharedAssets(shares) {
-      const seen = new Set();
-      const mapped = [];
-      for (const s of shares || []) {
-        const a = s.assets;
-        if (!a || seen.has(a.id)) continue;
-        seen.add(a.id);
-        mapped.push({
-          ...a,
-          _shared: true,
-          share_id: s.id,
-          shared_by: s.users?.nama || "-",
-          shared_to_division: s.divisions?.nama || user.division_nama || "",
-          share_note: s.catatan || "",
-          share_created_at: s.created_at
-        });
-      }
-      return mapped;
+    function openModal(id) {
+      document.getElementById(id).classList.add("open");
+      lucide.createIcons();
     }
 
-    function populateShareDivisionSelect() {
-      const select = document.getElementById("share-division-select");
-      const options = allDivisions
-        .filter(d => d.id !== user.division_id)
-        .map(d => `<option value="${d.id}">${escapeHtml(d.nama)}</option>`)
-        .join("");
-      select.innerHTML = `<option value="">Pilih divisi...</option>${options}`;
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("open");
     }
 
-    function openAssetShareModalForSelection() {
-      if (!selectedAssetIds.size) return;
-      shareModalMode = "assets";
-      shareModalAssetIds = Array.from(selectedAssetIds);
-      shareModalFolderId = null;
-      document.getElementById("share-division-title").textContent = "Share Aset";
-      document.getElementById("share-division-subtitle").textContent = `${shareModalAssetIds.length} aset akan dibagikan ke divisi tujuan dan muncul di folder Shared with me mereka.`;
-      document.getElementById("share-note-wrap").style.display = "block";
+    function backdropClose(event, id) {
+      if (event.target.id === id) closeModal(id);
+    }
+
+    function openShareModal() {
+      if (!selectedItems.size) return;
+      const assets = selectedAssets();
+      const folders = selectedFolders();
+
+      document.getElementById("share-summary").textContent =
+        `${assets.length} aset dan ${folders.length} folder akan dibagikan ke divisi yang dipilih. Folder dibagikan sebagai akses, bukan diduplikasi.`;
+
+      const select = document.getElementById("share-division");
+      select.innerHTML = allDivisions.length
+        ? allDivisions.map(division => `<option value="${division.id}">${escapeHtml(division.nama)}</option>`).join("")
+        : `<option value="">Tidak ada divisi</option>`;
+
       document.getElementById("share-note").value = "";
-      populateShareDivisionSelect();
-      document.getElementById("share-division-modal").classList.add("open");
+      document.getElementById("share-submit").disabled = !allDivisions.length;
+      openModal("share-modal");
     }
 
-    function openFolderShareModal(folderId) {
-      const folder = allFolders.find(f => f.id === folderId);
-      if (!folder) return;
-      shareModalMode = "folder";
-      shareModalAssetIds = [];
-      shareModalFolderId = folderId;
-      document.getElementById("share-division-title").textContent = "Share Folder";
-      document.getElementById("share-division-subtitle").textContent = `Folder “${folder.nama}” akan muncul sebagai Dibagikan ke Saya untuk anggota divisi tujuan, lengkap dengan nama pemberi share.`;
-      document.getElementById("share-note-wrap").style.display = "none";
-      populateShareDivisionSelect();
-      document.getElementById("share-division-modal").classList.add("open");
-    }
+    async function executeShare() {
+      const divisionId = document.getElementById("share-division").value;
+      if (!divisionId) return;
 
-    function closeShareDivisionModal() {
-      document.getElementById("share-division-modal").classList.remove("open");
-      shareModalMode = null;
-      shareModalAssetIds = [];
-      shareModalFolderId = null;
-    }
+      const note = document.getElementById("share-note").value.trim() || null;
+      const button = document.getElementById("share-submit");
+      button.disabled = true;
+      button.textContent = "Membagikan...";
 
-    async function submitShareToDivision() {
-      const divisionId = document.getElementById("share-division-select").value;
-      if (!divisionId) {
-        showToast("Pilih divisi tujuan dulu", "warning");
-        return;
+      const jobs = [
+        ...selectedAssets().map(asset => shareAssetToDivision(asset.id, user.user_id, divisionId, note)),
+        ...selectedFolders().map(folder => shareFolderToDivision(folder.id, user.user_id, divisionId)),
+      ];
+
+      const results = await Promise.allSettled(jobs);
+      const success = results.filter(result => result.status === "fulfilled").length;
+      const failed = results.length - success;
+
+      button.disabled = false;
+      button.textContent = "Bagikan";
+      closeModal("share-modal");
+
+      if (success) showToast(`${success} item berhasil dibagikan`, "success");
+      if (failed) {
+        const firstError = results.find(result => result.status === "rejected")?.reason?.message || "Sebagian item gagal dibagikan";
+        showToast(`${failed} item gagal: ${firstError}`, "error");
       }
-      const btn = document.getElementById("share-submit-btn");
-      btn.disabled = true;
-      btn.textContent = "Membagikan...";
+
+      clearSelection(false);
+      await loadAll(false);
+    }
+
+    function getMoveDestinations() {
+      const location = currentLocation();
+      return allFolders
+        .filter(folder => ["system", "smart"].includes(folder.type))
+        .filter(folder => !isCustomFolder(folder))
+        .filter(folder => folder.id !== location.id)
+        .filter(folder => !folder.shared_to_me || folder.user_id === user.user_id)
+        .sort((a, b) => {
+          if (a.type !== b.type) return a.type === "system" ? -1 : 1;
+          return a.nama.localeCompare(b.nama, "id");
+        });
+    }
+
+    function openMoveModal() {
+      const assets = selectedAssets();
+      if (!assets.length || selectedFolders().length) return;
+
+      const destinations = getMoveDestinations();
+      document.getElementById("move-summary").textContent =
+        `${assets.length} aset akan dipindahkan ke folder tujuan. Jika kamu sedang berada di sebuah folder, aset akan dikeluarkan dari folder saat ini.`;
+
+      const select = document.getElementById("move-destination");
+      select.innerHTML = destinations.length
+        ? destinations.map(folder => {
+            const prefix = folder.type === "system" ? "Divisi" : "Smart";
+            return `<option value="${folder.id}">${prefix} · ${escapeHtml(folder.nama)}</option>`;
+          }).join("")
+        : `<option value="">Tidak ada folder tujuan</option>`;
+
+      document.getElementById("move-submit").disabled = !destinations.length;
+      openModal("move-modal");
+    }
+
+    async function executeMove() {
+      const destinationId = document.getElementById("move-destination").value;
+      if (!destinationId) return;
+
+      const assets = selectedAssets();
+      const location = currentLocation();
+      const fromFolderId = location.type === "folder" ? location.id : null;
+      const button = document.getElementById("move-submit");
+
+      button.disabled = true;
+      button.textContent = "Memindahkan...";
+
+      const results = await Promise.allSettled(
+        assets.map(asset => moveAssetToFolder(asset.id, destinationId, fromFolderId, user.user_id))
+      );
+
+      const success = results.filter(result => result.status === "fulfilled").length;
+      const failed = results.length - success;
+
+      button.disabled = false;
+      button.textContent = "Pindahkan";
+      closeModal("move-modal");
+
+      if (success) showToast(`${success} aset berhasil dipindahkan`, "success");
+      if (failed) showToast(`${failed} aset gagal dipindahkan`, "error");
+
+      clearSelection(false);
+      await loadLocationData();
+    }
+
+    async function downloadOneAsset(asset) {
+      logDownload(asset.id, user.user_id);
+
       try {
-        if (shareModalMode === "assets") {
-          const note = document.getElementById("share-note").value.trim() || null;
-          let success = 0;
-          let failed = 0;
-          for (const assetId of shareModalAssetIds) {
-            try {
-              await shareAssetToDivision(assetId, user.user_id, divisionId, note);
-              success += 1;
-            } catch (e) {
-              console.error(e);
-              failed += 1;
-            }
-          }
-          if (success) showToast(`${success} aset berhasil dibagikan${failed ? `, ${failed} gagal` : ""}`, failed ? "warning" : "success");
-          else showToast("Semua aset gagal dibagikan", "error");
-        } else if (shareModalMode === "folder" && shareModalFolderId) {
-          const result = await shareFolderToDivision(shareModalFolderId, user.user_id, divisionId);
-          showToast(`Folder dibagikan ke ${result.division?.nama || "divisi tujuan"}`);
-          const folderData = await getFolders(user.user_id);
-          allFolders = folderData.folders;
-        }
-        closeShareDivisionModal();
-      } catch (err) {
-        showToast("Gagal membagikan: " + err.message, "error");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Bagikan";
+        const response = await fetch(asset.url);
+        if (!response.ok) throw new Error("Gagal mengambil file");
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = objectUrl;
+        anchor.download = asset.nama_file || "download";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+      } catch (error) {
+        const anchor = document.createElement("a");
+        anchor.href = asset.url;
+        anchor.target = "_blank";
+        anchor.rel = "noopener";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
       }
     }
 
-    function openBulkMoveModal() {
-      if (!selectedAssetIds.size) return;
-      const sel = document.getElementById("bulk-move-folder-select");
-      const options = allFolders
-        .filter(f => f.id !== currentFolderId)
-        .map(f => {
-          const label = f.type === "shared" ? `[Shared] ${f.nama}` :
-                        f.type === "system" ? `[${f.div_nama || "Divisi"}] ${f.nama}` :
-                        `[Smart] ${f.nama}`;
-          return `<option value="${f.id}">${escapeHtml(label)}</option>`;
-        }).join("");
-      sel.innerHTML = `<option value="">Pilih folder...</option>${options}`;
-      document.getElementById("bulk-move-subtitle").textContent = currentFolderId
-        ? `${selectedAssetIds.size} aset akan dipindahkan dari folder ini ke folder tujuan.`
-        : `${selectedAssetIds.size} aset akan dimasukkan ke folder tujuan.`;
-      document.getElementById("bulk-move-modal").classList.add("open");
+    async function bulkDownload() {
+      const assets = selectedAssets();
+      if (!assets.length || selectedFolders().length) return;
+
+      showToast(`Menyiapkan ${assets.length} download...`, "success");
+
+      for (const asset of assets) {
+        await downloadOneAsset(asset);
+        await new Promise(resolve => setTimeout(resolve, 250));
+      }
     }
 
-    function closeBulkMoveModal() {
-      document.getElementById("bulk-move-modal").classList.remove("open");
-    }
+    async function bulkDelete() {
+      const assets = selectedAssets();
+      if (!assets.length || selectedFolders().length) return;
 
-    async function submitBulkMove() {
-      const targetFolderId = document.getElementById("bulk-move-folder-select").value;
-      if (!targetFolderId) {
-        showToast("Pilih folder tujuan dulu", "warning");
+      if (!isManager() && assets.some(asset => asset.user_id !== user.user_id)) {
+        showToast("Kamu hanya bisa menghapus aset milikmu sendiri", "error");
         return;
       }
-      const ids = Array.from(selectedAssetIds);
-      let success = 0;
-      let failed = 0;
-      for (const id of ids) {
-        try {
-          await moveAssetToFolder(id, targetFolderId, currentFolderId, user.user_id);
-          success += 1;
-        } catch (e) {
-          console.error(e);
-          failed += 1;
-        }
-      }
-      closeBulkMoveModal();
+
+      const ok = confirm(`Hapus ${assets.length} aset terpilih? Aksi ini tidak bisa dibatalkan.`);
+      if (!ok) return;
+
+      const results = await Promise.allSettled(
+        assets.map(asset => deleteAsset(asset.id, user.user_id))
+      );
+
+      const successIds = assets
+        .filter((asset, index) => results[index].status === "fulfilled")
+        .map(asset => asset.id);
+
+      allAssets = allAssets.filter(asset => !successIds.includes(asset.id));
+      sharedAssetShares = sharedAssetShares.filter(share => !successIds.includes(share.assets?.id));
+
+      const success = successIds.length;
+      const failed = assets.length - success;
+
+      if (success) showToast(`${success} aset berhasil dihapus`, "success");
+      if (failed) showToast(`${failed} aset gagal dihapus`, "error");
+
       clearSelection(false);
-      showToast(`${success} aset berhasil dipindahkan${failed ? `, ${failed} gagal` : ""}`, failed ? "warning" : "success");
-      if (currentFolderId) await renderDrive(currentFolderId);
-      else render();
-    }
-
-    async function downloadSelectedAssets() {
-      const assets = getSelectedAssetObjects();
-      if (!assets.length) return;
-      showToast(`Menyiapkan ${assets.length} download...`, "warning");
-      for (const a of assets) {
-        try {
-          await logDownload(a.id, user.user_id);
-          const res = await fetch(a.url);
-          if (!res.ok) throw new Error("Gagal mengambil file");
-          const blob = await res.blob();
-          const objectUrl = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = objectUrl;
-          link.download = a.nama_file || "download";
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-        } catch (e) {
-          const link = document.createElement("a");
-          link.href = a.url;
-          link.target = "_blank";
-          link.rel = "noopener";
-          link.download = a.nama_file || "download";
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-        }
-        await new Promise(r => setTimeout(r, 180));
-      }
-      showToast(`${assets.length} file diproses untuk download`);
-    }
-
-    async function deleteSelectedAssets() {
-      const assets = getSelectedAssetObjects();
-      const deletable = assets.filter(a => a.user_id === user.user_id || isManager());
-      const blocked = assets.length - deletable.length;
-      if (!deletable.length) {
-        showToast("Tidak ada aset terpilih yang boleh kamu hapus", "error");
-        return;
-      }
-      const warning = blocked ? `\n${blocked} aset milik user lain akan dilewati.` : "";
-      if (!confirm(`Hapus permanen ${deletable.length} aset? File akan hilang dari storage dan semua folder.${warning}`)) return;
-
-      let success = 0;
-      let failed = 0;
-      for (const a of deletable) {
-        try {
-          await deleteAsset(a.id, user.user_id);
-          allAssets = allAssets.filter(x => x.id !== a.id);
-          sharedAssets = sharedAssets.filter(x => x.id !== a.id);
-          success += 1;
-        } catch (e) {
-          console.error(e);
-          failed += 1;
-        }
-      }
-      clearSelection(false);
-      showToast(`${success} aset dihapus${failed ? `, ${failed} gagal` : ""}${blocked ? `, ${blocked} dilewati` : ""}`, (failed || blocked) ? "warning" : "success");
-      if (currentContext === "shared") renderSharedWithMe();
-      else if (currentFolderId) await renderDrive(currentFolderId);
-      else render();
+      await loadLocationData();
     }
 
     function onAssetDeletedGallery(assetId) {
-      allAssets = allAssets.filter(a => a.id !== assetId);
-      sharedAssets = sharedAssets.filter(a => a.id !== assetId);
-      selectedAssetIds.delete(assetId);
-      if (currentContext === "shared") renderSharedWithMe();
-      else if (currentFolderId) renderDrive(currentFolderId);
-      else render();
+      allAssets = allAssets.filter(asset => asset.id !== assetId);
+      sharedAssetShares = sharedAssetShares.filter(share => share.assets?.id !== assetId);
+      selectedItems.delete(itemKey("asset", assetId));
+      loadLocationData();
     }
 
-    async function loadAll() {
+    async function loadAll(resetLocation = false) {
       try {
-        const [assetData, folderData, sharedData, divisionData] = await Promise.all([
+        const [assetData, folderData, divisionData, sharedData] = await Promise.all([
           getAssets(user.user_id),
           getFolders(user.user_id),
-          getSharedAssets(user.user_id).catch(err => {
-            console.error("Gagal load shared assets", err);
-            return {shares: []};
-          }),
-          getDivisions()
+          getDivisions(),
+          getSharedAssets(user.user_id),
         ]);
-        allAssets    = assetData.assets;
-        allFolders   = folderData.folders;
-        allDivisions = divisionData.divisions;
-        sharedAssets = mapSharedAssets(sharedData.shares);
-        render();
+
+        allAssets = assetData.assets || [];
+        allFolders = folderData.folders || [];
+        allDivisions = divisionData.divisions || [];
+        sharedAssetShares = sharedData.shares || [];
+
+        if (resetLocation) navStack = [];
+
+        renderDivisionStrip();
+        renderBreadcrumb();
+        await loadLocationData();
         initDetailPanelFromURL();
-      } catch (err) {
-        document.getElementById("content-area").innerHTML =
-          `<div class="empty-state">
-            <i data-lucide="wifi-off" style="width:40px;height:40px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
-            <p style="color:var(--danger);">Gagal memuat data: ${escapeHtml(err.message)}</p>
+      } catch (error) {
+        document.getElementById("content-area").innerHTML = `
+          <div class="empty-state">
+            <i data-lucide="wifi-off" style="width:42px;height:42px;opacity:0.3;margin:0 auto 12px;display:block;"></i>
+            <p style="color:var(--danger);">Gagal memuat data: ${escapeHtml(error.message)}</p>
             <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="loadAll()">Coba Lagi</button>
           </div>`;
         lucide.createIcons();
@@ -1274,22 +1681,30 @@
     }
 
     document.getElementById("search-input").addEventListener("input", debounce(() => {
-      ensureGridView();
-      applyFilters();
-    }, 300));
+      applyFiltersAndRender();
+    }, 250));
 
     document.getElementById("sort-by").addEventListener("change", () => {
-      ensureGridView();
-      applyFilters();
+      applyFiltersAndRender();
     });
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeShareDivisionModal();
-        closeBulkMoveModal();
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        closeModal("share-modal");
+        closeModal("move-modal");
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") {
+        const tag = document.activeElement?.tagName;
+        if (!["INPUT", "TEXTAREA", "SELECT"].includes(tag)) {
+          event.preventDefault();
+          toggleSelectAll(true);
+        }
       }
     });
 
+    setView(viewMode);
+    renderBreadcrumb();
     loadTags();
     loadAll();
     lucide.createIcons();
