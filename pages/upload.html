@@ -230,6 +230,44 @@
       margin-top: 6px;
     }
 
+    .folders-result {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .folder-suggest-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 6px;
+    }
+
+    .folder-suggest-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      padding: 4px 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .folder-suggest-item input { accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
+
+    .folder-suggest-item span:first-of-type { font-weight: 500; }
+
+    .folder-suggest-reason {
+      font-size: 11px;
+      color: var(--text-light);
+      margin-left: auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* ── Kolom kanan: info panel ── */
     .side-panel {
       display: flex;
@@ -370,7 +408,7 @@
           <div class="card-title"><i data-lucide="map-pin"></i> Tujuan Upload</div>
           <div class="destination-row">
             <div class="destination-field" id="division-field" style="display:none;">
-              <label>Bagikan ke divisi (bisa pilih lebih dari satu)</label>
+              <label>Upload sekaligus ke divisi (bisa pilih lebih dari satu)</label>
               <div class="division-picker" id="division-picker"></div>
               <div class="field-hint">Tidak pilih apa pun = upload ke divisimu sendiri saja.</div>
             </div>
@@ -579,6 +617,8 @@
     let fileStatuses  = [];   // 'pending' | 'uploading' | 'done' | 'error'
     let fileTags      = [];   // hasil tag per file (untuk restore saat render ulang)
     let filePreviews  = [];   // object URL untuk thumbnail gambar
+    let fileFolders   = [];   // { id, nama, reason, checked } per file — folder hasil auto-tagging
+    let fileAssetIds  = [];   // asset_id hasil upload, dipakai saat toggle folder
     let isUploading   = false;
 
     const dropzone  = document.getElementById("dropzone");
@@ -616,6 +656,8 @@
         fileStatuses.push("pending");
         fileTags.push(null);
         filePreviews.push(f.type.startsWith("image") ? URL.createObjectURL(f) : null);
+        fileFolders.push([]);
+        fileAssetIds.push(null);
       });
       renderFileList();
     }
@@ -660,11 +702,51 @@
             <span class="file-retry-btn" id="retry-${i}" style="display:${status === 'error' ? 'inline' : 'none'};" onclick="retrySingle(${i})">Coba Lagi</span>
           </div>
           <div class="tags-result" id="tags-${i}">${tagsHtml}</div>
+          <div class="folders-result" id="folders-${i}"></div>
         </div>`;
       }).join("");
 
       lucide.createIcons();
+      selectedFiles.forEach((_, i) => renderFolderSuggestions(i));
       updateUploadButton();
+    }
+
+    function renderFolderSuggestions(i) {
+      const wrap = document.getElementById(`folders-${i}`);
+      if (!wrap) return;
+      const suggestions = fileFolders[i] || [];
+      if (suggestions.length === 0) {
+        wrap.innerHTML = "";
+        return;
+      }
+      wrap.innerHTML = `<div class="folder-suggest-title">Folder tujuan (otomatis dari tag)</div>` +
+        suggestions.map((s, si) => `
+          <label class="folder-suggest-item">
+            <input type="checkbox" ${s.checked ? "checked" : ""} onchange="toggleSuggestedFolder(${i}, ${si}, this.checked)">
+            <span>${s.nama}</span>
+            <span class="folder-suggest-reason">${s.reason || ""}</span>
+          </label>`).join("");
+    }
+
+    async function toggleSuggestedFolder(fileIndex, sugIndex, checked) {
+      const suggestions = fileFolders[fileIndex];
+      const s        = suggestions && suggestions[sugIndex];
+      const assetId  = fileAssetIds[fileIndex];
+      if (!s || !assetId) return;
+
+      s.checked = checked;
+      try {
+        if (checked) {
+          await addAssetToFolder(s.id, assetId, user.user_id);
+        } else {
+          await removeAssetFromFolder(s.id, assetId, user.user_id);
+        }
+      } catch (e) {
+        // Gagal ubah di server -> kembalikan checkbox ke kondisi semula
+        s.checked = !checked;
+        renderFolderSuggestions(fileIndex);
+        showToast(`Gagal memperbarui folder "${s.nama}"`, "error");
+      }
     }
 
     function updateUploadButton() {
@@ -690,6 +772,8 @@
       fileStatuses  = [];
       fileTags      = [];
       filePreviews  = [];
+      fileFolders   = [];
+      fileAssetIds  = [];
       renderFileList();
     }
 
@@ -721,24 +805,36 @@
         statusEl.className   = "file-status";
         retryEl.style.display = "none";
         tagsEl.innerHTML = "";
+        fileFolders[i] = [];
+        renderFolderSuggestions(i);
 
         try {
           const result  = await uploadAsset(user.user_id, file, (pct) => {
             progEl.style.width = pct + "%";
           }, 3, 4000, primaryDiv || null);
           const assetId = result.asset && result.asset.id;
+          fileAssetIds[i] = assetId;
 
-          // Kalau dipilih 2+ divisi, set visibility aset ke semua divisi itu
-          // dan masukkan ke folder system divisi tambahan (selain primaryDiv
-          // yang sudah otomatis ditangani oleh endpoint upload).
+          // Folder yang sudah otomatis diterapkan endpoint upload (folder divisi
+          // utama + smart folder yang cocok tag). Simpan sebagai checkbox tercentang
+          // supaya user bisa langsung lihat & cancel salah satunya kalau tidak perlu.
+          const suggestions = (result.suggested_folders || []).map(s => ({ ...s, checked: true }));
+
+          // Kalau dipilih 2+ divisi, set visibility aset ke semua divisi itu,
+          // lalu ambil & terapkan juga folder yang relevan (system + smart folder)
+          // untuk divisi-divisi tambahan itu supaya muncul di checkbox yang sama.
           if (assetId && divisionIds.length >= 2) {
             try {
               await setAssetPermissions(assetId, divisionIds);
               const extraDivs = divisionIds.slice(1);
-              for (const divId of extraDivs) {
-                const sysFolder = allFolders.find(f => f.type === "system" && f.division_id === divId);
-                if (sysFolder) {
-                  await addAssetToFolder(sysFolder.id, assetId, user.user_id);
+              const predictRes = await apiCall(`/assets/${assetId}/predict-folders`, {
+                method: "POST",
+                body: JSON.stringify({ division_ids: extraDivs }),
+              });
+              for (const s of (predictRes.suggested_folders || [])) {
+                if (!suggestions.find(x => x.id === s.id)) {
+                  await addAssetToFolder(s.id, assetId, user.user_id);
+                  suggestions.push({ ...s, checked: true });
                 }
               }
             } catch (multiDivErr) {
@@ -746,13 +842,22 @@
             }
           }
 
-          if (assetId && targetFolder) {
+          if (assetId && targetFolder && !suggestions.find(x => x.id === targetFolder)) {
             try {
               await addAssetToFolder(targetFolder, assetId, user.user_id);
+              const chosen = allFolders.find(f => f.id === targetFolder);
+              suggestions.push({
+                id: targetFolder,
+                nama: chosen ? chosen.nama : "Folder pilihan",
+                reason: "Dipilih manual",
+                checked: true
+              });
             } catch (folderErr) {
               console.error("Gagal menambahkan ke folder pilihan:", folderErr);
             }
           }
+
+          fileFolders[i] = suggestions;
 
           progEl.style.width  = "100%";
           fileStatuses[i]     = "done";
@@ -760,6 +865,7 @@
           statusEl.textContent = "Upload berhasil — tag otomatis:";
           statusEl.className   = "file-status done";
           tagsEl.innerHTML = result.tags.map(t => `<span class="tag-pill">${t}</span>`).join("");
+          renderFolderSuggestions(i);
 
         } catch (err) {
           fileStatuses[i] = "error";
