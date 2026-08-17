@@ -575,10 +575,26 @@
     }
 
     function getUserDivisionInfo(u) {
-      const div = u.division?.divisions || null;
+      /*
+       * Response /divisions/users berbentuk:
+       *
+       * u.division = {
+       *   user_id: "...",
+       *   division_id: "...",
+       *   divisions: {
+       *     nama: "Animator"
+       *   }
+       * }
+       *
+       * Jadi ID divisi berada di u.division.division_id,
+       * bukan di u.division.divisions.id.
+       */
+      const assignment = u.division || null;
+      const division = assignment?.divisions || null;
+
       return {
-        id: div?.id || "",
-        nama: div?.nama || ""
+        id: assignment?.division_id || division?.id || "",
+        nama: division?.nama || ""
       };
     }
 
@@ -610,9 +626,20 @@
         let matchDivision = true;
 
         if (divisionFilter === "__none__") {
-          matchDivision = !div.id;
+          matchDivision = !div.id && !div.nama;
         } else if (divisionFilter) {
-          matchDivision = div.id === divisionFilter;
+          const selectedDivision = divisions.find(
+            item => item.id === divisionFilter
+          );
+
+          matchDivision =
+            div.id === divisionFilter ||
+            (
+              selectedDivision &&
+              div.nama &&
+              String(div.nama).trim().toLowerCase() ===
+              String(selectedDivision.nama).trim().toLowerCase()
+            );
         }
 
         return matchSearch && matchDivision;
