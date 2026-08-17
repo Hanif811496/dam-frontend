@@ -150,31 +150,133 @@
       justify-content: flex-end;
     }
 
-    .stat-mini {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .stat-mini-item {
-      flex: 1;
-      background: var(--surface-2);
+    .staff-toolbar {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.4fr) minmax(180px, .8fr) minmax(180px, .8fr) auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 14px;
       border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 12px;
-      text-align: center;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
     }
 
-    .stat-mini-value {
-      font-size: 24px;
-      font-weight: 800;
+    .staff-search-wrap {
+      position: relative;
+    }
+
+    .staff-search-wrap i {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .staff-search-wrap .input {
+      padding-left: 35px;
+    }
+
+    .staff-result-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .staff-pagination {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .staff-pagination-info {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .staff-pagination-buttons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .staff-page-btn {
+      min-width: 30px;
+      height: 30px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 7px;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 0 8px;
+    }
+
+    .staff-page-btn:hover:not(:disabled) {
+      border-color: var(--primary);
       color: var(--primary);
     }
 
-    .stat-mini-label {
-      font-size: 11px;
+    .staff-page-btn.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: white;
+    }
+
+    .staff-page-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .user-list-empty {
+      border: 1px dashed var(--border-dark);
+      border-radius: var(--radius-md);
+      padding: 30px 16px;
+      text-align: center;
       color: var(--text-muted);
-      margin-top: 2px;
+      font-size: 12px;
+      background: var(--surface);
+    }
+
+    @media (max-width: 1050px) {
+      .staff-toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .staff-result-count {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .admin-wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .staff-toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .user-item {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .user-division {
+        order: 3;
+      }
+
+      .user-actions {
+        margin-left: auto;
+      }
     }
   </style>
 </head>
@@ -224,19 +326,31 @@
       </button>
     </div>
 
-    <div class="stat-mini">
-      <div class="stat-mini-item">
-        <div class="stat-mini-value" id="stat-total-user">—</div>
-        <div class="stat-mini-label">Total User</div>
+    <div class="staff-toolbar">
+      <div class="staff-search-wrap">
+        <i data-lucide="search"></i>
+        <input
+          type="text"
+          class="input"
+          id="staff-search"
+          placeholder="Cari nama atau email..."
+          autocomplete="off"
+        >
       </div>
-      <div class="stat-mini-item">
-        <div class="stat-mini-value" id="stat-total-aset">—</div>
-        <div class="stat-mini-label">Total Aset</div>
-      </div>
-      <div class="stat-mini-item">
-        <div class="stat-mini-value">7</div>
-        <div class="stat-mini-label">Divisi</div>
-      </div>
+
+      <select class="input" id="staff-filter-division">
+        <option value="">Semua divisi</option>
+        <option value="__none__">Belum ada divisi</option>
+      </select>
+
+      <select class="input" id="staff-sort">
+        <option value="name_asc">Nama A–Z</option>
+        <option value="name_desc">Nama Z–A</option>
+        <option value="division_asc">Divisi A–Z</option>
+        <option value="division_desc">Divisi Z–A</option>
+      </select>
+
+      <div class="staff-result-count" id="staff-result-count">Memuat staff...</div>
     </div>
 
     <div class="admin-wrap">
@@ -249,6 +363,11 @@
           <div style="display:flex;justify-content:center;padding:30px;">
             <div class="spinner"></div>
           </div>
+        </div>
+
+        <div class="staff-pagination" id="staff-pagination">
+          <div class="staff-pagination-info" id="staff-pagination-info"></div>
+          <div class="staff-pagination-buttons" id="staff-pagination-buttons"></div>
         </div>
       </div>
 
@@ -343,6 +462,11 @@
 
     let divisions    = [];
     let selectedUser = null;
+    let allUsers = [];
+    let filteredUsers = [];
+    let staffCurrentPage = 1;
+
+    const STAFF_PAGE_SIZE = 20;
 
     const divisionClass = {
       "Manager":       "div-manager",
@@ -357,13 +481,24 @@
     async function loadDivisions() {
       try {
         const data = await fetchWithRetry(`${API_BASE_URL}/divisions`);
-        divisions  = data.divisions;
+        divisions = (data.divisions || []).filter(
+          d => String(d.nama || "").trim().toLowerCase() !== "custom"
+        );
 
         const sel1 = document.getElementById("new-division");
         const sel2 = document.getElementById("ubah-division");
-        const opts = divisions.map(d => `<option value="${d.id}">${d.nama}</option>`).join("");
+        const filterSel = document.getElementById("staff-filter-division");
+
+        const opts = divisions.map(
+          d => `<option value="${d.id}">${d.nama}</option>`
+        ).join("");
+
         sel1.innerHTML = `<option value="">Pilih divisi...</option>` + opts;
         sel2.innerHTML = `<option value="">Pilih divisi...</option>` + opts;
+        filterSel.innerHTML =
+          `<option value="">Semua divisi</option>` +
+          `<option value="__none__">Belum ada divisi</option>` +
+          opts;
 
       } catch (e) { console.error(e); showToast("Gagal memuat divisi", "error"); }
     }
@@ -373,12 +508,16 @@
         const data = await fetchWithRetry(`${API_BASE_URL}/admin/report/divisions`);
         const infoEl = document.getElementById("division-info");
 
-        if (!data.divisions.length) {
+        const visibleDivisions = (data.divisions || []).filter(
+          d => String(d.nama || "").trim().toLowerCase() !== "custom"
+        );
+
+        if (!visibleDivisions.length) {
           infoEl.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:10px 0;">Belum ada divisi</div>`;
           return;
         }
 
-        infoEl.innerHTML = data.divisions.map(d => `
+        infoEl.innerHTML = visibleDivisions.map(d => `
           <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
             <span class="user-division ${divisionClass[d.nama] || 'div-none'}" style="flex-shrink:0;">${d.nama}</span>
             <span style="font-size:12px;color:var(--text-muted);flex:1;">${d.jumlah_user} user &bull; ${d.jumlah_aset} aset</span>
@@ -394,49 +533,271 @@
     async function loadUsers() {
       try {
         const data = await fetchWithRetry(`${API_BASE_URL}/divisions/users`);
-        const el   = document.getElementById("user-list");
+        allUsers = data.users || [];
+        staffCurrentPage = 1;
+        applyStaffFilters();
+      } catch (e) {
+        console.error(e);
+        document.getElementById("user-list").innerHTML =
+          `<div class="user-list-empty">Gagal memuat daftar staff.</div>`;
+        document.getElementById("staff-result-count").textContent =
+          "Gagal memuat staff";
+        showToast("Gagal memuat daftar user", "error");
+      }
+    }
 
-        document.getElementById("stat-total-user").textContent = data.users.length;
+    function getUserDivisionInfo(u) {
+      const div = u.division?.divisions || null;
+      return {
+        id: div?.id || "",
+        nama: div?.nama || ""
+      };
+    }
 
-        if (data.users.length === 0) {
-          el.innerHTML = `<div class="empty-state"><p>Belum ada user</p></div>`;
-          return;
+    function applyStaffFilters(resetPage = false) {
+      if (resetPage) staffCurrentPage = 1;
+
+      const query = document
+        .getElementById("staff-search")
+        .value
+        .trim()
+        .toLowerCase();
+
+      const divisionFilter =
+        document.getElementById("staff-filter-division").value;
+
+      const sortMode =
+        document.getElementById("staff-sort").value;
+
+      filteredUsers = allUsers.filter(u => {
+        const nama = String(u.nama || "").toLowerCase();
+        const email = String(u.email || "").toLowerCase();
+        const div = getUserDivisionInfo(u);
+
+        const matchSearch =
+          !query ||
+          nama.includes(query) ||
+          email.includes(query);
+
+        let matchDivision = true;
+
+        if (divisionFilter === "__none__") {
+          matchDivision = !div.id;
+        } else if (divisionFilter) {
+          matchDivision = div.id === divisionFilter;
         }
 
-        el.innerHTML = data.users.map(u => {
-          const divNama  = u.division?.divisions?.nama || null;
-          const divClass = divisionClass[divNama] || "div-none";
-          const initial  = u.nama.charAt(0).toUpperCase();
-          const isSelf   = u.id === user.user_id;
-          return `
-            <div class="user-item">
-              <div class="user-avatar">${initial}</div>
-              <div class="user-info">
-                <div class="user-nama">${u.nama} ${isSelf ? '<span style="font-size:10px;color:var(--text-muted);">(kamu)</span>' : ''}</div>
-                <div class="user-email">${u.email}</div>
-              </div>
-              <span class="user-division ${divClass}">${divNama || "Belum ada"}</span>
-              <div class="user-actions">
-                <div class="btn-icon" title="Ubah divisi" onclick="bukaModalUbah('${u.id}', '${u.nama}')">
-                  <i data-lucide="pencil" style="width:13px;height:13px;"></i>
-                </div>
-                ${!isSelf ? `
-                <div class="btn-icon danger" title="Hapus akun" onclick="hapusStaff('${u.id}', '${u.nama}')">
-                  <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
-                </div>` : ''}
-              </div>
-            </div>`;
-        }).join("");
-        lucide.createIcons();
-      } catch (e) { console.error(e); showToast("Gagal memuat daftar user", "error"); }
+        return matchSearch && matchDivision;
+      });
+
+      filteredUsers.sort((a, b) => {
+        const aDiv = getUserDivisionInfo(a).nama || "ZZZZ";
+        const bDiv = getUserDivisionInfo(b).nama || "ZZZZ";
+        const aName = String(a.nama || "");
+        const bName = String(b.nama || "");
+
+        if (sortMode === "name_desc") {
+          return bName.localeCompare(aName, "id");
+        }
+
+        if (sortMode === "division_asc") {
+          const byDiv = aDiv.localeCompare(bDiv, "id");
+          return byDiv || aName.localeCompare(bName, "id");
+        }
+
+        if (sortMode === "division_desc") {
+          const byDiv = bDiv.localeCompare(aDiv, "id");
+          return byDiv || aName.localeCompare(bName, "id");
+        }
+
+        return aName.localeCompare(bName, "id");
+      });
+
+      renderUsersPage();
     }
 
-    async function loadStats() {
-      try {
-        const data = await fetchWithRetry(`${API_BASE_URL}/assets/by-division?user_id=${user.user_id}`);
-        document.getElementById("stat-total-aset").textContent = data.assets.length;
-      } catch (e) { console.error(e); }
+    function renderUsersPage() {
+      const el = document.getElementById("user-list");
+      const total = filteredUsers.length;
+      const allTotal = allUsers.length;
+      const totalPages = Math.max(1, Math.ceil(total / STAFF_PAGE_SIZE));
+
+      if (staffCurrentPage > totalPages) {
+        staffCurrentPage = totalPages;
+      }
+
+      if (!total) {
+        el.innerHTML = `
+          <div class="user-list-empty">
+            Tidak ada staff yang cocok dengan pencarian atau filter.
+          </div>
+        `;
+
+        document.getElementById("staff-result-count").textContent =
+          `0 dari ${allTotal} staff`;
+
+        document.getElementById("staff-pagination").style.display = "none";
+        return;
+      }
+
+      const start = (staffCurrentPage - 1) * STAFF_PAGE_SIZE;
+      const end = Math.min(start + STAFF_PAGE_SIZE, total);
+      const pageUsers = filteredUsers.slice(start, end);
+
+      el.innerHTML = pageUsers.map(u => {
+        const divNama  = u.division?.divisions?.nama || null;
+        const divClass = divisionClass[divNama] || "div-none";
+        const initial  = String(u.nama || "?").charAt(0).toUpperCase();
+        const isSelf   = u.id === user.user_id;
+
+        return `
+          <div class="user-item">
+            <div class="user-avatar">${initial}</div>
+
+            <div class="user-info">
+              <div class="user-nama">
+                ${u.nama}
+                ${isSelf
+                  ? '<span style="font-size:10px;color:var(--text-muted);">(kamu)</span>'
+                  : ''}
+              </div>
+              <div class="user-email">${u.email}</div>
+            </div>
+
+            <span class="user-division ${divClass}">
+              ${divNama || "Belum ada"}
+            </span>
+
+            <div class="user-actions">
+              <div
+                class="btn-icon"
+                title="Edit staff"
+                onclick="bukaModalUbah('${u.id}', ${JSON.stringify(String(u.nama || ""))})"
+              >
+                <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+              </div>
+
+              ${!isSelf ? `
+                <div
+                  class="btn-icon danger"
+                  title="Hapus akun"
+                  onclick="hapusStaff('${u.id}', ${JSON.stringify(String(u.nama || ""))})"
+                >
+                  <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+                </div>
+              ` : ""}
+            </div>
+          </div>`;
+      }).join("");
+
+      document.getElementById("staff-result-count").textContent =
+        total === allTotal
+          ? `${allTotal} staff`
+          : `${total} dari ${allTotal} staff`;
+
+      renderStaffPagination(totalPages, start, end, total);
+      lucide.createIcons();
     }
+
+    function renderStaffPagination(totalPages, start, end, total) {
+      const wrap = document.getElementById("staff-pagination");
+      const info = document.getElementById("staff-pagination-info");
+      const buttons = document.getElementById("staff-pagination-buttons");
+
+      if (totalPages <= 1) {
+        wrap.style.display = "none";
+        return;
+      }
+
+      wrap.style.display = "flex";
+      info.textContent = `Menampilkan ${start + 1}–${end} dari ${total} staff`;
+
+      const pageSet = new Set([
+        1,
+        totalPages,
+        staffCurrentPage - 1,
+        staffCurrentPage,
+        staffCurrentPage + 1
+      ]);
+
+      const pages = [...pageSet]
+        .filter(page => page >= 1 && page <= totalPages)
+        .sort((a, b) => a - b);
+
+      let html = `
+        <button
+          class="staff-page-btn"
+          ${staffCurrentPage === 1 ? "disabled" : ""}
+          onclick="goToStaffPage(${staffCurrentPage - 1})"
+        >
+          Sebelumnya
+        </button>
+      `;
+
+      let previous = null;
+
+      for (const page of pages) {
+        if (previous !== null && page - previous > 1) {
+          html += `<span style="font-size:11px;color:var(--text-muted);">…</span>`;
+        }
+
+        html += `
+          <button
+            class="staff-page-btn ${page === staffCurrentPage ? "active" : ""}"
+            onclick="goToStaffPage(${page})"
+          >
+            ${page}
+          </button>
+        `;
+
+        previous = page;
+      }
+
+      html += `
+        <button
+          class="staff-page-btn"
+          ${staffCurrentPage === totalPages ? "disabled" : ""}
+          onclick="goToStaffPage(${staffCurrentPage + 1})"
+        >
+          Berikutnya
+        </button>
+      `;
+
+      buttons.innerHTML = html;
+    }
+
+    function goToStaffPage(page) {
+      const totalPages = Math.max(
+        1,
+        Math.ceil(filteredUsers.length / STAFF_PAGE_SIZE)
+      );
+
+      if (page < 1 || page > totalPages) return;
+
+      staffCurrentPage = page;
+      renderUsersPage();
+    }
+
+    document
+      .getElementById("staff-search")
+      .addEventListener(
+        "input",
+        debounce(() => applyStaffFilters(true), 200)
+      );
+
+    document
+      .getElementById("staff-filter-division")
+      .addEventListener(
+        "change",
+        () => applyStaffFilters(true)
+      );
+
+    document
+      .getElementById("staff-sort")
+      .addEventListener(
+        "change",
+        () => applyStaffFilters(true)
+      );
 
     function bukaModalBuatAkun() {
       document.getElementById("modal-buat").classList.add("open");
@@ -567,7 +928,6 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Gagal menghapus akun");
         await loadUsers();
-        await loadStats();
         await loadDivisionSummary();
         showToast(`Akun ${nama} berhasil dihapus`);
       } catch (err) {
@@ -578,7 +938,6 @@
     loadDivisions();
     loadDivisionSummary();
     loadUsers();
-    loadStats();
     lucide.createIcons();
   </script>
 </body>
