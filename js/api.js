@@ -449,28 +449,58 @@ async function createFolder(
 }
 
 
-async function createSmartFolder({
-  nama,
-  user_id,
-  parent_id = null,
-  target_division_id = null,
-  division_ids = [],
-}) {
+async function createSmartFolder(payload) {
   return apiCall(
     "/folders/smart",
     {
       method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
+}
+
+
+// ======================================================
+// MOVE SMART FOLDER
+// ======================================================
+
+async function moveSmartFolder(
+  folder_id,
+  user_id,
+  parent_id = null
+) {
+  return apiCall(
+    `/folders/${encodeURIComponent(folder_id)}/move`,
+    {
+      method: "PUT",
       body: JSON.stringify({
-        nama,
         user_id,
         parent_id,
-        target_division_id,
-        division_ids,
       }),
     }
   );
 }
 
+
+/*
+ * Alias untuk kompatibilitas dengan kode Gallery / helper lama.
+ */
+async function moveFolder(
+  folder_id,
+  user_id,
+  parent_id = null
+) {
+  return moveSmartFolder(
+    folder_id,
+    user_id,
+    parent_id
+  );
+}
+
+
+// ======================================================
+// DELETE SMART FOLDER
+// ======================================================
 
 async function deleteFolder(
   folder_id,
@@ -493,24 +523,22 @@ async function deleteFolder(
 }
 
 
-// ======================================================
-// NESTED SMART FOLDERS
-// ======================================================
-
-async function moveFolder(
+/*
+ * IMPORTANT:
+ *
+ * folders.html memanggil:
+ *
+ * deleteSmartFolder(folder_id, user_id)
+ *
+ * Jadi helper ini wajib tetap ada.
+ */
+async function deleteSmartFolder(
   folder_id,
-  user_id,
-  parent_id = null
+  user_id
 ) {
-  return apiCall(
-    `/folders/${encodeURIComponent(folder_id)}/move`,
-    {
-      method: "PUT",
-      body: JSON.stringify({
-        user_id,
-        parent_id,
-      }),
-    }
+  return deleteFolder(
+    folder_id,
+    user_id
   );
 }
 
@@ -589,6 +617,10 @@ async function shareFolderToDivision(
   );
 }
 
+
+// ======================================================
+// FOLDER ACCESS
+// ======================================================
 
 async function getFolderAccess(
   folder_id
@@ -755,12 +787,13 @@ function parseRuleKeywords(
 
 
 /*
- * Helper internal.
+ * Bisa menerima:
  *
- * Parameter:
- * user_id
- * rawKeywords
- * folder_id
+ * "jpg, png, character"
+ *
+ * atau:
+ *
+ * ["jpg", "png", "character"]
  */
 async function createMultipleFolderRules(
   user_id,
@@ -793,16 +826,7 @@ async function createMultipleFolderRules(
   }
 
   /*
-   * Backend terbaru punya endpoint:
-   *
-   * POST /folders/rules/batch
-   *
-   * body:
-   * {
-   *   user_id,
-   *   keywords,
-   *   folder_id
-   * }
+   * Coba endpoint batch dulu.
    */
   try {
     const result =
@@ -824,8 +848,8 @@ async function createMultipleFolderRules(
 
   } catch (batchError) {
     /*
-     * Fallback untuk backend yang
-     * belum punya endpoint batch.
+     * Fallback kalau endpoint batch
+     * belum tersedia.
      */
     const rules = [];
     const skipped = [];
@@ -882,7 +906,7 @@ async function createMultipleFolderRules(
  * IMPORTANT
  * =========
  *
- * folders.html memanggil:
+ * folders.html sekarang memanggil:
  *
  * addFolderRules(
  *   user_id,
@@ -890,12 +914,7 @@ async function createMultipleFolderRules(
  *   keywords
  * )
  *
- * Jadi urutan parameter fungsi ini
- * HARUS:
- *
- * 1. user_id
- * 2. folder_id
- * 3. rawKeywords
+ * Urutan parameter jangan diubah.
  */
 async function addFolderRules(
   user_id,
