@@ -86,7 +86,34 @@
       font-weight: 700;
     }
 
-    .folder-field { max-width: 340px; }
+    .division-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .division-toolbar-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .select-all-divisions {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .select-all-divisions input {
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
 
     .destination-summary {
       margin-top: 12px;
@@ -289,21 +316,52 @@
 
     .side-card .side-card-title i { width: 14px; height: 14px; }
 
-    .info-list {
-      display: flex;
-      flex-direction: column;
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr;
       gap: 10px;
     }
 
-    .info-row {
-      display: flex;
-      gap: 8px;
-      font-size: 12.5px;
-      color: var(--text-muted);
-      line-height: 1.5;
+    .info-box {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
     }
 
-    .info-row i { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; color: var(--primary); }
+    .info-box-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+    }
+
+    .info-box-icon i {
+      width: 16px;
+      height: 16px;
+    }
+
+    .info-box-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .info-box-text {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
 
     .recent-item {
       display: flex;
@@ -408,20 +466,21 @@
           <div class="card-title"><i data-lucide="map-pin"></i> Tujuan Upload</div>
           <div class="destination-row">
             <div class="destination-field" id="division-field" style="display:none;">
-              <label>Upload sekaligus ke divisi (bisa pilih lebih dari satu)</label>
+              <div class="division-toolbar">
+                <div class="division-toolbar-label">Upload sekaligus ke divisi</div>
+                <label class="select-all-divisions">
+                  <input type="checkbox" id="select-all-divisions" onchange="toggleAllDivisions(this.checked)">
+                  Pilih semua
+                </label>
+              </div>
               <div class="division-picker" id="division-picker"></div>
-              <div class="field-hint">Tidak pilih apa pun = upload ke divisimu sendiri saja.</div>
-            </div>
-            <div class="destination-field folder-field">
-              <label>Simpan ke folder</label>
-              <select class="input" id="upload-target-folder">
-                <option value="">Otomatis saja</option>
-              </select>
+              <div class="field-hint">Khusus Manager. Tidak memilih apa pun = upload ke divisi Manager saja.</div>
             </div>
           </div>
+
           <div class="destination-summary" id="destination-summary">
-            <i data-lucide="info"></i>
-            <span id="destination-summary-text">Aset akan otomatis masuk ke folder divisi dan tag terkait.</span>
+            <i data-lucide="sparkles"></i>
+            <span id="destination-summary-text">Tag dan Smart Folder ditentukan otomatis setelah file diupload.</span>
           </div>
         </div>
 
@@ -444,22 +503,45 @@
       <div class="side-panel">
         <div class="card side-card">
           <div class="side-card-title"><i data-lucide="lightbulb"></i> Info Upload</div>
-          <div class="info-list">
-            <div class="info-row">
-              <i data-lucide="file-check-2"></i>
-              <span>Format didukung: JPG, PNG, PDF, MP4, DOCX, XLSX.</span>
+          <div class="info-grid">
+            <div class="info-box">
+              <div class="info-box-icon"><i data-lucide="file-check-2"></i></div>
+              <div>
+                <div class="info-box-title">Format file</div>
+                <div class="info-box-text">JPG, PNG, PDF, MP4, DOCX, dan XLSX.</div>
+              </div>
             </div>
-            <div class="info-row">
-              <i data-lucide="database"></i>
-              <span>Ukuran maksimal per file 50MB.</span>
+
+            <div class="info-box">
+              <div class="info-box-icon"><i data-lucide="database"></i></div>
+              <div>
+                <div class="info-box-title">Batas ukuran</div>
+                <div class="info-box-text">Maksimal 50MB untuk setiap file.</div>
+              </div>
             </div>
-            <div class="info-row">
-              <i data-lucide="sparkles"></i>
-              <span>Tag dibuat otomatis dari nama file, tipe file, dan AI untuk gambar.</span>
+
+            <div class="info-box">
+              <div class="info-box-icon"><i data-lucide="sparkles"></i></div>
+              <div>
+                <div class="info-box-title">Auto-tag & Smart Folder</div>
+                <div class="info-box-text">Tag dibuat otomatis. Jika cocok dengan Rules Auto-Assign, aset ditempatkan ke Smart Folder terdalam yang sesuai.</div>
+              </div>
             </div>
-            <div class="info-row" id="info-manager" style="display:none;">
-              <i data-lucide="shield-check"></i>
-              <span>Sebagai Manager, kamu bisa pilih satu atau beberapa divisi sekaligus sebagai tujuan upload.</span>
+
+            <div class="info-box" id="info-manager" style="display:none;">
+              <div class="info-box-icon"><i data-lucide="shield-check"></i></div>
+              <div>
+                <div class="info-box-title">Multi-divisi</div>
+                <div class="info-box-text">Manager dapat memilih satu, beberapa, atau semua divisi sebagai tujuan upload.</div>
+              </div>
+            </div>
+
+            <div class="info-box" id="info-staff">
+              <div class="info-box-icon"><i data-lucide="building-2"></i></div>
+              <div>
+                <div class="info-box-title">Divisi tujuan</div>
+                <div class="info-box-text">Aset otomatis masuk ke divisi akunmu. Pilihan divisi hanya tersedia untuk Manager.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -491,98 +573,128 @@
     document.getElementById("user-name").textContent = user.nama;
 
     const divisionPicker = document.getElementById("division-picker");
-    const folderSelect   = document.getElementById("upload-target-folder");
     const summaryText    = document.getElementById("destination-summary-text");
 
-    let allFolders   = [];
     let allDivisions = [];
     let selectedDivisions = new Set();
 
     if (isManager()) {
       document.getElementById("division-field").style.display = "block";
-      document.getElementById("info-manager").style.display   = "flex";
+      document.getElementById("info-manager").style.display   = "grid";
+      document.getElementById("info-staff").style.display     = "none";
       loadDivisionsForUpload();
+    } else {
+      document.getElementById("division-field").style.display = "none";
+      document.getElementById("info-manager").style.display   = "none";
+      document.getElementById("info-staff").style.display     = "grid";
     }
 
-    loadFoldersForUpload();
+    updateDestinationSummary();
     loadRecentUploads();
 
     async function loadDivisionsForUpload() {
       try {
-        const res  = await fetch(`${API_BASE_URL}/divisions`);
-        const data = await res.json();
-        allDivisions = data.divisions || [];
+        const data = await getDivisions();
+
+        allDivisions = (data.divisions || []).filter(
+          d => String(d.nama || "").trim().toLowerCase() !== "custom"
+        );
+
         divisionPicker.innerHTML = allDivisions.map(d => `
           <label class="division-chip" data-div-id="${d.id}">
-            <input type="checkbox" value="${d.id}" onchange="toggleDivision('${d.id}', this.checked)">
+            <input
+              type="checkbox"
+              value="${d.id}"
+              onchange="toggleDivision('${d.id}', this.checked)"
+            >
             ${d.nama}
-          </label>`).join("");
-      } catch (e) { console.error(e); }
+          </label>
+        `).join("");
+
+        syncSelectAllDivisions();
+        updateDestinationSummary();
+      } catch (e) {
+        console.error(e);
+        divisionPicker.innerHTML = `<span style="font-size:12px;color:var(--danger);">Gagal memuat daftar divisi.</span>`;
+      }
     }
 
     function toggleDivision(divId, checked) {
       if (checked) selectedDivisions.add(divId);
       else selectedDivisions.delete(divId);
 
-      const chip = divisionPicker.querySelector(`.division-chip[data-div-id="${divId}"]`);
-      if (chip) chip.classList.toggle("checked", checked);
+      const chip = divisionPicker.querySelector(
+        `.division-chip[data-div-id="${divId}"]`
+      );
 
-      renderFolderOptions();
-    }
-
-    async function loadFoldersForUpload() {
-      try {
-        const data = await getFolders(user.user_id);
-        allFolders = data.folders || [];
-        renderFolderOptions();
-      } catch (e) {
-        console.error(e);
+      if (chip) {
+        chip.classList.toggle("checked", checked);
       }
-    }
 
-    function renderFolderOptions() {
-      const targetIds = selectedDivisions.size > 0
-        ? Array.from(selectedDivisions)
-        : [user.division_id || ""];
-
-      const relevant = allFolders.filter(f => {
-        if (f.type === "shared") return true;
-        return targetIds.includes(f.division_id);
-      });
-
-      const options = relevant.map(f => {
-        const label = f.type === "shared" ? `[Shared] ${f.nama}` :
-                      f.type === "system" ? `[${f.div_nama || "Divisi"}] ${f.nama}` :
-                      f.nama;
-        return `<option value="${f.id}">${label}</option>`;
-      }).join("");
-
-      folderSelect.innerHTML = `<option value="">Otomatis saja</option>` + options;
+      syncSelectAllDivisions();
       updateDestinationSummary();
     }
 
-    function updateDestinationSummary() {
-      let divText;
-      if (selectedDivisions.size === 0) {
-        divText = "divisimu sendiri";
-      } else if (selectedDivisions.size === 1) {
-        const d = allDivisions.find(d => selectedDivisions.has(d.id));
-        divText = d ? d.nama : "divisi terpilih";
-      } else {
-        const names = allDivisions.filter(d => selectedDivisions.has(d.id)).map(d => d.nama);
-        divText = `${names.length} divisi (${names.join(", ")})`;
-      }
+    function toggleAllDivisions(checked) {
+      selectedDivisions.clear();
 
-      const folderName = folderSelect.value
-        ? folderSelect.options[folderSelect.selectedIndex].textContent
-        : null;
+      divisionPicker
+        .querySelectorAll(".division-chip")
+        .forEach(chip => {
+          const checkbox = chip.querySelector('input[type="checkbox"]');
+          if (!checkbox) return;
 
-      summaryText.textContent = folderName
-        ? `Aset akan masuk ke folder "${folderName}" (${divText}), plus folder otomatis & tag terkait.`
-        : `Aset akan otomatis masuk ke folder ${divText} dan tag terkait.`;
+          checkbox.checked = checked;
+          chip.classList.toggle("checked", checked);
+
+          if (checked) {
+            selectedDivisions.add(checkbox.value);
+          }
+        });
+
+      syncSelectAllDivisions();
+      updateDestinationSummary();
     }
 
-    folderSelect.addEventListener("change", updateDestinationSummary);
+    function syncSelectAllDivisions() {
+      const selectAll = document.getElementById("select-all-divisions");
+      if (!selectAll) return;
+
+      const total = allDivisions.length;
+      const selected = selectedDivisions.size;
+
+      selectAll.checked = total > 0 && selected === total;
+      selectAll.indeterminate = selected > 0 && selected < total;
+    }
+
+    function updateDestinationSummary() {
+      if (!isManager()) {
+        summaryText.textContent =
+          "Aset akan masuk ke divisimu sendiri. Tag dan Smart Folder ditentukan otomatis setelah upload.";
+        return;
+      }
+
+      if (selectedDivisions.size === 0) {
+        summaryText.textContent =
+          "Belum ada divisi dipilih. Aset akan diupload ke divisi Manager dan Smart Folder yang cocok.";
+        return;
+      }
+
+      const names = allDivisions
+        .filter(d => selectedDivisions.has(d.id))
+        .map(d => d.nama);
+
+      if (names.length === 1) {
+        summaryText.textContent =
+          `Aset akan diupload ke ${names[0]}. Tag dan Smart Folder ditentukan otomatis.`;
+      } else if (names.length === allDivisions.length) {
+        summaryText.textContent =
+          `Semua ${names.length} divisi dipilih. Aset akan tersedia untuk seluruh divisi dan auto-assign mengikuti rules masing-masing.`;
+      } else {
+        summaryText.textContent =
+          `${names.length} divisi dipilih (${names.join(", ")}). Auto-tag dan Smart Folder tetap berjalan otomatis.`;
+      }
+    }
 
     async function loadRecentUploads() {
       const wrap = document.getElementById("recent-uploads");
@@ -789,9 +901,11 @@
       btnUpload.disabled    = true;
       btnUpload.textContent = "Mengupload...";
 
-      const targetFolder = folderSelect.value || "";
-      const divisionIds  = Array.from(selectedDivisions);
-      const primaryDiv   = divisionIds[0] || "";
+      const divisionIds = isManager()
+        ? Array.from(selectedDivisions)
+        : [];
+
+      const primaryDiv = divisionIds[0] || "";
 
       for (const i of indices) {
         const file     = selectedFiles[i];
@@ -815,26 +929,31 @@
           const assetId = result.asset && result.asset.id;
           fileAssetIds[i] = assetId;
 
-          // Folder yang sudah otomatis diterapkan endpoint upload (folder divisi
-          // utama + smart folder yang cocok tag). Simpan sebagai checkbox tercentang
-          // supaya user bisa langsung lihat & cancel salah satunya kalau tidak perlu.
+          // Folder yang sudah otomatis diterapkan endpoint upload.
+          // Backend hierarchy-aware hanya menyimpan tujuan yang relevan/terdalam.
+          // Checkbox tetap ditampilkan agar user bisa melihat atau membatalkan assignment.
           const suggestions = (result.suggested_folders || []).map(s => ({ ...s, checked: true }));
 
           // Kalau dipilih 2+ divisi, set visibility aset ke semua divisi itu,
           // lalu ambil & terapkan juga folder yang relevan (system + smart folder)
           // untuk divisi-divisi tambahan itu supaya muncul di checkbox yang sama.
-          if (assetId && divisionIds.length >= 2) {
+          if (assetId && divisionIds.length >= 1) {
             try {
               await setAssetPermissions(assetId, divisionIds);
+
               const extraDivs = divisionIds.slice(1);
-              const predictRes = await apiCall(`/assets/${assetId}/predict-folders`, {
-                method: "POST",
-                body: JSON.stringify({ division_ids: extraDivs }),
-              });
-              for (const s of (predictRes.suggested_folders || [])) {
-                if (!suggestions.find(x => x.id === s.id)) {
-                  await addAssetToFolder(s.id, assetId, user.user_id);
-                  suggestions.push({ ...s, checked: true });
+
+              if (extraDivs.length > 0) {
+                const predictRes = await apiCall(`/assets/${assetId}/predict-folders`, {
+                  method: "POST",
+                  body: JSON.stringify({ division_ids: extraDivs }),
+                });
+
+                for (const s of (predictRes.suggested_folders || [])) {
+                  if (!suggestions.find(x => x.id === s.id)) {
+                    await addAssetToFolder(s.id, assetId, user.user_id);
+                    suggestions.push({ ...s, checked: true });
+                  }
                 }
               }
             } catch (multiDivErr) {
@@ -842,20 +961,6 @@
             }
           }
 
-          if (assetId && targetFolder && !suggestions.find(x => x.id === targetFolder)) {
-            try {
-              await addAssetToFolder(targetFolder, assetId, user.user_id);
-              const chosen = allFolders.find(f => f.id === targetFolder);
-              suggestions.push({
-                id: targetFolder,
-                nama: chosen ? chosen.nama : "Folder pilihan",
-                reason: "Dipilih manual",
-                checked: true
-              });
-            } catch (folderErr) {
-              console.error("Gagal menambahkan ke folder pilihan:", folderErr);
-            }
-          }
 
           fileFolders[i] = suggestions;
 
