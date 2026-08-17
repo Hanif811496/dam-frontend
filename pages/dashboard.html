@@ -3,170 +3,235 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — DAM</title>
-
+  <title>Dashboard Admin — DAM</title>
   <link rel="stylesheet" href="../css/variables.css">
   <link rel="stylesheet" href="../css/reset.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/layout.css">
-
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-
   <style>
-    .dashboard-head {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 18px;
-      margin-bottom: 20px;
-    }
-
-    .dashboard-subtitle {
-      color: var(--text-muted);
-      font-size: 13px;
-      margin-top: 5px;
-      line-height: 1.55;
-    }
-
-    .stats-grid {
+    .stat-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 18px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
     }
 
     .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 15px 16px;
+      padding: 18px 20px;
+      border: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      right: -10px;
+      bottom: -10px;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      opacity: 0.12;
+      background: white;
+    }
+
+    .stat-card.red    { background: var(--primary); color: white; }
+    .stat-card.yellow { background: var(--accent-yellow); color: #111; }
+    .stat-card.blue   { background: var(--accent-blue); color: white; }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+      margin-bottom: 8px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      min-height: 86px;
-    }
-
-    .stat-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 auto;
-    }
-
-    .stat-icon svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    .stat-icon.upload {
-      background: #eaf3ff;
-      color: #1976d2;
-    }
-
-    .stat-icon.download {
-      background: #eef8ef;
-      color: #2e7d32;
-    }
-
-    .stat-icon.share {
-      background: #f4efff;
-      color: #7e57c2;
-    }
-
-    .stat-icon.delete {
-      background: #fff0f0;
-      color: var(--primary);
+      gap: 5px;
     }
 
     .stat-value {
-      font-size: 22px;
-      font-weight: 700;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
       line-height: 1;
-      margin-bottom: 5px;
     }
 
-    .stat-label {
+    .stat-sub {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 5px;
+    }
+
+    .storage-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+
+    .storage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .storage-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .storage-pct {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .storage-bar {
+      height: 10px;
+      background: var(--border);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .storage-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+      background: linear-gradient(90deg, var(--primary), var(--accent-yellow));
+      width: 0%;
+      transition: width 1s ease;
+    }
+
+    .storage-info {
+      display: flex;
+      justify-content: space-between;
       font-size: 12px;
       color: var(--text-muted);
     }
 
-    .activity-card {
+    /* Collapsible sections */
+    .section-panel {
       background: var(--surface);
       border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+
+    .section-panel-header:hover { background: var(--surface-2); }
+
+    .section-panel.collapsed .section-panel-header { border-bottom: none; }
+
+    .section-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .section-chevron {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .section-panel.collapsed .section-chevron { transform: rotate(-90deg); }
+
+    .section-panel-body {
+      padding: 18px;
+    }
+
+    .section-panel.collapsed .section-panel-body { display: none; }
+
+    /* Activity */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
       border-radius: var(--radius-lg);
       overflow: hidden;
     }
 
-    .activity-card-head {
+    .activity-item {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .activity-title {
-      font-size: 14px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .activity-title svg {
-      width: 16px;
-      height: 16px;
-      color: var(--primary);
-    }
-
-    .filter-bar {
-      display: grid;
-      grid-template-columns:
-        minmax(130px, 1fr)
-        minmax(130px, 1fr)
-        minmax(130px, 1fr)
-        minmax(125px, .9fr)
-        minmax(125px, .9fr)
-        minmax(120px, .9fr)
-        auto
-        auto;
-      gap: 8px;
-      align-items: center;
-      padding: 12px 18px;
-      border-bottom: 1px solid var(--border);
+      gap: 14px;
       background: var(--surface);
-      position: sticky;
-      top: var(--navbar-h);
-      z-index: 7;
+      padding: 12px 16px;
+      transition: background 0.12s;
     }
 
-    .filter-bar .input,
-    .filter-bar select {
-      min-width: 0;
-      font-size: 12px;
-      padding: 8px 9px;
+    .activity-item:hover { background: var(--surface-2); }
+
+    .activity-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
-    .activity-meta-row {
-      padding: 9px 18px;
+    .activity-icon.upload { background: var(--primary-light); color: var(--primary); }
+    .activity-icon.share  { background: var(--accent-blue-light); color: var(--accent-blue); }
+    .activity-icon.tag    { background: #FDF3D9; color: var(--accent-yellow); }
+    .activity-icon.download { background: var(--accent-blue-light); color: var(--accent-blue); }
+    .activity-icon.delete   { background: #FCE4E4; color: var(--danger); }
+    .activity-icon.move     { background: #EAE4FB; color: #8E44AD; }
+
+    .activity-info { flex: 1; min-width: 0; }
+
+    .activity-text {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .activity-meta {
       font-size: 11px;
       color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
+      margin-top: 2px;
     }
 
-    .activity-list {
-      min-height: 220px;
+    .activity-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .activity-item {
+      cursor: pointer;
     }
 
     .activity-group {
+      background: var(--surface);
       border-bottom: 1px solid var(--border);
     }
 
@@ -174,309 +239,350 @@
       border-bottom: 0;
     }
 
-    .activity-row {
-      display: grid;
-      grid-template-columns: 34px minmax(0, 1fr) auto 24px;
-      gap: 11px;
-      align-items: center;
-      padding: 11px 18px;
-      cursor: pointer;
-      transition: background 0.12s;
+    .activity-group .activity-item {
+      border-bottom: 0;
     }
 
-    .activity-row:hover {
-      background: var(--surface-2);
-    }
-
-    .activity-event-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 auto;
-    }
-
-    .activity-event-icon svg {
-      width: 14px;
-      height: 14px;
-    }
-
-    .activity-event-icon.upload {
-      background: #eaf3ff;
-      color: #1976d2;
-    }
-
-    .activity-event-icon.download {
-      background: #eef8ef;
-      color: #2e7d32;
-    }
-
-    .activity-event-icon.share {
-      background: #f4efff;
-      color: #7e57c2;
-    }
-
-    .activity-event-icon.delete {
-      background: #fff0f0;
-      color: var(--primary);
-    }
-
-    .activity-event-icon.tag_added,
-    .activity-event-icon.tag_removed {
-      background: #fff8df;
-      color: #9b7200;
-    }
-
-    .activity-event-icon.move,
-    .activity-event-icon.remove_from_folder {
-      background: #eef7fb;
-      color: #19758c;
-    }
-
-    .activity-main {
-      min-width: 0;
-    }
-
-    .activity-line {
-      font-size: 12px;
-      line-height: 1.4;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .activity-line strong {
-      font-weight: 650;
-    }
-
-    .activity-sub {
-      margin-top: 3px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--text-muted);
-      font-size: 10px;
-      min-width: 0;
-    }
-
-    .activity-sub span {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .group-count {
+    .activity-group-count {
       min-width: 34px;
       height: 24px;
       padding: 0 8px;
       border-radius: var(--radius-full);
-      background: var(--surface-2);
       border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-muted);
       font-size: 10px;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: var(--text-muted);
+      flex-shrink: 0;
     }
 
-    .activity-chevron {
+    .activity-group-chevron {
+      width: 16px;
+      height: 16px;
       color: var(--text-muted);
       transition: transform .15s;
+      flex-shrink: 0;
     }
 
-    .activity-chevron svg {
-      width: 15px;
-      height: 15px;
-    }
-
-    .activity-group.open .activity-chevron {
+    .activity-group.open .activity-group-chevron {
       transform: rotate(180deg);
     }
 
-    .activity-detail {
+    .activity-group-detail {
       display: none;
-      padding: 0 18px 12px 63px;
+      padding: 0 16px 12px 66px;
       background: var(--surface);
     }
 
-    .activity-group.open .activity-detail {
+    .activity-group.open .activity-group-detail {
       display: block;
     }
 
-    .detail-box {
+    .activity-detail-box {
       border: 1px solid var(--border);
-      background: var(--surface-2);
       border-radius: var(--radius-md);
+      background: var(--surface-2);
       overflow: hidden;
     }
 
-    .detail-item {
+    .activity-detail-row {
       display: grid;
-      grid-template-columns: 150px 1fr;
+      grid-template-columns: 95px minmax(0, 1fr);
       gap: 10px;
-      padding: 8px 11px;
+      padding: 7px 10px;
       border-bottom: 1px solid var(--border);
       font-size: 11px;
     }
 
-    .detail-item:last-child {
+    .activity-detail-row:last-child {
       border-bottom: 0;
     }
 
-    .detail-label {
+    .activity-detail-time {
       color: var(--text-muted);
+      white-space: nowrap;
     }
 
-    .detail-value {
+    .activity-detail-text {
+      color: var(--text);
       min-width: 0;
       word-break: break-word;
     }
 
-    .detail-history-title {
-      padding: 9px 11px;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .detail-history-row {
-      display: grid;
-      grid-template-columns: 90px 1fr;
-      gap: 10px;
-      padding: 7px 11px;
-      border-bottom: 1px solid var(--border);
-      font-size: 10px;
-    }
-
-    .detail-history-row:last-child {
-      border-bottom: 0;
-    }
-
-    .empty-log {
-      padding: 55px 20px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 12px;
-    }
-
-    .empty-log svg {
-      width: 38px;
-      height: 38px;
-      opacity: .28;
-      margin-bottom: 10px;
-    }
-
-    .pagination {
-      border-top: 1px solid var(--border);
-      padding: 12px 18px;
+    .activity-pagination {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       gap: 12px;
+      margin-top: 14px;
       flex-wrap: wrap;
     }
 
-    .pagination-info {
+    .activity-pagination-info {
       font-size: 11px;
       color: var(--text-muted);
     }
 
-    .pagination-buttons {
+    .activity-pagination-buttons {
       display: flex;
       align-items: center;
       gap: 5px;
     }
 
-    .page-btn {
+    .activity-page-btn {
       min-width: 30px;
       height: 30px;
       border: 1px solid var(--border);
       background: var(--surface);
+      color: var(--text-muted);
       border-radius: 7px;
       font-size: 11px;
-      cursor: pointer;
       padding: 0 8px;
-      color: var(--text-muted);
+      cursor: pointer;
     }
 
-    .page-btn:hover:not(:disabled) {
+    .activity-page-btn:hover:not(:disabled) {
       border-color: var(--primary);
       color: var(--primary);
     }
 
-    .page-btn.active {
+    .activity-page-btn.active {
       background: var(--primary);
-      color: #fff;
+      color: white;
       border-color: var(--primary);
     }
 
-    .page-btn:disabled {
+    .activity-page-btn:disabled {
       opacity: .4;
       cursor: not-allowed;
     }
 
-    .loading-wrap {
+    .activity-summary-line {
       display: flex;
-      justify-content: center;
-      padding: 55px;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
     }
 
-    @media (max-width: 1100px) {
-      .stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .filter-bar {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
+    .activity-group-note {
+      font-size: 11px;
+      color: var(--text-light);
     }
 
-    @media (max-width: 720px) {
-      .stats-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .filter-bar {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .activity-row {
-        grid-template-columns: 32px minmax(0,1fr) auto;
-      }
-
-      .activity-chevron {
-        display: none;
-      }
-
-      .activity-detail {
-        padding-left: 18px;
-      }
-
-      .detail-item {
-        grid-template-columns: 1fr;
-        gap: 3px;
-      }
+    /* Report table */
+    .report-toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      align-items: center;
     }
+
+    .report-toolbar .input { width: 200px; }
+
+    .report-table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      overflow-x: auto;
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .report-table th {
+      background: var(--surface-2);
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .report-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .report-table tr:last-child td { border-bottom: none; }
+    .report-table tr:hover td { background: var(--surface-2); }
+
+    .tipe-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .tipe-image { background: #E6F1FB; color: var(--accent-blue); }
+    .tipe-video { background: #FCEBEB; color: var(--primary); }
+    .tipe-pdf   { background: #FAEEDA; color: #633806; }
+    .tipe-doc   { background: #EEEDFE; color: #3C3489; }
+    .tipe-other { background: #F5F5F5; color: #666; }
+
+    .div-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      background: var(--primary-light);
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .public-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+    }
+
+    .public-yes { background: #E1F5EE; color: #085041; }
+    .public-no  { background: #FCEBEB; color: var(--primary); }
+
+    /* Division report */
+    .div-report-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+
+    .div-report-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+
+    .div-report-name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .div-report-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .div-report-row:last-child { border-bottom: none; }
+    .div-report-row span:last-child { font-weight: 600; color: var(--text); }
+
+    /* Tagging report */
+    .tag-report-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .chart-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .chart-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      color: var(--text-muted);
+    }
+
+    .tag-stat-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .tag-stat-label  { font-size: 13px; color: var(--text-muted); min-width: 110px; }
+
+    .tag-stat-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--border);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+
+    .tag-stat-fill   { height: 100%; border-radius: var(--radius-full); }
+    .tag-stat-pct    { font-size: 12px; font-weight: 700; min-width: 40px; text-align: right; }
+    .tag-stat-count  { font-size: 11px; color: var(--text-muted); min-width: 50px; text-align: right; }
+
+    .top-tag-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .top-tag-item:last-child { border-bottom: none; }
+    .top-tag-rank  { font-size: 11px; font-weight: 700; color: var(--text-muted); min-width: 24px; }
+    .top-tag-name  { flex: 1; font-weight: 500; }
+    .top-tag-count {
+      font-size: 11px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 2px 8px;
+      color: var(--text-muted);
+    }
+
+    .export-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      background: #2E7D32;
+      color: white;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+    }
+
+    .export-btn:hover { opacity: 0.88; }
   </style>
 </head>
-
 <body>
+
   <nav class="navbar">
     <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Tampilkan/sembunyikan sidebar">
       <i data-lucide="panel-left"></i>
     </button>
-
     <div class="navbar-brand">DAM System</div>
-
+    <div style="margin-left:8px;font-size:11px;background:var(--primary);color:white;padding:2px 8px;border-radius:var(--radius-full);font-weight:600;">ADMIN</div>
     <div class="navbar-right">
-      <span class="badge badge-red" style="font-size:9px;padding:3px 7px;">ADMIN</span>
       <span id="user-name" style="font-size:14px;color:var(--text-muted);"></span>
       <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
     </div>
@@ -484,618 +590,593 @@
 
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-label">Menu</div>
-
     <a href="gallery.html" class="sidebar-item">
       <i data-lucide="image"></i> Gallery
     </a>
-
     <a href="upload.html" class="sidebar-item">
       <i data-lucide="upload-cloud"></i> Upload
     </a>
-
     <a href="folders.html" class="sidebar-item">
-      <i data-lucide="folder"></i> Folder
+      <i data-lucide="folder"></i> Folders
     </a>
-
     <a href="profile.html" class="sidebar-item">
       <i data-lucide="user"></i> Profile
     </a>
 
     <div class="sidebar-label">Admin</div>
-
     <a href="dashboard.html" class="sidebar-item active">
       <i data-lucide="layout-dashboard"></i> Dashboard
     </a>
-
     <a href="admin.html" class="sidebar-item">
       <i data-lucide="users"></i> Users
     </a>
   </aside>
 
   <main class="main-content">
-    <div class="dashboard-head">
-      <div>
-        <div class="page-title" style="margin:0;">Dashboard</div>
-        <div class="dashboard-subtitle">
-          Ringkasan aktivitas DAM dan audit trail staff.
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="page-title" style="margin:0;">Dashboard Admin</div>
+      <div style="font-size:12px;color:var(--text-muted);" id="last-update"></div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+      <div class="stat-card red">
+        <div class="stat-label">
+          <i data-lucide="users" style="width:12px;height:12px;"></i> Total User
+        </div>
+        <div class="stat-value" id="stat-user">—</div>
+        <div class="stat-sub">akun terdaftar</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">
+          <i data-lucide="folder" style="width:12px;height:12px;"></i> Total Aset
+        </div>
+        <div class="stat-value" id="stat-aset">—</div>
+        <div class="stat-sub">file tersimpan</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-label">
+          <i data-lucide="tag" style="width:12px;height:12px;"></i> Total Tag
+        </div>
+        <div class="stat-value" id="stat-tag">—</div>
+        <div class="stat-sub">tag unik</div>
+      </div>
+    </div>
+
+    <!-- Storage bar -->
+    <div class="storage-box">
+      <div class="storage-header">
+        <div class="storage-title">
+          <i data-lucide="database" style="width:14px;height:14px;color:var(--primary);"></i>
+          Penggunaan Storage
+        </div>
+        <div class="storage-pct" id="stat-storage-pct">0%</div>
+      </div>
+      <div class="storage-bar">
+        <div class="storage-fill" id="stat-storage-fill"></div>
+      </div>
+      <div class="storage-info">
+        <span id="stat-storage">0 MB digunakan</span>
+        <span>50 MB tersedia (Supabase free tier)</span>
+      </div>
+    </div>
+
+    <!-- Section: Aktivitas -->
+    <div class="section-panel" id="section-activity">
+      <div class="section-panel-header" onclick="toggleSection('activity')">
+        <div class="section-panel-title">
+          <i data-lucide="chevron-down" class="section-chevron" id="chevron-activity"></i>
+          <i data-lucide="activity" style="width:14px;height:14px;color:var(--primary);"></i> Aktivitas Staff
+        </div>
+      </div>
+      <div class="section-panel-body" id="body-activity">
+        <div class="report-toolbar">
+          <select class="input" id="activity-filter-type" style="width:170px;">
+            <option value="">Semua aktivitas</option>
+            <option value="upload">Upload</option>
+            <option value="download">Download</option>
+            <option value="delete">Hapus Aset</option>
+            <option value="move">Pindah Folder</option>
+            <option value="remove_from_folder">Keluar dari Folder</option>
+            <option value="tag_added">Tambah Tag</option>
+            <option value="tag_removed">Hapus Tag</option>
+            <option value="share">Share</option>
+          </select>
+          <select class="input" id="activity-filter-user" style="width:170px;">
+            <option value="">Semua user</option>
+          </select>
+          <select class="input" id="activity-filter-divisi" style="width:170px;">
+            <option value="">Semua divisi</option>
+          </select>
+          <input type="date" class="input" id="activity-filter-from" style="width:150px;" title="Dari tanggal">
+          <input type="date" class="input" id="activity-filter-to" style="width:150px;" title="Sampai tanggal">
+          <select class="input" id="activity-filter-sort" style="width:150px;">
+            <option value="desc">Terbaru dulu</option>
+            <option value="asc">Terlama dulu</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="resetActivityFilters()">Reset</button>
+          <button class="export-btn" onclick="exportActivityCSV()">
+            <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+          </button>
+        </div>
+        <div class="activity-summary-line">
+          <div style="font-size:13px;color:var(--text-muted);" id="activity-count-info">Memuat aktivitas...</div>
+          <div class="activity-group-note">Aktivitas serupa dalam 15 menit otomatis diringkas.</div>
+        </div>
+
+        <div class="activity-list" id="activity-list">
+          <div style="display:flex;justify-content:center;padding:30px;background:var(--surface);">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+        <div class="activity-pagination" id="activity-pagination" style="display:none;">
+          <div class="activity-pagination-info" id="activity-pagination-info"></div>
+          <div class="activity-pagination-buttons" id="activity-pagination-buttons"></div>
         </div>
       </div>
     </div>
 
-    <section class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon upload"><i data-lucide="upload-cloud"></i></div>
-        <div>
-          <div class="stat-value" id="stat-upload">0</div>
-          <div class="stat-label">Upload</div>
+    <!-- Section: Laporan Aset -->
+    <div class="section-panel" id="section-assets">
+      <div class="section-panel-header" onclick="toggleSection('assets')">
+        <div class="section-panel-title">
+          <i data-lucide="chevron-down" class="section-chevron" id="chevron-assets"></i>
+          <i data-lucide="file" style="width:14px;height:14px;color:var(--accent-blue);"></i> Laporan Aset
         </div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-icon download"><i data-lucide="download"></i></div>
-        <div>
-          <div class="stat-value" id="stat-download">0</div>
-          <div class="stat-label">Download</div>
+      <div class="section-panel-body" id="body-assets">
+        <div class="report-toolbar">
+          <input type="text" class="input" id="filter-nama" placeholder="Cari nama file...">
+          <select class="input" id="filter-tipe" style="width:160px;">
+            <option value="">Semua tipe</option>
+            <option value="image">Gambar</option>
+            <option value="video">Video</option>
+            <option value="pdf">PDF</option>
+            <option value="word">Word</option>
+          </select>
+          <select class="input" id="filter-divisi" style="width:180px;">
+            <option value="">Semua divisi</option>
+          </select>
+          <button class="export-btn" onclick="exportAssetsCSV()">
+            <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+          </button>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:auto;" id="asset-count"></span>
+        </div>
+        <div class="report-table-wrap">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nama File</th>
+                <th>Tipe</th>
+                <th>Ukuran</th>
+                <th>Uploader</th>
+                <th>Divisi</th>
+                <th>Tag</th>
+                <th>Akses</th>
+                <th>Tanggal Upload</th>
+              </tr>
+            </thead>
+            <tbody id="asset-table-body">
+              <tr><td colspan="9" style="text-align:center;padding:30px;">
+                <div class="spinner" style="margin:0 auto;"></div>
+              </td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
+    </div>
 
-      <div class="stat-card">
-        <div class="stat-icon share"><i data-lucide="share-2"></i></div>
-        <div>
-          <div class="stat-value" id="stat-share">0</div>
-          <div class="stat-label">Share</div>
+    <!-- Section: Laporan Tagging -->
+    <div class="section-panel" id="section-tagging">
+      <div class="section-panel-header" onclick="toggleSection('tagging')">
+        <div class="section-panel-title">
+          <i data-lucide="chevron-down" class="section-chevron" id="chevron-tagging"></i>
+          <i data-lucide="cpu" style="width:14px;height:14px;color:var(--accent-yellow);"></i> Laporan Tagging
         </div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-icon delete"><i data-lucide="trash-2"></i></div>
-        <div>
-          <div class="stat-value" id="stat-delete">0</div>
-          <div class="stat-label">Delete</div>
+      <div class="section-panel-body" id="body-tagging">
+        <div class="tag-report-grid">
+          <div class="chart-box">
+            <div class="chart-title">Distribusi Sumber Tag</div>
+            <div id="tag-source-chart"></div>
+            <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);text-align:center;" id="tag-total-info"></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Tag Terpopuler (Top 10)</div>
+            <div id="top-tags-report"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;">
+          <div class="chart-title">Ringkasan Auto-Tagging</div>
+          <div id="tagging-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:12px;"></div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section class="activity-card">
-      <div class="activity-card-head">
-        <div class="activity-title">
-          <i data-lucide="activity"></i>
-          Aktivitas Staff
+    <!-- Section: Laporan Divisi -->
+    <div class="section-panel" id="section-divisions">
+      <div class="section-panel-header" onclick="toggleSection('divisions')">
+        <div class="section-panel-title">
+          <i data-lucide="chevron-down" class="section-chevron" id="chevron-divisions"></i>
+          <i data-lucide="layers" style="width:14px;height:14px;color:#8E44AD;"></i> Laporan Divisi
         </div>
       </div>
-
-      <div class="filter-bar">
-        <select class="input" id="filter-type">
-          <option value="">Semua aktivitas</option>
-          <option value="upload">Upload</option>
-          <option value="download">Download</option>
-          <option value="share">Share</option>
-          <option value="delete">Delete</option>
-          <option value="tag_added">Tambah Tag</option>
-          <option value="tag_removed">Hapus Tag</option>
-          <option value="move">Move</option>
-          <option value="remove_from_folder">Keluar Folder</option>
-        </select>
-
-        <select class="input" id="filter-user">
-          <option value="">Semua user</option>
-        </select>
-
-        <select class="input" id="filter-division">
-          <option value="">Semua divisi</option>
-        </select>
-
-        <input class="input" type="date" id="filter-from" title="Tanggal mulai">
-
-        <input class="input" type="date" id="filter-to" title="Tanggal akhir">
-
-        <select class="input" id="filter-sort">
-          <option value="desc">Terbaru dulu</option>
-          <option value="asc">Terlama dulu</option>
-        </select>
-
-        <button class="btn btn-outline btn-sm" onclick="resetFilters()">
-          Reset
-        </button>
-
-        <button class="btn btn-success btn-sm" onclick="exportCsv()">
-          <i data-lucide="download" style="width:13px;height:13px;"></i>
-          Export CSV
-        </button>
+      <div class="section-panel-body" id="body-divisions">
+        <div class="div-report-grid" id="div-report-grid">
+          <div style="grid-column:1/-1;display:flex;justify-content:center;padding:30px;">
+            <div class="spinner"></div>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <div class="activity-meta-row">
-        <span id="activity-result-info">Memuat aktivitas...</span>
-        <span>Aktivitas serupa dalam 15 menit otomatis diringkas.</span>
-      </div>
-
-      <div class="activity-list" id="activity-list">
-        <div class="loading-wrap"><div class="spinner"></div></div>
-      </div>
-
-      <div class="pagination" id="pagination" style="display:none;">
-        <div class="pagination-info" id="pagination-info"></div>
-        <div class="pagination-buttons" id="pagination-buttons"></div>
-      </div>
-    </section>
   </main>
 
   <script src="../js/config.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/utils.js"></script>
-
   <script>
-    requireAuth();
+    requireManager();
     initSidebarToggle();
-
     const user = getUser();
+    document.getElementById("user-name").textContent = user.nama;
+    document.getElementById("last-update").textContent = "Update: " + new Date().toLocaleTimeString("id-ID");
 
-    if (!isManager()) {
-      window.location.href = "gallery.html";
+    let allReportAssets = [];
+    let allActivityData = [];
+    let groupedActivityData = [];
+    let activityCurrentPage = 1;
+
+    const ACTIVITY_PAGE_SIZE = 20;
+    const ACTIVITY_GROUP_WINDOW_MS = 15 * 60 * 1000;
+
+    const divisionColors = {
+      "Manager":       "#D42B2B",
+      "Design Artist": "#1A6BBF",
+      "3D Modeler":    "#3C3489",
+      "Animator":      "#085041",
+      "Editor":        "#633806",
+      "Render Artist": "#444441",
+      "Custom":        "#666",
+    };
+
+    function toggleSection(name) {
+      const panel = document.getElementById(`section-${name}`);
+      panel.classList.toggle("collapsed");
     }
 
-    document.getElementById("user-name").textContent = user?.nama || "Admin";
-
-    const PAGE_SIZE = 20;
-    const GROUP_WINDOW_MS = 15 * 60 * 1000;
-
-    let rawActivities = [];
-    let groupedActivities = [];
-    let currentPage = 1;
-
-    function esc(value) {
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    function getTipeBadge(tipe) {
+      if (tipe.includes("image"))  return `<span class="tipe-badge tipe-image">Gambar</span>`;
+      if (tipe.includes("video"))  return `<span class="tipe-badge tipe-video">Video</span>`;
+      if (tipe.includes("pdf"))    return `<span class="tipe-badge tipe-pdf">PDF</span>`;
+      if (tipe.includes("word") || tipe.includes("document")) return `<span class="tipe-badge tipe-doc">Word</span>`;
+      return `<span class="tipe-badge tipe-other">Lainnya</span>`;
     }
 
-    function formatDateTime(value) {
-      if (!value) return "—";
+    // ── Load Stats ────────────────────────────────────
+    async function loadStats() {
+      try {
+        const [usersData, tagsData] = await Promise.all([
+          fetchWithRetry(`${API_BASE_URL}/divisions/users`),
+          fetchWithRetry(`${API_BASE_URL}/tags/count?user_id=${user.user_id}`)
+        ]);
 
-      const date = new Date(value);
+        document.getElementById("stat-user").textContent = usersData.users.length;
+        document.getElementById("stat-aset").textContent = allReportAssets.length;
+        document.getElementById("stat-tag").textContent  = tagsData.count;
 
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
+        const totalBytes = allReportAssets.reduce((s, a) => s + a.ukuran, 0);
+        const totalMB    = totalBytes / (1024 * 1024);
+        const limitMB    = 50;
+        const pct        = Math.min(Math.round(totalMB / limitMB * 100), 100);
 
-      return new Intl.DateTimeFormat("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(date);
+        document.getElementById("stat-storage").textContent     = totalMB.toFixed(1) + " MB digunakan";
+        document.getElementById("stat-storage-pct").textContent = pct + "%";
+        setTimeout(() => {
+          document.getElementById("stat-storage-fill").style.width = pct + "%";
+        }, 300);
+
+      } catch (e) { console.error(e); showToast("Gagal memuat statistik", "error"); }
     }
 
-    function formatTimeOnly(value) {
-      if (!value) return "—";
+    // ── Load Activity ─────────────────────────────────
+    let activityFiltersLoaded = false;
 
-      const date = new Date(value);
+    async function loadActivityFilterOptions() {
+      if (activityFiltersLoaded) return;
+      activityFiltersLoaded = true;
+      try {
+        const [usersRes, divRes] = await Promise.all([
+          fetchWithRetry(`${API_BASE_URL}/divisions/users`),
+          fetchWithRetry(`${API_BASE_URL}/divisions`)
+        ]);
+        const userSel = document.getElementById("activity-filter-user");
+        userSel.innerHTML = `<option value="">Semua user</option>` +
+          usersRes.users.map(u => `<option value="${u.id}">${u.nama}</option>`).join("");
 
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
-
-      return new Intl.DateTimeFormat("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }).format(date);
+        const divSel = document.getElementById("activity-filter-divisi");
+        divSel.innerHTML = `<option value="">Semua divisi</option>` +
+          divRes.divisions.map(d => `<option value="${d.id}">${d.nama}</option>`).join("");
+      } catch (e) { console.error(e); }
     }
 
-    function eventIcon(type) {
-      const map = {
-        upload: "upload-cloud",
-        download: "download",
-        share: "share-2",
-        delete: "trash-2",
-        tag_added: "tag",
-        tag_removed: "tag",
-        move: "folder-input",
-        remove_from_folder: "folder-minus",
-      };
-
-      return map[type] || "activity";
+    function buildActivityQuery() {
+      const params = new URLSearchParams();
+      params.set("limit", "500");
+      const type = document.getElementById("activity-filter-type").value;
+      const user = document.getElementById("activity-filter-user").value;
+      const div  = document.getElementById("activity-filter-divisi").value;
+      const from = document.getElementById("activity-filter-from").value;
+      const to   = document.getElementById("activity-filter-to").value;
+      const sort = document.getElementById("activity-filter-sort").value;
+      if (type) params.set("type", type);
+      if (user) params.set("user_id", user);
+      if (div)  params.set("division_id", div);
+      if (from) params.set("date_from", from);
+      if (to)   params.set("date_to", to);
+      if (sort) params.set("sort", sort);
+      return params.toString();
     }
 
-    function eventVerb(item) {
-      switch (item.type) {
-        case "upload":
-          return "mengupload";
-        case "download":
-          return "mendownload";
-        case "share":
-          return "membagikan";
-        case "delete":
-          return "menghapus";
-        case "tag_added":
-          return `menambahkan ${item.count || 0} tag pada`;
-        case "tag_removed":
-          return `menghapus tag "${item.tag || "—"}" dari`;
-        case "move":
-          return "memindahkan";
-        case "remove_from_folder":
-          return "mengeluarkan";
-        default:
-          return "melakukan aktivitas pada";
-      }
-    }
-
-    function groupKey(item) {
+    function activityGroupKey(a) {
       return [
-        item.type || "",
-        item.user_id || item.user || "",
-        item.file || "",
-        item.division_id || item.division || "",
-        item.to_folder || "",
-        item.from_folder || "",
-        item.folder || "",
-        item.tag || "",
+        a.type || "",
+        a.user_id || a.user || "",
+        a.file || "",
+        a.division_id || a.division || "",
+        a.to_folder || "",
+        a.from_folder || "",
+        a.folder || "",
+        a.tag || ""
       ].join("::");
     }
 
-    function groupActivities(items) {
-      const grouped = [];
+    function groupActivityRows(activities) {
+      const groups = [];
 
-      for (const item of items) {
-        const key = groupKey(item);
-        const timestamp = new Date(item.created_at).getTime();
-        const previous = grouped[grouped.length - 1];
+      for (const activity of activities) {
+        const key = activityGroupKey(activity);
+        const ts = new Date(activity.created_at).getTime();
+        const previous = groups[groups.length - 1];
 
         if (
           previous &&
           previous.key === key &&
-          Math.abs(previous.lastTimestamp - timestamp) <= GROUP_WINDOW_MS
+          Number.isFinite(ts) &&
+          Number.isFinite(previous.lastTimestamp) &&
+          Math.abs(previous.lastTimestamp - ts) <= ACTIVITY_GROUP_WINDOW_MS
         ) {
-          previous.items.push(item);
+          previous.items.push(activity);
           previous.count += 1;
-          previous.lastTimestamp = timestamp;
+          previous.lastTimestamp = ts;
 
-          const currentDate = new Date(previous.latest.created_at).getTime();
-          if (timestamp > currentDate) {
-            previous.latest = item;
+          const latestTs = new Date(previous.latest.created_at).getTime();
+          if (!Number.isFinite(latestTs) || ts > latestTs) {
+            previous.latest = activity;
           }
 
           continue;
         }
 
-        grouped.push({
+        groups.push({
           key,
-          latest: item,
-          items: [item],
+          latest: activity,
+          items: [activity],
           count: 1,
-          lastTimestamp: timestamp,
+          lastTimestamp: ts
         });
       }
 
-      return grouped;
+      return groups;
     }
 
-    function buildApiParams() {
-      const params = {
-        limit: 500,
-        sort: document.getElementById("filter-sort").value || "desc",
-      };
+    function activityIconAndText(a) {
+      let icon, text, meta, iconClass;
 
-      const type = document.getElementById("filter-type").value;
-      const userId = document.getElementById("filter-user").value;
-      const divisionId = document.getElementById("filter-division").value;
-      const dateFrom = document.getElementById("filter-from").value;
-      const dateTo = document.getElementById("filter-to").value;
-
-      if (type) params.type = type;
-      if (userId) params.user_id = userId;
-      if (divisionId) params.division_id = divisionId;
-      if (dateFrom) params.date_from = dateFrom;
-      if (dateTo) params.date_to = dateTo;
-
-      return params;
-    }
-
-    async function loadFilterOptions() {
-      try {
-        const [usersResult, divisionsResult] = await Promise.all([
-          getAllUsersWithDivision(),
-          getDivisions(),
-        ]);
-
-        const userSelect = document.getElementById("filter-user");
-        const divisionSelect = document.getElementById("filter-division");
-
-        (usersResult.users || [])
-          .slice()
-          .sort((a, b) => String(a.nama || "").localeCompare(String(b.nama || "")))
-          .forEach(item => {
-            const option = document.createElement("option");
-            option.value = item.id;
-            option.textContent = item.nama || item.email || "User";
-            userSelect.appendChild(option);
-          });
-
-        (divisionsResult.divisions || [])
-          .filter(item => String(item.nama || "").trim().toLowerCase() !== "custom")
-          .slice()
-          .sort((a, b) => String(a.nama || "").localeCompare(String(b.nama || "")))
-          .forEach(item => {
-            const option = document.createElement("option");
-            option.value = item.id;
-            option.textContent = item.nama || "Divisi";
-            divisionSelect.appendChild(option);
-          });
-
-      } catch (error) {
-        console.error("Gagal memuat opsi filter:", error);
+      if (a.type === "upload") {
+        icon      = `<i data-lucide="upload-cloud" style="width:16px;height:16px;"></i>`;
+        iconClass = "upload";
+        text      = `<strong>${a.user}</strong> mengupload <strong>${a.file}</strong>`;
+        meta      = `${a.division} · ${formatFileSize(a.ukuran)}`;
+      } else if (a.type === "download") {
+        icon      = `<i data-lucide="download" style="width:16px;height:16px;"></i>`;
+        iconClass = "download";
+        text      = `<strong>${a.user}</strong> mendownload <strong>${a.file}</strong>`;
+        meta      = a.division || "";
+      } else if (a.type === "delete") {
+        icon      = `<i data-lucide="trash-2" style="width:16px;height:16px;"></i>`;
+        iconClass = "delete";
+        text      = `<strong>${a.user}</strong> menghapus <strong>${a.file}</strong>`;
+        meta      = `${a.division || "—"}${a.ukuran ? " · " + formatFileSize(a.ukuran) : ""}`;
+      } else if (a.type === "move") {
+        icon      = `<i data-lucide="folder-input" style="width:16px;height:16px;"></i>`;
+        iconClass = "move";
+        text      = `<strong>${a.user}</strong> memindahkan <strong>${a.file}</strong>`;
+        meta      = a.from_folder ? `${a.from_folder} → ${a.to_folder}` : `ke folder ${a.to_folder || "—"}`;
+      } else if (a.type === "remove_from_folder") {
+        icon      = `<i data-lucide="folder-minus" style="width:16px;height:16px;"></i>`;
+        iconClass = "move";
+        text      = `<strong>${a.user}</strong> mengeluarkan <strong>${a.file}</strong> dari folder`;
+        meta      = a.folder || "—";
+      } else if (a.type === "tag_added") {
+        icon      = `<i data-lucide="tag" style="width:16px;height:16px;"></i>`;
+        iconClass = "tag";
+        text      = `<strong>${a.user}</strong> menambahkan <strong>${a.count} tag</strong> pada <strong>${a.file}</strong>`;
+        meta      = `Tag: ${(a.tags || []).join(", ")}`;
+      } else if (a.type === "tag_removed") {
+        icon      = `<i data-lucide="tag" style="width:16px;height:16px;"></i>`;
+        iconClass = "tag";
+        text      = `<strong>${a.user}</strong> menghapus tag <strong>${a.tag}</strong> dari <strong>${a.file}</strong>`;
+        meta      = a.division || "";
+      } else {
+        icon      = `<i data-lucide="share-2" style="width:16px;height:16px;"></i>`;
+        iconClass = "share";
+        text      = `<strong>${a.user}</strong> membagikan <strong>${a.file}</strong> ke divisi <strong>${a.division}</strong>`;
+        meta      = a.catatan ? `Catatan: ${a.catatan}` : "Tanpa catatan";
       }
+
+      return { icon, text, meta, iconClass };
     }
 
-    async function loadActivities(resetPage = true) {
-      if (resetPage) currentPage = 1;
+    function activityTimeOnly(value) {
+      if (!value) return "—";
 
-      const list = document.getElementById("activity-list");
-      list.innerHTML = `<div class="loading-wrap"><div class="spinner"></div></div>`;
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "—";
+
+      return new Intl.DateTimeFormat("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      }).format(date);
+    }
+
+    async function loadActivity(resetPage = true) {
+      await loadActivityFilterOptions();
+
+      if (resetPage) activityCurrentPage = 1;
+
+      showLoading("activity-list");
+      document.getElementById("activity-pagination").style.display = "none";
 
       try {
-        const result = await getAdminActivity(buildApiParams());
+        const data = await fetchWithRetry(
+          `${API_BASE_URL}/admin/activity?${buildActivityQuery()}`
+        );
 
-        rawActivities = result.activities || [];
-        groupedActivities = groupActivities(rawActivities);
+        allActivityData = data.activities || [];
+        groupedActivityData = groupActivityRows(allActivityData);
 
-        updateStats();
+        const reduced = allActivityData.length - groupedActivityData.length;
+
+        document.getElementById("activity-count-info").textContent =
+          `${allActivityData.length} aktivitas · ${groupedActivityData.length} baris setelah grouping` +
+          (reduced > 0 ? ` · ${reduced} baris diringkas` : "");
+
         renderActivityPage();
-
-      } catch (error) {
-        console.error(error);
-
-        list.innerHTML = `
-          <div class="empty-log">
-            <i data-lucide="wifi-off"></i>
-            <div>Gagal memuat aktivitas.</div>
-            <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="loadActivities()">Coba Lagi</button>
-          </div>
-        `;
-
-        document.getElementById("activity-result-info").textContent =
-          error?.message || "Gagal memuat aktivitas";
-
-        document.getElementById("pagination").style.display = "none";
-
-        lucide.createIcons();
+      } catch (e) {
+        document.getElementById("activity-list").innerHTML =
+          `<div style="background:var(--surface);padding:20px;text-align:center;color:var(--danger);">Gagal memuat aktivitas</div>`;
       }
     }
 
-    function updateStats() {
-      const counts = {
-        upload: 0,
-        download: 0,
-        share: 0,
-        delete: 0,
-      };
-
-      rawActivities.forEach(item => {
-        if (Object.prototype.hasOwnProperty.call(counts, item.type)) {
-          counts[item.type] += 1;
-        }
-      });
-
-      document.getElementById("stat-upload").textContent = counts.upload;
-      document.getElementById("stat-download").textContent = counts.download;
-      document.getElementById("stat-share").textContent = counts.share;
-      document.getElementById("stat-delete").textContent = counts.delete;
+    function resetActivityFilters() {
+      document.getElementById("activity-filter-type").value   = "";
+      document.getElementById("activity-filter-user").value   = "";
+      document.getElementById("activity-filter-divisi").value = "";
+      document.getElementById("activity-filter-from").value   = "";
+      document.getElementById("activity-filter-to").value     = "";
+      document.getElementById("activity-filter-sort").value   = "desc";
+      loadActivity(true);
     }
 
-    function activitySentence(item) {
-      const file = item.file || "—";
-      const userName = item.user || "—";
-
-      let sentence = `
-        <strong>${esc(userName)}</strong>
-        ${esc(eventVerb(item))}
-        <strong>${esc(file)}</strong>
-      `;
-
-      if (item.type === "move" && item.to_folder) {
-        sentence += ` ke <strong>${esc(item.to_folder)}</strong>`;
-      }
-
-      if (item.type === "remove_from_folder" && item.folder) {
-        sentence += ` dari <strong>${esc(item.folder)}</strong>`;
-      }
-
-      if (item.type === "share" && item.division && item.division !== "—") {
-        sentence += ` ke <strong>${esc(item.division)}</strong>`;
-      }
-
-      return sentence;
-    }
-
-    function renderDetailBox(group) {
-      const item = group.latest;
-
-      const detailRows = [
-        ["Aktivitas", eventVerb(item)],
-        ["User", item.user || "—"],
-        ["File", item.file || "—"],
-        ["Divisi", item.division || "—"],
-        ["Waktu terbaru", formatDateTime(item.created_at)],
-      ];
-
-      if (item.ukuran !== undefined && item.ukuran !== null) {
-        detailRows.push([
-          "Ukuran",
-          typeof formatFileSize === "function"
-            ? formatFileSize(item.ukuran)
-            : `${item.ukuran} B`
-        ]);
-      }
-
-      if (item.tipe) {
-        detailRows.push(["Tipe file", item.tipe]);
-      }
-
-      if (item.to_folder) {
-        detailRows.push(["Folder tujuan", item.to_folder]);
-      }
-
-      if (item.from_folder) {
-        detailRows.push(["Folder asal", item.from_folder]);
-      }
-
-      if (item.folder) {
-        detailRows.push(["Folder", item.folder]);
-      }
-
-      if (Array.isArray(item.tags) && item.tags.length) {
-        detailRows.push(["Tag", item.tags.join(", ")]);
-      }
-
-      if (item.catatan) {
-        detailRows.push(["Catatan", item.catatan]);
-      }
-
-      let html = `<div class="detail-box">`;
-
-      html += detailRows.map(([label, value]) => `
-        <div class="detail-item">
-          <div class="detail-label">${esc(label)}</div>
-          <div class="detail-value">${esc(value)}</div>
-        </div>
-      `).join("");
-
-      if (group.count > 1) {
-        html += `<div class="detail-history-title">${group.count} aktivitas yang diringkas</div>`;
-
-        html += group.items.map(event => `
-          <div class="detail-history-row">
-            <div>${esc(formatTimeOnly(event.created_at))}</div>
-            <div>${esc(event.user || "—")} · ${esc(event.file || "—")}</div>
-          </div>
-        `).join("");
-      }
-
-      html += `</div>`;
-
-      return html;
-    }
-
-    function renderGroup(group, absoluteIndex) {
-      const item = group.latest;
-
-      return `
-        <div class="activity-group" id="activity-group-${absoluteIndex}">
-          <div class="activity-row" onclick="toggleActivityDetail(${absoluteIndex})">
-            <div class="activity-event-icon ${esc(item.type || "")}">
-              <i data-lucide="${eventIcon(item.type)}"></i>
-            </div>
-
-            <div class="activity-main">
-              <div class="activity-line">${activitySentence(item)}</div>
-              <div class="activity-sub">
-                <span>${esc(item.division || "—")}</span>
-                <span>•</span>
-                <span>${esc(formatDateTime(item.created_at))}</span>
-              </div>
-            </div>
-
-            ${group.count > 1
-              ? `<div class="group-count">×${group.count}</div>`
-              : `<div></div>`}
-
-            <div class="activity-chevron">
-              <i data-lucide="chevron-down"></i>
-            </div>
-          </div>
-
-          <div class="activity-detail">
-            ${renderDetailBox(group)}
-          </div>
-        </div>
-      `;
-    }
+    ["activity-filter-type", "activity-filter-user", "activity-filter-divisi",
+     "activity-filter-from", "activity-filter-to", "activity-filter-sort"].forEach(id => {
+      document.getElementById(id).addEventListener("change", () => loadActivity(true));
+    });
 
     function renderActivityPage() {
-      const totalGroups = groupedActivities.length;
-      const totalPages = Math.max(1, Math.ceil(totalGroups / PAGE_SIZE));
+      const el = document.getElementById("activity-list");
+      const totalGroups = groupedActivityData.length;
 
-      if (currentPage > totalPages) {
-        currentPage = totalPages;
-      }
-
-      const start = (currentPage - 1) * PAGE_SIZE;
-      const end = Math.min(start + PAGE_SIZE, totalGroups);
-      const pageGroups = groupedActivities.slice(start, end);
-
-      const list = document.getElementById("activity-list");
-
-      if (!pageGroups.length) {
-        list.innerHTML = `
-          <div class="empty-log">
-            <i data-lucide="inbox"></i>
-            <div>Tidak ada aktivitas untuk filter ini.</div>
-          </div>
-        `;
-
-        document.getElementById("activity-result-info").textContent =
-          "0 aktivitas";
-
-        document.getElementById("pagination").style.display = "none";
-        lucide.createIcons();
+      if (!totalGroups) {
+        el.innerHTML =
+          `<div style="background:var(--surface);padding:30px;text-align:center;color:var(--text-muted);">Belum ada aktivitas</div>`;
+        document.getElementById("activity-pagination").style.display = "none";
         return;
       }
 
-      list.innerHTML = pageGroups
-        .map((group, index) => renderGroup(group, start + index))
-        .join("");
+      const totalPages = Math.max(1, Math.ceil(totalGroups / ACTIVITY_PAGE_SIZE));
 
-      const duplicateReduction = rawActivities.length - totalGroups;
+      if (activityCurrentPage > totalPages) {
+        activityCurrentPage = totalPages;
+      }
 
-      document.getElementById("activity-result-info").textContent =
-        `${rawActivities.length} aktivitas · ${totalGroups} baris setelah grouping` +
-        (duplicateReduction > 0 ? ` · ${duplicateReduction} baris diringkas` : "");
+      const start = (activityCurrentPage - 1) * ACTIVITY_PAGE_SIZE;
+      const end = Math.min(start + ACTIVITY_PAGE_SIZE, totalGroups);
+      const pageGroups = groupedActivityData.slice(start, end);
 
-      renderPagination(totalPages, start, end, totalGroups);
+      el.innerHTML = pageGroups.map((group, index) => {
+        const a = group.latest;
+        const display = activityIconAndText(a);
+        const absoluteIndex = start + index;
+
+        return `
+          <div class="activity-group" id="activity-group-${absoluteIndex}">
+            <div class="activity-item" onclick="toggleActivityGroup(${absoluteIndex})">
+              <div class="activity-icon ${display.iconClass}">${display.icon}</div>
+
+              <div class="activity-info">
+                <div class="activity-text">${display.text}</div>
+                <div class="activity-meta">${display.meta}</div>
+              </div>
+
+              <div class="activity-time">${formatDate(a.created_at)}</div>
+
+              ${group.count > 1
+                ? `<div class="activity-group-count">×${group.count}</div>`
+                : `<div style="width:34px;"></div>`}
+
+              <i data-lucide="chevron-down" class="activity-group-chevron"></i>
+            </div>
+
+            <div class="activity-group-detail">
+              <div class="activity-detail-box">
+                ${group.items.map(item => {
+                  const detail = activityIconAndText(item);
+                  return `
+                    <div class="activity-detail-row">
+                      <div class="activity-detail-time">${activityTimeOnly(item.created_at)}</div>
+                      <div class="activity-detail-text">
+                        ${detail.text}
+                        ${detail.meta ? `<div style="margin-top:2px;color:var(--text-muted);">${detail.meta}</div>` : ""}
+                      </div>
+                    </div>`;
+                }).join("")}
+              </div>
+            </div>
+          </div>`;
+      }).join("");
+
+      renderActivityPagination(totalPages, start, end, totalGroups);
       lucide.createIcons();
     }
 
-    function toggleActivityDetail(index) {
-      const el = document.getElementById(`activity-group-${index}`);
-
-      if (!el) return;
-
-      el.classList.toggle("open");
+    function toggleActivityGroup(index) {
+      const row = document.getElementById(`activity-group-${index}`);
+      if (!row) return;
+      row.classList.toggle("open");
     }
 
-    function renderPagination(totalPages, start, end, totalGroups) {
-      const wrap = document.getElementById("pagination");
-      const info = document.getElementById("pagination-info");
-      const buttons = document.getElementById("pagination-buttons");
+    function renderActivityPagination(totalPages, start, end, totalGroups) {
+      const wrap = document.getElementById("activity-pagination");
+      const info = document.getElementById("activity-pagination-info");
+      const buttons = document.getElementById("activity-pagination-buttons");
 
       wrap.style.display = "flex";
-
-      info.textContent =
-        `Menampilkan ${start + 1}–${end} dari ${totalGroups} baris aktivitas`;
+      info.textContent = `Menampilkan ${start + 1}–${end} dari ${totalGroups} baris aktivitas`;
 
       const pageSet = new Set([
         1,
         totalPages,
-        currentPage - 1,
-        currentPage,
-        currentPage + 1,
+        activityCurrentPage - 1,
+        activityCurrentPage,
+        activityCurrentPage + 1
       ]);
 
-      const pages = Array.from(pageSet)
+      const pages = [...pageSet]
         .filter(page => page >= 1 && page <= totalPages)
         .sort((a, b) => a - b);
 
       let html = `
-        <button class="page-btn" ${currentPage === 1 ? "disabled" : ""}
-          onclick="goToPage(${currentPage - 1})">
+        <button class="activity-page-btn"
+          ${activityCurrentPage === 1 ? "disabled" : ""}
+          onclick="goToActivityPage(${activityCurrentPage - 1})">
           Sebelumnya
-        </button>
-      `;
+        </button>`;
 
       let previous = null;
 
@@ -1105,143 +1186,253 @@
         }
 
         html += `
-          <button class="page-btn ${page === currentPage ? "active" : ""}"
-            onclick="goToPage(${page})">
+          <button class="activity-page-btn ${page === activityCurrentPage ? "active" : ""}"
+            onclick="goToActivityPage(${page})">
             ${page}
-          </button>
-        `;
+          </button>`;
 
         previous = page;
       }
 
       html += `
-        <button class="page-btn" ${currentPage === totalPages ? "disabled" : ""}
-          onclick="goToPage(${currentPage + 1})">
+        <button class="activity-page-btn"
+          ${activityCurrentPage === totalPages ? "disabled" : ""}
+          onclick="goToActivityPage(${activityCurrentPage + 1})">
           Berikutnya
-        </button>
-      `;
+        </button>`;
 
       buttons.innerHTML = html;
     }
 
-    function goToPage(page) {
+    function goToActivityPage(page) {
       const totalPages = Math.max(
         1,
-        Math.ceil(groupedActivities.length / PAGE_SIZE)
+        Math.ceil(groupedActivityData.length / ACTIVITY_PAGE_SIZE)
       );
 
       if (page < 1 || page > totalPages) return;
 
-      currentPage = page;
+      activityCurrentPage = page;
       renderActivityPage();
 
-      document.querySelector(".activity-card")
-        ?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+      document.getElementById("section-activity").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
     }
 
-    function resetFilters() {
-      document.getElementById("filter-type").value = "";
-      document.getElementById("filter-user").value = "";
-      document.getElementById("filter-division").value = "";
-      document.getElementById("filter-from").value = "";
-      document.getElementById("filter-to").value = "";
-      document.getElementById("filter-sort").value = "desc";
+    const ACTIVITY_TYPE_LABEL = {
+      upload:             "Upload",
+      download:           "Download",
+      delete:             "Hapus Aset",
+      move:               "Pindah Folder",
+      remove_from_folder: "Keluar dari Folder",
+      tag_added:          "Tambah Tag",
+      tag_removed:        "Hapus Tag",
+      share:              "Share"
+    };
 
-      loadActivities();
+    function activityDetailText(a) {
+      switch (a.type) {
+        case "upload":             return formatFileSize(a.ukuran);
+        case "delete":             return a.ukuran ? formatFileSize(a.ukuran) : "";
+        case "move":               return a.from_folder ? `${a.from_folder} → ${a.to_folder}` : (a.to_folder || "");
+        case "remove_from_folder": return a.folder || "";
+        case "tag_added":          return `${a.count} tag: ${(a.tags || []).join(", ")}`;
+        case "tag_removed":        return a.tag || "";
+        case "share":              return a.catatan || "";
+        default:                   return "";
+      }
     }
 
-    function exportCsv() {
-      if (!rawActivities.length) {
-        if (typeof showToast === "function") {
-          showToast("Tidak ada aktivitas untuk diexport", "warning");
-        }
+    function exportActivityCSV() {
+      const headers = ["Tipe","User","Divisi","File","Detail","Tanggal"];
+      const rows    = allActivityData.map(a => [
+        ACTIVITY_TYPE_LABEL[a.type] || a.type,
+        a.user, a.division, a.file,
+        activityDetailText(a),
+        a.created_at
+      ]);
+      downloadCSV("laporan_aktivitas.csv", headers, rows);
+    }
+
+    // ── Load Assets Report ────────────────────────────
+    async function loadAssetsReport() {
+      try {
+        const data = await fetchWithRetry(`${API_BASE_URL}/admin/report/assets`);
+        allReportAssets = data.assets;
+
+        const divSet = [...new Set(data.assets.map(a => a.divisi).filter(Boolean))];
+        const sel    = document.getElementById("filter-divisi");
+        sel.innerHTML = `<option value="">Semua divisi</option>` +
+          divSet.map(d => `<option value="${d}">${d}</option>`).join("");
+
+        renderAssetsTable(allReportAssets);
+
+        document.getElementById("filter-nama").addEventListener("input",   debounce(filterAssets, 300));
+        document.getElementById("filter-tipe").addEventListener("change",  filterAssets);
+        document.getElementById("filter-divisi").addEventListener("change", filterAssets);
+
+      } catch (e) {
+        console.error(e);
+        showToast("Gagal memuat laporan aset", "error");
+      }
+    }
+
+    function filterAssets() {
+      const q      = document.getElementById("filter-nama").value.toLowerCase();
+      const tipe   = document.getElementById("filter-tipe").value;
+      const divisi = document.getElementById("filter-divisi").value;
+      const filtered = allReportAssets.filter(a => {
+        const matchQ = a.nama_file.toLowerCase().includes(q);
+        const matchT = tipe   ? a.tipe_file.includes(tipe) : true;
+        const matchD = divisi ? a.divisi === divisi         : true;
+        return matchQ && matchT && matchD;
+      });
+      renderAssetsTable(filtered);
+    }
+
+    function renderAssetsTable(assets) {
+      document.getElementById("asset-count").textContent = `${assets.length} aset`;
+      const tbody = document.getElementById("asset-table-body");
+      if (!assets.length) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text-muted);">Tidak ada aset</td></tr>`;
         return;
       }
-
-      const headers = [
-        "Tipe",
-        "User",
-        "Divisi",
-        "File",
-        "Tanggal",
-        "Folder Asal",
-        "Folder Tujuan",
-        "Tag",
-        "Catatan",
-      ];
-
-      const rows = rawActivities.map(item => [
-        item.type || "",
-        item.user || "",
-        item.division || "",
-        item.file || "",
-        item.created_at || "",
-        item.from_folder || item.folder || "",
-        item.to_folder || "",
-        Array.isArray(item.tags)
-          ? item.tags.join(" | ")
-          : (item.tag || ""),
-        item.catatan || "",
-      ]);
-
-      const escapeCsv = value => {
-        const text = String(value ?? "");
-
-        if (
-          text.includes(",") ||
-          text.includes('"') ||
-          text.includes("\n")
-        ) {
-          return `"${text.replaceAll('"', '""')}"`;
-        }
-
-        return text;
-      };
-
-      const csv = [
-        headers.map(escapeCsv).join(","),
-        ...rows.map(row => row.map(escapeCsv).join(",")),
-      ].join("\n");
-
-      const blob = new Blob(
-        ["\ufeff" + csv],
-        { type: "text/csv;charset=utf-8;" }
-      );
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download =
-        `dam-activity-${new Date().toISOString().slice(0, 10)}.csv`;
-
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      tbody.innerHTML = assets.map((a, i) => `
+        <tr>
+          <td style="color:var(--text-muted);">${i + 1}</td>
+          <td><div style="font-weight:500;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.nama_file}</div></td>
+          <td>${getTipeBadge(a.tipe_file)}</td>
+          <td style="white-space:nowrap;">${formatFileSize(a.ukuran)}</td>
+          <td>${a.uploader}</td>
+          <td><span class="div-badge">${a.divisi}</span></td>
+          <td style="text-align:center;">${a.jumlah_tag}</td>
+          <td><span class="public-badge ${a.is_public ? 'public-yes' : 'public-no'}">${a.is_public ? "Publik" : "Private"}</span></td>
+          <td style="white-space:nowrap;color:var(--text-muted);">${formatDate(a.created_at)}</td>
+        </tr>`).join("");
     }
 
-    [
-      "filter-type",
-      "filter-user",
-      "filter-division",
-      "filter-from",
-      "filter-to",
-      "filter-sort",
-    ].forEach(id => {
-      document.getElementById(id)
-        .addEventListener("change", () => loadActivities());
-    });
+    function exportAssetsCSV() {
+      const headers = ["No","Nama File","Tipe","Ukuran","Uploader","Divisi","Jumlah Tag","Akses","Tanggal Upload"];
+      const rows    = allReportAssets.map((a, i) => [
+        i + 1, a.nama_file, a.tipe_file,
+        formatFileSize(a.ukuran), a.uploader, a.divisi,
+        a.jumlah_tag, a.is_public ? "Publik" : "Private", a.created_at
+      ]);
+      downloadCSV("laporan_aset.csv", headers, rows);
+    }
 
+    // ── Load Tagging Report ───────────────────────────
+    async function loadTaggingReport() {
+      try {
+        const [stats, top] = await Promise.all([
+          fetchWithRetry(`${API_BASE_URL}/stats/tagging?user_id=${user.user_id}`),
+          fetchWithRetry(`${API_BASE_URL}/tags/top?user_id=${user.user_id}&limit=10`)
+        ]);
+
+        const rows = [
+          {label:"Dari Nama File", pct: stats.pct_nama_file, count: stats.nama_file, color:"var(--primary)"},
+          {label:"Dari Metadata",  pct: stats.pct_metadata,  count: stats.metadata,  color:"var(--accent-yellow)"},
+          {label:"Dari AI Imagga", pct: stats.pct_ai,        count: stats.ai,        color:"#4CAF50"},
+          {label:"Manual",         pct: stats.pct_manual,    count: stats.manual,    color:"var(--accent-blue)"},
+        ];
+
+        document.getElementById("tag-source-chart").innerHTML = rows.map(r => `
+          <div class="tag-stat-row">
+            <div class="tag-stat-label">${r.label}</div>
+            <div class="tag-stat-bar">
+              <div class="tag-stat-fill" style="width:${r.pct}%;background:${r.color};"></div>
+            </div>
+            <div class="tag-stat-pct" style="color:${r.color};">${r.pct}%</div>
+            <div class="tag-stat-count">${r.count} tag</div>
+          </div>`).join("");
+
+        document.getElementById("tag-total-info").textContent =
+          `Total ${stats.total} tag dari seluruh aset sistem`;
+
+        document.getElementById("top-tags-report").innerHTML =
+          top.tags.map((t, i) => `
+            <div class="top-tag-item">
+              <div class="top-tag-rank">#${i+1}</div>
+              <div class="top-tag-name">${t.nama}</div>
+              <span class="top-tag-count">${t.jumlah}x</span>
+            </div>`).join("");
+
+        const avgTag = allReportAssets.length
+          ? (stats.total / allReportAssets.length).toFixed(1)
+          : "—";
+
+        document.getElementById("tagging-summary").innerHTML = [
+          {label:"Total Tag",         value: stats.total,  color:"var(--primary)"},
+          {label:"Rata-rata Tag/Aset", value: avgTag,       color:"var(--accent-blue)"},
+          {label:"Tag dari AI",        value: stats.ai,     color:"#4CAF50"},
+          {label:"Tag Manual",         value: stats.manual, color:"#633806"},
+        ].map(s => `
+          <div style="text-align:center;padding:14px;background:var(--surface-2);border-radius:var(--radius-md);border:1px solid var(--border);">
+            <div style="font-size:24px;font-weight:800;color:${s.color};">${s.value}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${s.label}</div>
+          </div>`).join("");
+
+      } catch (e) { console.error(e); showToast("Gagal memuat laporan tagging", "error"); }
+    }
+
+    // ── Load Division Report ──────────────────────────
+    async function loadDivisionReport() {
+      try {
+        const data = await fetchWithRetry(`${API_BASE_URL}/admin/report/divisions`);
+        const el   = document.getElementById("div-report-grid");
+        el.innerHTML = data.divisions.map(d => `
+          <div class="div-report-card">
+            <div class="div-report-name">
+              <div style="width:10px;height:10px;border-radius:50%;background:${divisionColors[d.nama] || '#aaa'};"></div>
+              ${d.nama}
+            </div>
+            <div class="div-report-row">
+              <span>Jumlah Staff</span>
+              <span>${d.jumlah_user} orang</span>
+            </div>
+            <div class="div-report-row">
+              <span>Total Aset</span>
+              <span>${d.jumlah_aset} file</span>
+            </div>
+            <div class="div-report-row">
+              <span>Total Storage</span>
+              <span>${formatFileSize(d.total_storage)}</span>
+            </div>
+          </div>`).join("");
+      } catch (e) { console.error(e); showToast("Gagal memuat laporan divisi", "error"); }
+    }
+
+    // ── CSV Helper ────────────────────────────────────
+    function downloadCSV(filename, headers, rows) {
+      const escape = val => `"${String(val).replace(/"/g, '""')}"`;
+      const csv    = [headers, ...rows].map(r => r.map(escape).join(",")).join("\n");
+      const blob   = new Blob(["\uFEFF" + csv], {type:"text/csv;charset=utf-8;"});
+      const url    = URL.createObjectURL(blob);
+      const a      = document.createElement("a");
+      a.href       = url;
+      a.download   = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ── Init ──────────────────────────────────────────
     async function init() {
-      await loadFilterOptions();
-      await loadActivities();
+      // allReportAssets dipakai oleh loadStats() dan loadTaggingReport(),
+      // jadi dimuat dulu sekali saja (tidak fetch /admin/report/assets berkali-kali).
+      await loadAssetsReport();
+      await Promise.all([
+        loadStats(),
+        loadActivity(),
+        loadTaggingReport(),
+        loadDivisionReport()
+      ]);
       lucide.createIcons();
     }
+
+    // Render ikon statis (termasuk sidebar) segera — jangan tunggu data selesai dimuat
+    lucide.createIcons();
 
     init();
   </script>
