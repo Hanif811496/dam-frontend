@@ -374,6 +374,179 @@
       color: var(--text-light);
     }
 
+    /* Dashboard report launcher cards */
+    .report-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .report-launch-card {
+      position: relative;
+      min-height: 150px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, border-color .15s, background .15s;
+      overflow: hidden;
+    }
+
+    .report-launch-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-dark);
+    }
+
+    .report-launch-card.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+      background: rgba(216, 35, 42, .018);
+    }
+
+    .report-launch-card::after {
+      content: "";
+      position: absolute;
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      right: -28px;
+      bottom: -34px;
+      opacity: .07;
+      background: currentColor;
+      pointer-events: none;
+    }
+
+    .report-launch-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .report-launch-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .report-launch-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .report-launch-icon i {
+      width: 17px;
+      height: 17px;
+    }
+
+    .report-launch-icon.activity { background: var(--primary-light); color: var(--primary); }
+    .report-launch-icon.assets   { background: var(--accent-blue-light); color: var(--accent-blue); }
+    .report-launch-icon.tagging  { background: #FDF3D9; color: #8A6800; }
+    .report-launch-icon.divisions{ background: #F1ECFB; color: #7A49A5; }
+
+    .report-launch-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .report-launch-subtitle {
+      margin-top: 3px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    .report-launch-arrow {
+      color: var(--text-light);
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      transition: transform .15s, color .15s;
+    }
+
+    .report-launch-card:hover .report-launch-arrow,
+    .report-launch-card.active .report-launch-arrow {
+      color: var(--primary);
+      transform: translateX(2px);
+    }
+
+    .report-launch-metric {
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .report-launch-secondary {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      min-height: 16px;
+    }
+
+    .report-launch-tertiary {
+      font-size: 10.5px;
+      color: var(--text-light);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 20px;
+    }
+
+    .report-detail-panel {
+      display: none;
+      margin-bottom: 16px;
+      scroll-margin-top: 86px;
+    }
+
+    .report-detail-panel.active {
+      display: block;
+    }
+
+    .report-detail-panel .section-panel-header {
+      cursor: default;
+    }
+
+    .report-detail-panel .section-panel-header:hover {
+      background: var(--surface);
+    }
+
+    .report-detail-close {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .report-detail-close:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    @media (max-width: 760px) {
+      .report-card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* Report table */
     .report-toolbar {
       display: flex;
@@ -661,13 +834,90 @@
       </div>
     </div>
 
+    <!-- Ringkasan laporan -->
+    <div class="report-card-grid" id="report-card-grid">
+      <div class="report-launch-card" id="report-card-activity" onclick="openReportDetail('activity')">
+        <div class="report-launch-top">
+          <div class="report-launch-title-wrap">
+            <div class="report-launch-icon activity">
+              <i data-lucide="activity"></i>
+            </div>
+            <div>
+              <div class="report-launch-title">Aktivitas Staff</div>
+              <div class="report-launch-subtitle">Audit trail & aktivitas terbaru</div>
+            </div>
+          </div>
+          <i data-lucide="arrow-right" class="report-launch-arrow"></i>
+        </div>
+        <div class="report-launch-metric" id="report-activity-primary">—</div>
+        <div class="report-launch-secondary" id="report-activity-secondary">Memuat aktivitas...</div>
+        <div class="report-launch-tertiary" id="report-activity-tertiary">Klik untuk melihat detail</div>
+      </div>
+
+      <div class="report-launch-card" id="report-card-assets" onclick="openReportDetail('assets')">
+        <div class="report-launch-top">
+          <div class="report-launch-title-wrap">
+            <div class="report-launch-icon assets">
+              <i data-lucide="file"></i>
+            </div>
+            <div>
+              <div class="report-launch-title">Laporan Aset</div>
+              <div class="report-launch-subtitle">Inventaris file & penggunaan storage</div>
+            </div>
+          </div>
+          <i data-lucide="arrow-right" class="report-launch-arrow"></i>
+        </div>
+        <div class="report-launch-metric" id="report-assets-primary">—</div>
+        <div class="report-launch-secondary" id="report-assets-secondary">Memuat aset...</div>
+        <div class="report-launch-tertiary" id="report-assets-tertiary">Klik untuk melihat detail</div>
+      </div>
+
+      <div class="report-launch-card" id="report-card-tagging" onclick="openReportDetail('tagging')">
+        <div class="report-launch-top">
+          <div class="report-launch-title-wrap">
+            <div class="report-launch-icon tagging">
+              <i data-lucide="tags"></i>
+            </div>
+            <div>
+              <div class="report-launch-title">Laporan Tagging</div>
+              <div class="report-launch-subtitle">Kualitas auto-tag & tag populer</div>
+            </div>
+          </div>
+          <i data-lucide="arrow-right" class="report-launch-arrow"></i>
+        </div>
+        <div class="report-launch-metric" id="report-tagging-primary">—</div>
+        <div class="report-launch-secondary" id="report-tagging-secondary">Memuat tagging...</div>
+        <div class="report-launch-tertiary" id="report-tagging-tertiary">Klik untuk melihat detail</div>
+      </div>
+
+      <div class="report-launch-card" id="report-card-divisions" onclick="openReportDetail('divisions')">
+        <div class="report-launch-top">
+          <div class="report-launch-title-wrap">
+            <div class="report-launch-icon divisions">
+              <i data-lucide="layers"></i>
+            </div>
+            <div>
+              <div class="report-launch-title">Laporan Divisi</div>
+              <div class="report-launch-subtitle">Staff, aset & storage per divisi</div>
+            </div>
+          </div>
+          <i data-lucide="arrow-right" class="report-launch-arrow"></i>
+        </div>
+        <div class="report-launch-metric" id="report-divisions-primary">—</div>
+        <div class="report-launch-secondary" id="report-divisions-secondary">Memuat divisi...</div>
+        <div class="report-launch-tertiary" id="report-divisions-tertiary">Klik untuk melihat detail</div>
+      </div>
+    </div>
+
     <!-- Section: Aktivitas -->
-    <div class="section-panel" id="section-activity">
-      <div class="section-panel-header" onclick="toggleSection('activity')">
+    <div class="section-panel report-detail-panel" id="section-activity">
+      <div class="section-panel-header">
         <div class="section-panel-title">
-          <i data-lucide="chevron-down" class="section-chevron" id="chevron-activity"></i>
           <i data-lucide="activity" style="width:14px;height:14px;color:var(--primary);"></i> Aktivitas Staff
         </div>
+        <button class="report-detail-close" type="button" onclick="closeReportDetail()" title="Tutup detail">
+          <i data-lucide="x" style="width:15px;height:15px;"></i>
+        </button>
       </div>
       <div class="section-panel-body" id="body-activity">
         <div class="report-toolbar">
@@ -718,12 +968,14 @@
     </div>
 
     <!-- Section: Laporan Aset -->
-    <div class="section-panel" id="section-assets">
-      <div class="section-panel-header" onclick="toggleSection('assets')">
+    <div class="section-panel report-detail-panel" id="section-assets">
+      <div class="section-panel-header">
         <div class="section-panel-title">
-          <i data-lucide="chevron-down" class="section-chevron" id="chevron-assets"></i>
           <i data-lucide="file" style="width:14px;height:14px;color:var(--accent-blue);"></i> Laporan Aset
         </div>
+        <button class="report-detail-close" type="button" onclick="closeReportDetail()" title="Tutup detail">
+          <i data-lucide="x" style="width:15px;height:15px;"></i>
+        </button>
       </div>
       <div class="section-panel-body" id="body-assets">
         <div class="report-toolbar">
@@ -769,12 +1021,14 @@
     </div>
 
     <!-- Section: Laporan Tagging -->
-    <div class="section-panel" id="section-tagging">
-      <div class="section-panel-header" onclick="toggleSection('tagging')">
+    <div class="section-panel report-detail-panel" id="section-tagging">
+      <div class="section-panel-header">
         <div class="section-panel-title">
-          <i data-lucide="chevron-down" class="section-chevron" id="chevron-tagging"></i>
           <i data-lucide="cpu" style="width:14px;height:14px;color:var(--accent-yellow);"></i> Laporan Tagging
         </div>
+        <button class="report-detail-close" type="button" onclick="closeReportDetail()" title="Tutup detail">
+          <i data-lucide="x" style="width:15px;height:15px;"></i>
+        </button>
       </div>
       <div class="section-panel-body" id="body-tagging">
         <div class="tag-report-grid">
@@ -796,12 +1050,14 @@
     </div>
 
     <!-- Section: Laporan Divisi -->
-    <div class="section-panel" id="section-divisions">
-      <div class="section-panel-header" onclick="toggleSection('divisions')">
+    <div class="section-panel report-detail-panel" id="section-divisions">
+      <div class="section-panel-header">
         <div class="section-panel-title">
-          <i data-lucide="chevron-down" class="section-chevron" id="chevron-divisions"></i>
           <i data-lucide="layers" style="width:14px;height:14px;color:#8E44AD;"></i> Laporan Divisi
         </div>
+        <button class="report-detail-close" type="button" onclick="closeReportDetail()" title="Tutup detail">
+          <i data-lucide="x" style="width:15px;height:15px;"></i>
+        </button>
       </div>
       <div class="section-panel-body" id="body-divisions">
         <div class="div-report-grid" id="div-report-grid">
@@ -846,6 +1102,55 @@
     function toggleSection(name) {
       const panel = document.getElementById(`section-${name}`);
       panel.classList.toggle("collapsed");
+    }
+
+    let activeReportDetail = null;
+
+    function openReportDetail(name) {
+      if (activeReportDetail === name) {
+        closeReportDetail();
+        return;
+      }
+
+      activeReportDetail = name;
+
+      ["activity", "assets", "tagging", "divisions"].forEach(key => {
+        document.getElementById(`section-${key}`)?.classList.toggle("active", key === name);
+        document.getElementById(`report-card-${key}`)?.classList.toggle("active", key === name);
+      });
+
+      lucide.createIcons();
+
+      requestAnimationFrame(() => {
+        document.getElementById(`section-${name}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      });
+    }
+
+    function closeReportDetail() {
+      activeReportDetail = null;
+
+      ["activity", "assets", "tagging", "divisions"].forEach(key => {
+        document.getElementById(`section-${key}`)?.classList.remove("active");
+        document.getElementById(`report-card-${key}`)?.classList.remove("active");
+      });
+
+      document.getElementById("report-card-grid")?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+      });
+    }
+
+    function reportFileTypeLabel(tipe) {
+      const value = String(tipe || "").toLowerCase();
+      if (value.includes("image")) return "Gambar";
+      if (value.includes("video")) return "Video";
+      if (value.includes("pdf")) return "PDF";
+      if (value.includes("word") || value.includes("document")) return "Word";
+      if (value.includes("sheet") || value.includes("excel")) return "Spreadsheet";
+      return "Lainnya";
     }
 
     function getTipeBadge(tipe) {
@@ -1056,10 +1361,25 @@
           `${allActivityData.length} aktivitas · ${groupedActivityData.length} baris setelah grouping` +
           (reduced > 0 ? ` · ${reduced} baris diringkas` : "");
 
+        document.getElementById("report-activity-primary").textContent =
+          `${allActivityData.length} aktivitas`;
+
+        document.getElementById("report-activity-secondary").textContent =
+          `${groupedActivityData.length} baris setelah grouping`;
+
+        const latestActivity = groupedActivityData[0]?.latest;
+        document.getElementById("report-activity-tertiary").textContent =
+          latestActivity
+            ? `Terbaru: ${latestActivity.user || "—"} · ${latestActivity.file || "—"}`
+            : "Belum ada aktivitas";
+
         renderActivityPage();
       } catch (e) {
         document.getElementById("activity-list").innerHTML =
           `<div style="background:var(--surface);padding:20px;text-align:center;color:var(--danger);">Gagal memuat aktivitas</div>`;
+        document.getElementById("report-activity-primary").textContent = "—";
+        document.getElementById("report-activity-secondary").textContent = "Gagal memuat aktivitas";
+        document.getElementById("report-activity-tertiary").textContent = "Klik untuk mencoba melihat detail";
       }
     }
 
@@ -1262,6 +1582,21 @@
         const data = await fetchWithRetry(`${API_BASE_URL}/admin/report/assets`);
         allReportAssets = data.assets;
 
+        const totalAssetBytes = allReportAssets.reduce((sum, asset) => sum + Number(asset.ukuran || 0), 0);
+        const typeCounts = allReportAssets.reduce((acc, asset) => {
+          const label = reportFileTypeLabel(asset.tipe_file);
+          acc[label] = (acc[label] || 0) + 1;
+          return acc;
+        }, {});
+        const topType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0];
+
+        document.getElementById("report-assets-primary").textContent =
+          `${allReportAssets.length} aset`;
+        document.getElementById("report-assets-secondary").textContent =
+          `${formatFileSize(totalAssetBytes)} total storage`;
+        document.getElementById("report-assets-tertiary").textContent =
+          topType ? `Tipe terbanyak: ${topType[0]} (${topType[1]})` : "Belum ada aset";
+
         const divSet = [...new Set(data.assets.map(a => a.divisi).filter(Boolean))];
         const sel    = document.getElementById("filter-divisi");
         sel.innerHTML = `<option value="">Semua divisi</option>` +
@@ -1363,6 +1698,16 @@
           ? (stats.total / allReportAssets.length).toFixed(1)
           : "—";
 
+        const autoPct = Math.max(0, Math.min(100, 100 - Number(stats.pct_manual || 0)));
+        const topTag = (top.tags || [])[0];
+
+        document.getElementById("report-tagging-primary").textContent =
+          `${stats.total} tag`;
+        document.getElementById("report-tagging-secondary").textContent =
+          `${autoPct}% dibuat otomatis`;
+        document.getElementById("report-tagging-tertiary").textContent =
+          topTag ? `Top tag: ${topTag.nama} (${topTag.jumlah}x)` : "Belum ada tag";
+
         document.getElementById("tagging-summary").innerHTML = [
           {label:"Total Tag",         value: stats.total,  color:"var(--primary)"},
           {label:"Rata-rata Tag/Aset", value: avgTag,       color:"var(--accent-blue)"},
@@ -1382,7 +1727,28 @@
       try {
         const data = await fetchWithRetry(`${API_BASE_URL}/admin/report/divisions`);
         const el   = document.getElementById("div-report-grid");
-        el.innerHTML = data.divisions.map(d => `
+
+        const visibleDivisions = (data.divisions || []).filter(
+          d => String(d.nama || "").trim().toLowerCase() !== "custom"
+        );
+        const totalStaff = visibleDivisions.reduce(
+          (sum, d) => sum + Number(d.jumlah_user || 0),
+          0
+        );
+        const topDivision = visibleDivisions
+          .slice()
+          .sort((a, b) => Number(b.jumlah_aset || 0) - Number(a.jumlah_aset || 0))[0];
+
+        document.getElementById("report-divisions-primary").textContent =
+          `${visibleDivisions.length} divisi`;
+        document.getElementById("report-divisions-secondary").textContent =
+          `${totalStaff} staff terdaftar`;
+        document.getElementById("report-divisions-tertiary").textContent =
+          topDivision
+            ? `Aset terbanyak: ${topDivision.nama} (${topDivision.jumlah_aset})`
+            : "Belum ada data divisi";
+
+        el.innerHTML = visibleDivisions.map(d => `
           <div class="div-report-card">
             <div class="div-report-name">
               <div style="width:10px;height:10px;border-radius:50%;background:${divisionColors[d.nama] || '#aaa'};"></div>
