@@ -132,12 +132,27 @@ function renderDetailPanel() {
     previewHtml = `<div class="preview-icon-sm">${getFileIconDetail(a.tipe_file)}</div>`;
   }
 
-  const tagsHtml = tags.map(t => `
+  const autoTags   = tags.filter(t => t.sumber !== "manual");
+  const manualTags = tags.filter(t => t.sumber === "manual");
+
+  const autoTagsHtml = autoTags.map(t => `
     <span class="tag-pill-removable" id="dp-tag-${t.nama}">
       ${t.nama}
       <span class="sumber-badge">${t.sumber}</span>
       <span class="tag-remove" onclick="hapusTagPanel('${t.nama}')">×</span>
     </span>`).join("");
+
+  const manualTagsHtml = manualTags.length
+    ? manualTags.map(t => `
+      <div class="manual-tag-row" id="dp-tag-${t.nama}">
+        <div class="manual-tag-name">${t.nama}</div>
+        <div class="manual-tag-by">
+          <i data-lucide="user" style="width:11px;height:11px;"></i>
+          ${t.added_by || "—"}
+        </div>
+        <span class="tag-remove" onclick="hapusTagPanel('${t.nama}')">×</span>
+      </div>`).join("")
+    : `<div style="font-size:12px;color:var(--text-muted);padding:6px 0;">Belum ada tag manual</div>`;
 
   document.getElementById("detail-panel-body").innerHTML = `
     <div class="detail-panel-preview">${previewHtml}</div>
@@ -176,8 +191,13 @@ function renderDetailPanel() {
     </div>
 
     <div class="info-section">
-      <div class="info-section-title">Tag (${tags.length})</div>
-      <div class="tags-wrap" id="dp-tags-wrap">${tagsHtml}</div>
+      <div class="info-section-title">Tag Otomatis (${autoTags.length})</div>
+      <div class="tags-wrap" id="dp-auto-tags-wrap">${autoTagsHtml || '<div style="font-size:12px;color:var(--text-muted);">Belum ada tag otomatis</div>'}</div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Tag Manual (${manualTags.length})</div>
+      <div id="dp-manual-tags-wrap">${manualTagsHtml}</div>
       <div class="tag-add-row">
         <input type="text" class="input" id="dp-new-tag" placeholder="Tambah tag manual...">
         <button class="btn btn-primary btn-sm" onclick="tambahTagPanel()">Tambah</button>
@@ -208,7 +228,7 @@ async function tambahTagPanel() {
     await fetchWithRetry(`${API_BASE_URL}/assets/${detailPanelAssetId}/tags`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({nama_tag: nama, sumber: "manual"})
+      body: JSON.stringify({nama_tag: nama, sumber: "manual", user_id: user.user_id})
     });
     input.value = "";
     await loadDetailPanel();
