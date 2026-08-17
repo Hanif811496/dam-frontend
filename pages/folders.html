@@ -3,539 +3,273 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Folders — DAM</title>
+  <title>Smart Folder - DAM</title>
   <link rel="stylesheet" href="../css/variables.css">
   <link rel="stylesheet" href="../css/reset.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/layout.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    .folders-wrap {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      align-items: start;
+    .folder-page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+    .folder-page-actions{display:flex;gap:8px;align-items:center}
+    .folder-help{font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.55}
+    .folder-manager{display:grid;grid-template-columns:minmax(270px,340px) minmax(0,1fr);gap:16px;min-height:650px}
+    .tree-panel,.detail-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;min-width:0}
+    .tree-panel{display:flex;flex-direction:column;height:calc(100vh - 150px);min-height:600px;position:sticky;top:76px}
+    .tree-toolbar{padding:14px;border-bottom:1px solid var(--border)}
+    .tree-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+    .tree-search{position:relative}.tree-search i{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-muted)}
+    .tree-search .input{padding-left:32px;height:36px}
+    .tree-scroll{overflow:auto;padding:8px;flex:1}
+    .tree-empty{padding:22px 12px;text-align:center;color:var(--text-muted);font-size:12px}
+    .tree-row{display:flex;align-items:center;gap:5px;min-height:34px;padding:4px 6px;border-radius:7px;cursor:pointer;user-select:none;color:var(--text)}
+    .tree-row:hover{background:var(--surface-2)}.tree-row.active{background:var(--primary-light);color:var(--primary);font-weight:600}
+    .tree-row.shared-root{color:#287a38}.tree-row .tree-label{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+    .tree-row .tree-meta{font-size:10px;color:var(--text-muted);white-space:nowrap}.tree-row.active .tree-meta{color:inherit;opacity:.7}
+    .tree-toggle{width:20px;height:20px;border:0;background:transparent;padding:0;display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;flex-shrink:0}
+    .tree-toggle.placeholder{visibility:hidden}.tree-toggle i{width:14px;height:14px}.tree-icon{width:16px;height:16px;flex-shrink:0}
+    .detail-panel{
+      min-height:650px;
+      display:flex;
+      flex-direction:column;
     }
 
-    .section-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 20px;
+    .detail-head{
+      padding:18px 22px 0;
+      border-bottom:1px solid var(--border);
+      background:var(--surface);
     }
 
-    .section-title {
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .breadcrumbs{
+      display:flex;
+      align-items:center;
+      gap:5px;
+      flex-wrap:wrap;
+      font-size:12px;
+      color:var(--text-muted);
+      margin-bottom:14px;
+      min-height:18px;
     }
 
-    .folder-group-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 8px 0 4px;
-      margin-top: 4px;
+    .crumb{
+      border:0;
+      background:transparent;
+      padding:0;
+      color:var(--text-muted);
+      cursor:pointer
     }
 
-    .folder-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      margin-bottom: 6px;
-      background: var(--surface-2);
-      cursor: pointer;
-      transition: border-color 0.15s;
+    .crumb:hover{color:var(--primary)}
+
+    .detail-title-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom:16px
     }
 
-    .folder-item:hover { border-color: var(--primary); }
-    .folder-item.active { border-color: var(--primary); background: var(--primary-light); }
-
-    .folder-item-name { flex: 1; font-size: 14px; font-weight: 500; }
-
-    .folder-delete {
-      color: var(--text-muted);
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.15s;
+    .detail-title-wrap{
+      min-width:0;
+      flex:1;
     }
 
-    .folder-item:hover .folder-delete { opacity: 1; }
-    .folder-delete:hover { color: var(--danger); }
-
-    .rule-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      margin-bottom: 6px;
-      background: var(--surface-2);
+    .detail-title{
+      font-size:21px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+      line-height:1.25;
     }
 
-    .rule-keyword {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--primary);
-      background: var(--primary-light);
-      padding: 2px 10px;
-      border-radius: var(--radius-full);
+    .detail-title span{
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap
     }
 
-    .rule-arrow { color: var(--text-muted); font-size: 14px; }
-    .rule-folder { font-size: 13px; font-weight: 500; flex: 1; }
-    .rule-delete { color: var(--text-muted); cursor: pointer; }
-    .rule-delete:hover { color: var(--danger); }
-
-    .add-form { display: flex; gap: 8px; margin-top: 12px; }
-    .add-form .input { flex: 1; }
-
-    .asset-grid-sm {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 10px;
-      margin-top: 14px;
+    .detail-subtitle{
+      font-size:12px;
+      color:var(--text-muted);
+      margin-top:6px
     }
 
-    .asset-card-sm {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color 0.15s;
+    .detail-actions{
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      flex-shrink:0;
     }
 
-    .asset-card-sm:hover { border-color: var(--primary); }
-
-    .asset-preview-sm {
-      width: 100%;
-      height: 90px;
-      background: var(--surface-2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      overflow: hidden;
+    .tabs{
+      display:flex;
+      align-items:flex-end;
+      gap:2px;
+      min-height:42px;
     }
 
-    .asset-preview-sm img { width: 100%; height: 90px; object-fit: cover; }
-    .asset-name-sm { font-size: 11px; padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-muted); }
-
-    .empty-folder { text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px; }
-
-    .folder-share {
-      color: var(--text-muted);
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.15s;
-      margin-right: 2px;
-    }
-    .folder-item:hover .folder-share { opacity: 1; }
-    .folder-share:hover { color: var(--primary); }
-
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      width: 380px;
-      max-width: 90vw;
-      max-height: 80vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-    .modal-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
-    .modal-user-list { overflow-y: auto; flex: 1; margin-bottom: 14px; border-top: 1px solid var(--border); padding-top: 8px; }
-    .modal-user-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 4px;
-      font-size: 13px;
-      border-bottom: 1px solid var(--border);
-    }
-    .modal-user-item:last-child { border-bottom: none; }
-    .modal-user-name { font-weight: 500; flex: 1; }
-    .modal-user-email { color: var(--text-muted); font-size: 11px; }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
-
-    .info-banner {
-      background: var(--accent-yellow-light);
-      border: 1px solid rgba(245,197,24,0.3);
-      border-radius: var(--radius-md);
-      padding: 12px 16px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: #7a600a;
+    .tab-btn{
+      padding:10px 14px 9px;
+      border:0;
+      background:transparent;
+      font-size:12px;
+      font-weight:600;
+      color:var(--text-muted);
+      border-bottom:2px solid transparent;
+      cursor:pointer;
+      margin-bottom:-1px;
+      white-space:nowrap;
     }
 
-    /* ── Folder page layout cleanup ───────────────────────── */
-    .folders-wrap {
-      grid-template-columns: minmax(320px, 0.82fr) minmax(0, 1.18fr);
-      gap: 20px;
+    .tab-btn.active{
+      color:var(--primary);
+      border-bottom-color:var(--primary)
     }
 
-    .folder-detail-shell {
-      padding: 0;
-      overflow: hidden;
-      min-height: 0;
+    .tab-btn:disabled{
+      opacity:.35;
+      cursor:not-allowed
     }
 
-    .folder-detail-head {
-      padding: 20px 22px 14px;
-      border-bottom: 1px solid var(--border);
+    .detail-body{
+      padding:18px 22px 22px;
+      flex:1;
+      min-height:0;
     }
 
-    .folder-detail-breadcrumb {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 12px;
+    .content-summary{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      min-height:34px;
+      margin-bottom:14px
     }
 
-    .folder-detail-title-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
+    .content-count{
+      font-size:12px;
+      color:var(--text-muted)
+    }
+    .folder-content-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+    .child-folder-card,.asset-card-sm{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);overflow:hidden;cursor:pointer;transition:.15s}.child-folder-card:hover,.asset-card-sm:hover{border-color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .child-folder-visual{height:96px;background:var(--surface-2);display:flex;align-items:center;justify-content:center}.child-folder-visual i{width:36px;height:36px;color:var(--accent-yellow)}
+    .card-info{padding:10px}.card-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.card-meta{font-size:10px;color:var(--text-muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .asset-preview-sm{height:96px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden}.asset-preview-sm img{width:100%;height:100%;object-fit:cover}
+    .empty-state{
+      min-height:260px;
+      padding:34px 24px;
+      text-align:center;
+      color:var(--text-muted);
+      font-size:13px;
+      border:1px dashed var(--border);
+      border-radius:var(--radius-md);
+      background:var(--surface-2);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
     }
 
-    .folder-detail-title-main {
-      min-width: 0;
+    .empty-state i{
+      display:block;
+      width:40px;
+      height:40px;
+      opacity:.28;
+      margin:0 0 10px;
+    }
+    .rules-intro,.access-intro{font-size:12px;color:var(--text-muted);line-height:1.55;margin-bottom:16px}
+    .rule-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px}.rule-chip{display:inline-flex;align-items:center;gap:6px;background:var(--primary-light);color:var(--primary);border:1px solid rgba(214,38,38,.15);border-radius:999px;padding:5px 9px;font-size:12px;font-weight:600}.rule-chip button{border:0;background:transparent;padding:0;display:flex;color:inherit;cursor:pointer}.rule-chip button i{width:13px;height:13px}
+    .rule-form{border-top:1px solid var(--border);padding-top:16px}.rule-form-row{display:flex;gap:8px;align-items:flex-start}.rule-form-row .input{flex:1}.rule-hint{font-size:10px;color:var(--text-muted);margin-top:6px}
+    .access-section{border-top:1px solid var(--border);padding-top:15px;margin-top:15px}.access-section:first-of-type{border-top:0;padding-top:0;margin-top:0}.access-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}.access-chips{display:flex;flex-wrap:wrap;gap:6px}.access-chip{border:1px solid var(--border);border-radius:999px;padding:5px 9px;font-size:11px;background:var(--surface-2)}
+    .access-user{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px}.access-user:last-child{border-bottom:0}.access-user i{width:15px;height:15px;color:var(--text-muted)}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.46);z-index:120;align-items:center;justify-content:center;padding:18px}.modal-overlay.open{display:flex}.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:460px;max-width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 18px 60px rgba(0,0,0,.18)}
+    .modal-head{padding:18px 18px 10px}.modal-title{font-size:16px;font-weight:700}.modal-subtitle{font-size:12px;color:var(--text-muted);margin-top:4px}.modal-body{padding:8px 18px 18px;overflow:auto}.modal-actions{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}.field{margin-bottom:14px}.field-label{display:block;font-size:11px;font-weight:600;margin-bottom:6px}.location-select{width:100%}.modal-check-list{border:1px solid var(--border);border-radius:var(--radius-md);max-height:250px;overflow:auto}.modal-check-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-bottom:1px solid var(--border);font-size:12px}.modal-check-item:last-child{border-bottom:0}.danger-note{font-size:11px;color:var(--danger);margin-top:7px}
+    .folder-search-result{font-size:10px;color:var(--text-muted);padding-left:41px;margin-top:-2px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    @media(max-width:900px){
+      .folder-manager{grid-template-columns:1fr}
+      .tree-panel{height:360px;min-height:360px;position:static}
+      .detail-panel{min-height:520px}
+      .detail-title-row{align-items:flex-start;flex-direction:column}
+      .detail-actions{justify-content:flex-start}
     }
 
-    .folder-detail-name {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      font-size: 22px;
-      font-weight: 700;
-      line-height: 1.2;
-      margin-bottom: 6px;
-    }
-
-    .folder-detail-name i {
-      width: 21px;
-      height: 21px;
-      flex-shrink: 0;
-    }
-
-    .folder-detail-meta {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .folder-detail-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: flex-end;
-      flex-shrink: 0;
-    }
-
-    .folder-detail-tabs {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 0 22px;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-    }
-
-    .folder-detail-tab {
-      border: 0;
-      background: transparent;
-      color: var(--text-muted);
-      padding: 13px 12px 11px;
-      font-size: 12.5px;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      white-space: nowrap;
-    }
-
-    .folder-detail-tab.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-      font-weight: 600;
-    }
-
-    .folder-detail-tab:disabled {
-      color: var(--text-light);
-      cursor: not-allowed;
-      opacity: .65;
-    }
-
-    .folder-detail-body {
-      padding: 18px 22px 22px;
-      min-height: 340px;
-    }
-
-    .folder-detail-count-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-      min-height: 32px;
-    }
-
-    .folder-detail-count {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .folder-empty-state {
-      min-height: 250px;
-      border: 1px dashed var(--border);
-      border-radius: var(--radius-md);
-      background: var(--surface-2);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 30px;
-      color: var(--text-muted);
-      font-size: 12.5px;
-    }
-
-    .folder-empty-state i {
-      width: 36px;
-      height: 36px;
-      opacity: .35;
-      margin-bottom: 10px;
-    }
-
-    .folder-preview-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .folder-preview-heading-title {
-      font-size: 13px;
-      font-weight: 650;
-    }
-
-    .folder-preview-heading-meta {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    @media (max-width: 1050px) {
-      .folders-wrap {
-        grid-template-columns: 1fr;
-      }
-
-      .folder-detail-title-row {
-        flex-direction: column;
-      }
-
-      .folder-detail-actions {
-        justify-content: flex-start;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .folder-detail-head,
-      .folder-detail-body {
-        padding-left: 16px;
-        padding-right: 16px;
-      }
-
-      .folder-detail-tabs {
-        padding: 0 10px;
-        overflow-x: auto;
-      }
-
-      .folder-detail-count-row {
-        align-items: flex-start;
-        flex-direction: column;
-      }
+    @media(max-width:620px){
+      .detail-head{padding-left:16px;padding-right:16px}
+      .detail-body{padding-left:16px;padding-right:16px}
+      .tabs{overflow-x:auto}
+      .tab-btn{padding-left:11px;padding-right:11px}
+      .content-summary{align-items:flex-start;flex-direction:column}
     }
   </style>
 </head>
 <body>
-
   <nav class="navbar">
-    <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Tampilkan/sembunyikan sidebar">
-      <i data-lucide="panel-left"></i>
-    </button>
+    <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Tampilkan/sembunyikan sidebar"><i data-lucide="panel-left"></i></button>
     <div class="navbar-brand">DAM System</div>
-    <div class="navbar-right">
-      <span id="user-name" style="font-size:14px;color:var(--text-muted);"></span>
-      <button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button>
-    </div>
+    <div class="navbar-right"><span id="user-name" style="font-size:14px;color:var(--text-muted);"></span><button class="btn btn-outline btn-sm" onclick="logout()">Keluar</button></div>
   </nav>
 
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-label">Menu</div>
-    <a href="gallery.html" class="sidebar-item">
-      <i data-lucide="image"></i> Gallery
-    </a>
-    <a href="upload.html" class="sidebar-item">
-      <i data-lucide="upload-cloud"></i> Upload
-    </a>
-    <a href="folders.html" class="sidebar-item active">
-      <i data-lucide="folder"></i> Folder
-    </a>
-    <a href="profile.html" class="sidebar-item">
-      <i data-lucide="user"></i> Profile
-    </a>
-
+    <a href="gallery.html" class="sidebar-item"><i data-lucide="image"></i> Gallery</a>
+    <a href="upload.html" class="sidebar-item"><i data-lucide="upload-cloud"></i> Upload</a>
+    <a href="folders.html" class="sidebar-item active"><i data-lucide="folder"></i> Folder</a>
+    <a href="profile.html" class="sidebar-item"><i data-lucide="user"></i> Profile</a>
     <div class="sidebar-label" id="sidebar-admin-label" style="display:none;">Admin</div>
-    <a href="dashboard.html" class="sidebar-item" id="sidebar-dashboard" style="display:none;">
-      <i data-lucide="layout-dashboard"></i> Dashboard
-    </a>
-    <a href="admin.html" class="sidebar-item" id="sidebar-users" style="display:none;">
-      <i data-lucide="users"></i> Users
-    </a>
+    <a href="dashboard.html" class="sidebar-item" id="sidebar-dashboard" style="display:none;"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+    <a href="admin.html" class="sidebar-item" id="sidebar-users" style="display:none;"><i data-lucide="users"></i> Users</a>
   </aside>
 
   <main class="main-content">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <div class="page-title" style="margin:0;">Smart Folder</div>
+    <div class="folder-page-head">
+      <div><div class="page-title" style="margin:0;">Smart Folder</div></div>
+      <div class="folder-page-actions"><button class="btn btn-primary btn-sm" id="create-folder-btn"><i data-lucide="folder-plus" style="width:15px;height:15px;"></i> Smart Folder</button></div>
     </div>
+    <div class="folder-help">Kelola Smart Folder sebagai struktur bertingkat seperti Explorer. Folder Divisi menjadi root, Smart Folder dapat memiliki subfolder, dan Rules Auto-Assign diatur langsung dari folder yang sedang dipilih.</div>
 
-    <div class="info-banner">
-      <strong>Cara kerja:</strong> Folder Shared bisa diakses semua divisi. Folder Divisi hanya untuk divisinya masing-masing. Smart Folder otomatis mengisi aset berdasarkan rule keyword tag saat upload. Manager bisa membuat Smart Folder untuk beberapa divisi sekaligus (mis. Editor & Animator), dan mengatur ulang divisi mana saja yang boleh akses lewat ikon <i data-lucide="building-2" style="width:12px;height:12px;vertical-align:middle;"></i>. Smart Folder juga bisa dibagikan ke user tertentu lewat ikon <i data-lucide="user-plus" style="width:12px;height:12px;vertical-align:middle;"></i> di sebelah namanya.
-    </div>
-
-    <div class="folders-wrap">
-      <div style="display:flex;flex-direction:column;gap:16px;">
-
-        <div class="section-box">
-          <div class="section-title">
-            <i data-lucide="folder" style="width:16px;height:16px;color:var(--accent-yellow);"></i>
-            Daftar Folder
-          </div>
-          <div id="folder-list">
-            <div style="display:flex;justify-content:center;padding:20px;">
-              <div class="spinner"></div>
-            </div>
-          </div>
-
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;" id="new-folder-label">Buat Smart Folder baru (untuk divisi kamu):</div>
-            <div class="add-form" style="flex-wrap:wrap;">
-              <input type="text" class="input" id="new-folder-name" placeholder="Nama smart folder..." style="flex:1;min-width:140px;">
-              <button class="btn btn-primary btn-sm" onclick="buatFolder()">
-                <i data-lucide="plus" style="width:14px;height:14px;"></i> Buat
-              </button>
-            </div>
-            <div id="new-folder-division-wrap" style="display:none;margin-top:10px;">
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Divisi yang bisa akses folder ini:</div>
-              <div id="new-folder-division-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-            </div>
-          </div>
+    <div class="folder-manager">
+      <section class="tree-panel">
+        <div class="tree-toolbar">
+          <div class="tree-title"><i data-lucide="folder-tree" style="width:15px;height:15px;color:var(--accent-blue);"></i> Folder</div>
+          <div class="tree-search"><i data-lucide="search"></i><input class="input" id="folder-search" placeholder="Cari folder..."></div>
         </div>
+        <div class="tree-scroll" id="folder-tree"><div style="display:flex;justify-content:center;padding:28px;"><div class="spinner"></div></div></div>
+      </section>
 
-        <div class="section-box">
-          <div class="section-title">
-            <i data-lucide="git-branch" style="width:16px;height:16px;color:var(--accent-blue);"></i>
-            Rules Auto-assign
-          </div>
-          <div id="rule-list">
-            <div style="display:flex;justify-content:center;padding:20px;">
-              <div class="spinner"></div>
-            </div>
-          </div>
-          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Tambah rule baru:</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <input type="text" class="input" id="rule-keyword" placeholder="Kata kunci tag..." style="flex:1;min-width:120px;">
-              <select class="input" id="rule-folder" style="flex:1;min-width:120px;">
-                <option value="">Pilih folder...</option>
-              </select>
-              <button class="btn btn-primary btn-sm" onclick="buatRule()">
-                <i data-lucide="plus" style="width:14px;height:14px;"></i> Tambah
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="section-box folder-detail-shell">
-        <div id="folder-preview">
-          <div class="folder-detail-head">
-            <div class="folder-detail-breadcrumb">Folder</div>
-            <div class="folder-detail-title-row">
-              <div class="folder-detail-title-main">
-                <div class="folder-detail-name">
-                  <i data-lucide="folder" style="color:var(--accent-blue);"></i>
-                  Pilih folder
-                </div>
-                <div class="folder-detail-meta">Klik folder di panel kiri untuk melihat detail dan isinya.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="folder-detail-tabs">
-            <button class="folder-detail-tab active" type="button">Isi Folder</button>
-            <button class="folder-detail-tab" type="button" disabled>Auto-Assign Rules</button>
-            <button class="folder-detail-tab" type="button" disabled>Access</button>
-          </div>
-
-          <div class="folder-detail-body">
-            <div class="folder-empty-state">
-              <i data-lucide="folder-open"></i>
-              Pilih folder untuk melihat isinya.
-            </div>
-          </div>
-        </div>
-      </div>
+      <section class="detail-panel">
+        <div id="folder-detail"><div class="empty-state"><i data-lucide="folder-open"></i>Pilih folder di sebelah kiri untuk melihat isi dan pengaturannya.</div></div>
+      </section>
     </div>
   </main>
 
-  <div class="modal-overlay" id="share-modal">
+  <div class="modal-overlay" id="create-modal">
     <div class="modal-box">
-      <div class="modal-title">Bagikan Folder</div>
-      <div class="modal-subtitle" id="share-modal-subtitle">Pilih user yang boleh mengakses folder ini.</div>
-      <div class="modal-user-list" id="share-user-list">
-        <div style="display:flex;justify-content:center;padding:16px;"><div class="spinner"></div></div>
+      <div class="modal-head"><div class="modal-title">Buat Smart Folder</div><div class="modal-subtitle">Pilih lokasi. Jika dibuat di dalam Smart Folder, akses divisi otomatis mengikuti parent.</div></div>
+      <div class="modal-body">
+        <div class="field"><label class="field-label">Nama folder</label><input class="input" id="create-name" placeholder="Contoh: Character"></div>
+        <div class="field"><label class="field-label">Lokasi</label><select class="input location-select" id="create-parent"></select></div>
+        <div class="field" id="create-inherit-note"><div style="font-size:11px;color:var(--text-muted);">Akses divisi mengikuti lokasi yang dipilih.</div></div>
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-outline btn-sm" onclick="closeShareModal()">Batal</button>
-        <button class="btn btn-primary btn-sm" onclick="simpanShareFolder()">Simpan</button>
-      </div>
+      <div class="modal-actions"><button class="btn btn-outline btn-sm" data-close="create-modal">Batal</button><button class="btn btn-primary btn-sm" id="create-submit">Buat</button></div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="division-modal">
+  <div class="modal-overlay" id="move-modal">
     <div class="modal-box">
-      <div class="modal-title">Atur Akses Divisi</div>
-      <div class="modal-subtitle" id="division-modal-subtitle">Pilih divisi yang boleh mengakses folder ini.</div>
-      <div class="modal-user-list" id="division-list">
-        <div style="display:flex;justify-content:center;padding:16px;"><div class="spinner"></div></div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-outline btn-sm" onclick="closeDivisionModal()">Batal</button>
-        <button class="btn btn-primary btn-sm" onclick="simpanDivisionFolder()">Simpan</button>
-      </div>
+      <div class="modal-head"><div class="modal-title">Pindahkan Smart Folder</div><div class="modal-subtitle" id="move-subtitle"></div></div>
+      <div class="modal-body"><div class="field"><label class="field-label">Lokasi tujuan</label><select class="input location-select" id="move-parent"></select><div class="rule-hint">Folder tidak dapat dipindahkan ke dirinya sendiri atau ke salah satu subfoldernya.</div></div></div>
+      <div class="modal-actions"><button class="btn btn-outline btn-sm" data-close="move-modal">Batal</button><button class="btn btn-primary btn-sm" id="move-submit">Pindahkan</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="share-modal">
+    <div class="modal-box">
+      <div class="modal-head"><div class="modal-title">Bagikan Smart Folder</div><div class="modal-subtitle" id="share-subtitle"></div></div>
+      <div class="modal-body"><div class="field"><label class="field-label">Bagikan ke divisi</label><select class="input" id="share-division"></select></div><div style="font-size:11px;color:var(--text-muted);">Anggota divisi tujuan akan melihat folder ini pada bagian <strong>Dibagikan ke Saya</strong> beserta nama pemberi share.</div></div>
+      <div class="modal-actions"><button class="btn btn-outline btn-sm" data-close="share-modal">Batal</button><button class="btn btn-primary btn-sm" id="share-submit">Bagikan</button></div>
     </div>
   </div>
 
@@ -548,506 +282,261 @@
     requireAuth();
     initSidebarToggle();
     const user = getUser();
-    document.getElementById("user-name").textContent = user.nama;
+    document.getElementById('user-name').textContent = user.nama;
     if (isManager()) {
-      document.getElementById("sidebar-admin-label").style.display = "block";
-      document.getElementById("sidebar-users").style.display     = "flex";
-      document.getElementById("sidebar-dashboard").style.display = "flex";
+      document.getElementById('sidebar-admin-label').style.display = 'block';
+      document.getElementById('sidebar-users').style.display = 'flex';
+      document.getElementById('sidebar-dashboard').style.display = 'flex';
     }
 
-    let folders      = [];
-    let activeFolder = null;
-    let activeFolderNama = null;
-    let allUsers     = [];
-    let allDivisions = [];
-    let shareModalFolderId = null;
-    let shareModalSelected = new Set();
-    let divisionModalFolderId = null;
-    let divisionModalSelected = new Set();
+    const state = {
+      folders: [], divisions: [], activeId: null, activeVirtual: null, activeTab: 'content',
+      expanded: new Set(), search: '', rules: [], allUsers: [], moveId: null, shareId: null
+    };
 
-    if (isManager()) {
-      document.getElementById("new-folder-label").textContent = "Buat Smart Folder baru (pilih divisi yang boleh akses):";
-      document.getElementById("new-folder-division-wrap").style.display = "block";
-      loadDivisionsForForm();
+    const esc = (value='') => String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    const byId = id => state.folders.find(f => f.id === id);
+    const visibleFolders = () => state.folders.filter(f => String(f.nama || '').trim().toLowerCase() !== 'custom');
+    const systemFolders = () => visibleFolders().filter(f => f.type === 'system');
+    const smartFolders = () => visibleFolders().filter(f => f.type === 'smart');
+    const sharedFolders = () => smartFolders().filter(f => f.shared_to_me);
+    const canManage = f => !!f && f.type === 'smart' && (f.user_id === user.user_id || isManager());
+
+    function childrenOf(parent) {
+      if (!parent) return [];
+      return smartFolders().filter(f => {
+        if (f.shared_to_me && f.user_id !== user.user_id && !isManager()) return false;
+        if (f.parent_id) return f.parent_id === parent.id;
+        return parent.type === 'system' && f.division_id === parent.division_id;
+      }).sort((a,b) => a.nama.localeCompare(b.nama));
     }
 
-    async function loadDivisionsForForm() {
-      try {
-        const res  = await fetch(`${API_BASE_URL}/divisions`);
-        const data = await res.json();
-        allDivisions = data.divisions;
-        const listEl = document.getElementById("new-folder-division-list");
-        listEl.innerHTML = allDivisions.map(d => `
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius-full);padding:4px 10px;cursor:pointer;">
-            <input type="checkbox" class="new-folder-division-cb" value="${d.id}"> ${d.nama}
-          </label>`).join("");
-      } catch (e) { console.error(e); }
+    function smartChildren(folderId) {
+      return smartFolders().filter(f => f.parent_id === folderId && !(f.shared_to_me && f.user_id !== user.user_id && !isManager())).sort((a,b)=>a.nama.localeCompare(b.nama));
     }
 
-    function getFileIcon(tipe) {
-      if (tipe.includes("image")) return "🖼️";
-      if (tipe.includes("video")) return "🎬";
-      if (tipe.includes("pdf"))   return "📄";
-      if (tipe.includes("word") || tipe.includes("document")) return "📝";
-      if (tipe.includes("spreadsheet") || tipe.includes("excel")) return "📊";
-      return "📁";
+    function descendantsOf(folderId) {
+      const out = new Set();
+      const walk = id => smartChildren(id).forEach(c => { if (!out.has(c.id)) { out.add(c.id); walk(c.id); } });
+      walk(folderId); return out;
     }
 
-    async function loadFolders() {
-      try {
-        const res  = await fetch(`${API_BASE_URL}/folders?user_id=${user.user_id}`);
-        const data = await res.json();
-        folders = data.folders;
-        renderFolders();
-        updateFolderSelect();
-      } catch (e) { console.error(e); }
-    }
-
-    function renderFolders() {
-      const el = document.getElementById("folder-list");
-
-      const shared    = folders.filter(f => f.type === "shared");
-      const system    = folders.filter(f => f.type === "system");
-      const smart     = folders.filter(f => f.type === "smart" && !f.shared_to_me);
-      const sharedToMe = folders.filter(f => f.shared_to_me);
-
-      function renderGroup(list, label, color) {
-        if (!list.length) return "";
-        return `
-          <div class="folder-group-label" style="color:${color};">${label}</div>
-          ${list.map(f => {
-            const isActive     = activeFolder === f.id;
-            const isOwner      = f.user_id === user.user_id;
-            const canDelete    = f.type === "smart" && (isOwner || isManager());
-            const canShare     = f.type === "smart" && (isOwner || isManager());
-            const canShareDiv  = f.type === "smart" && isManager();
-            const subtitle     = f.type === "system" ? f.div_nama || "" :
-                              f.type === "shared"  ? "Semua divisi" :
-                              f.shared_to_me ? `Dibagikan • ${f.div_nama || ""}` :
-                              f.owner || "";
-            return `
-              <div class="folder-item ${isActive ? 'active' : ''}" onclick="lihatFolder('${f.id}', '${f.nama}')">
-                <i data-lucide="folder" style="width:16px;height:16px;color:${color};flex-shrink:0;"></i>
-                <span class="folder-item-name">${f.nama}</span>
-                <span style="font-size:10px;color:var(--text-muted);margin-right:4px;">${subtitle}</span>
-                ${canShareDiv ? `<i data-lucide="building-2" class="folder-share" style="width:14px;height:14px;" title="Atur divisi yang bisa akses" onclick="event.stopPropagation();openDivisionModal('${f.id}','${f.nama.replace(/'/g, "\\'")}')"></i>` : ""}
-                ${canShare ? `<i data-lucide="user-plus" class="folder-share" style="width:14px;height:14px;" title="Bagikan folder" onclick="event.stopPropagation();openShareModal('${f.id}','${f.nama.replace(/'/g, "\\'")}')"></i>` : ""}
-                ${canDelete ? `<i data-lucide="trash-2" class="folder-delete" style="width:14px;height:14px;" onclick="event.stopPropagation();hapusFolder('${f.id}')"></i>` : ""}
-              </div>`;
-          }).join("")}`;
+    function folderPath(folder) {
+      if (!folder) return [];
+      const path = [folder]; let cur = folder; const seen = new Set([folder.id]);
+      while (cur.parent_id) {
+        const p = byId(cur.parent_id); if (!p || seen.has(p.id)) break;
+        path.unshift(p); seen.add(p.id); cur = p;
       }
+      if (path[0]?.type === 'smart' && path[0].division_id) {
+        const sys = systemFolders().find(s => s.division_id === path[0].division_id);
+        if (sys) path.unshift(sys);
+      }
+      return path;
+    }
 
-      const html =
-        renderGroup(shared,     "Shared — Semua Divisi", "#2E7D32") +
-        renderGroup(system,     "Folder Divisi",         "var(--accent-blue)") +
-        renderGroup(smart,      "Smart Folder",           "var(--accent-yellow)") +
-        renderGroup(sharedToMe, "Dibagikan ke Saya",      "#8E44AD");
+    function hasSearchMatch(folder) {
+      if (!state.search) return true;
+      const q = state.search;
+      if ((folder.nama || '').toLowerCase().includes(q)) return true;
+      return childrenOf(folder).some(hasSearchMatch);
+    }
 
-      el.innerHTML = html || `<div class="empty-folder">Belum ada folder</div>`;
+    function treeRow(folder, depth=0) {
+      if (!hasSearchMatch(folder)) return '';
+      const kids = childrenOf(folder);
+      const expanded = state.search ? true : state.expanded.has(folder.id);
+      const active = state.activeId === folder.id;
+      const isSystem = folder.type === 'system';
+      const icon = isSystem ? 'folder' : 'zap';
+      const color = isSystem ? 'var(--accent-blue)' : 'var(--accent-yellow)';
+      const searchPath = state.search && !isSystem ? folderPath(folder).map(x=>x.nama).join(' / ') : '';
+      return `<div>
+        <div class="tree-row ${active?'active':''}" data-folder-id="${esc(folder.id)}" style="padding-left:${6+depth*17}px">
+          <button class="tree-toggle ${kids.length?'':'placeholder'}" data-toggle-id="${esc(folder.id)}">${kids.length?`<i data-lucide="${expanded?'chevron-down':'chevron-right'}"></i>`:''}</button>
+          <i data-lucide="${icon}" class="tree-icon" style="color:${color}"></i>
+          <span class="tree-label">${esc(folder.nama)}</span>
+          ${folder.shared_to_me?'<span class="tree-meta">shared</span>':''}
+        </div>
+        ${searchPath?`<div class="folder-search-result" style="padding-left:${41+depth*17}px">${esc(searchPath)}</div>`:''}
+        ${expanded?kids.map(c=>treeRow(c,depth+1)).join(''):''}
+      </div>`;
+    }
+
+    function renderTree() {
+      const el = document.getElementById('folder-tree');
+      const systems = systemFolders().sort((a,b)=>a.nama.localeCompare(b.nama));
+      const shared = sharedFolders();
+      let html = `<div class="tree-row shared-root ${state.activeVirtual==='shared'?'active':''}" data-virtual="shared"><button class="tree-toggle placeholder"></button><i data-lucide="users" class="tree-icon"></i><span class="tree-label">Dibagikan ke Saya</span><span class="tree-meta">${shared.length}</span></div>`;
+      html += systems.filter(hasSearchMatch).map(f=>treeRow(f,0)).join('');
+      if (!systems.length && !shared.length) html = '<div class="tree-empty">Belum ada folder.</div>';
+      el.innerHTML = html; lucide.createIcons();
+    }
+
+    function renderEmptyDetail() {
+      document.getElementById('folder-detail').innerHTML = '<div class="empty-state"><i data-lucide="folder-open"></i>Pilih folder di sebelah kiri untuk melihat isi dan pengaturannya.</div>'; lucide.createIcons();
+    }
+
+    function detailShell(folder, content) {
+      const path = folder ? folderPath(folder) : [];
+      const isSmart = folder?.type === 'smart';
+      const manageable = canManage(folder);
+      const subtitle = folder ? (
+        folder.type === 'system'
+          ? `Folder Divisi${folder.div_nama ? ' • ' + esc(folder.div_nama) : ''}`
+          : `${folder.shared_to_me?'Dibagikan kepada kamu':'Smart Folder'}${folder.div_nama?' • '+esc(folder.div_nama):''}${folder.shared_by?' • Dibagikan oleh '+esc(folder.shared_by):''}`
+      ) : '';
+      const crumbs = path.map((p,i)=>`<button class="crumb" data-crumb-id="${esc(p.id)}">${esc(p.nama)}</button>${i<path.length-1?'<span>›</span>':''}`).join('');
+      return `<div class="detail-head">
+        <div class="breadcrumbs">${crumbs || '<span>Folder</span>'}</div>
+        <div class="detail-title-row"><div class="detail-title-wrap"><div class="detail-title"><i data-lucide="${isSmart?'zap':'folder'}" style="width:20px;height:20px;color:${isSmart?'var(--accent-yellow)':'var(--accent-blue)'}"></i><span>${esc(folder?.nama||'Folder')}</span></div><div class="detail-subtitle">${subtitle}</div></div>
+        <div class="detail-actions">${manageable?`<button class="btn btn-outline btn-sm" data-action="move"><i data-lucide="folder-input" style="width:14px;height:14px"></i> Pindahkan</button><button class="btn btn-outline btn-sm" data-action="share"><i data-lucide="share-2" style="width:14px;height:14px"></i> Bagikan</button><button class="btn btn-outline btn-sm" data-action="delete" style="color:var(--danger);"><i data-lucide="trash-2" style="width:14px;height:14px"></i> Hapus</button>`:''}</div></div>
+        <div class="tabs"><button class="tab-btn ${state.activeTab==='content'?'active':''}" data-tab="content">Isi Folder</button><button class="tab-btn ${state.activeTab==='rules'?'active':''}" data-tab="rules" ${isSmart?'':'disabled'}>Auto-Assign Rules</button><button class="tab-btn ${state.activeTab==='access'?'active':''}" data-tab="access" ${isSmart?'':'disabled'}>Access</button></div>
+      </div><div class="detail-body">${content}</div>`;
+    }
+
+    async function selectFolder(id) {
+      const f = byId(id); if (!f) return;
+      state.activeId=id; state.activeVirtual=null; state.activeTab='content';
+      folderPath(f).forEach(x=>state.expanded.add(x.id)); renderTree(); await renderActiveDetail();
+    }
+
+    async function renderActiveDetail() {
+      if (state.activeVirtual === 'shared') return renderSharedDetail();
+      const folder = byId(state.activeId); if (!folder) return renderEmptyDetail();
+      document.getElementById('folder-detail').innerHTML = detailShell(folder,'<div style="display:flex;justify-content:center;padding:38px"><div class="spinner"></div></div>'); lucide.createIcons();
+      try {
+        if (state.activeTab === 'content') await renderContent(folder);
+        else if (state.activeTab === 'rules') await renderRules(folder);
+        else await renderAccess(folder);
+      } catch(e) { document.querySelector('.detail-body').innerHTML = `<div class="empty-state">${esc(e.message || 'Gagal memuat data')}</div>`; }
       lucide.createIcons();
     }
 
-    function updateFolderSelect() {
-      const sel = document.getElementById("rule-folder");
-      sel.innerHTML = `<option value="">Pilih folder...</option>` +
-        folders.map(f => {
-          const label = f.type === "shared"  ? `[Shared] ${f.nama}` :
-                        f.type === "system"   ? `[${f.div_nama}] ${f.nama}` :
-                        `[Smart] ${f.nama}`;
-          return `<option value="${f.id}">${label}</option>`;
-        }).join("");
+    async function renderContent(folder) {
+      const [assetData] = await Promise.all([getFolderAssets(folder.id,user.user_id)]);
+      const kids = smartChildren(folder.id);
+      const assets = assetData.assets || [];
+      const body = `<div class="content-summary"><div class="content-count">${kids.length} subfolder • ${assets.length} aset</div>${canManage(folder)?'<button class="btn btn-outline btn-sm" data-action="new-child"><i data-lucide="folder-plus" style="width:14px;height:14px"></i> Subfolder</button>':''}</div>
+      ${(kids.length||assets.length)?`<div class="folder-content-grid">
+        ${kids.map(f=>`<div class="child-folder-card" data-open-child="${esc(f.id)}"><div class="child-folder-visual"><i data-lucide="zap"></i></div><div class="card-info"><div class="card-name">${esc(f.nama)}</div><div class="card-meta">Smart Folder${f.shared_to_me?' • Shared':''}</div></div></div>`).join('')}
+        ${assets.map(a=>`<div class="asset-card-sm" data-asset-id="${esc(a.id)}"><div class="asset-preview-sm">${String(a.tipe_file||'').includes('image')?`<img src="${esc(a.url)}" loading="lazy" alt="">`:fileIcon(a.tipe_file)}</div><div class="card-info"><div class="card-name">${esc(a.nama_file)}</div><div class="card-meta">${formatBytesLocal(a.ukuran)}</div></div></div>`).join('')}
+      </div>`:'<div class="empty-state"><i data-lucide="folder-open"></i><strong style="font-size:13px;color:var(--text);margin-bottom:4px;">Folder masih kosong</strong><span>Belum ada subfolder atau aset di lokasi ini.</span></div>'}`;
+      document.getElementById('folder-detail').innerHTML = detailShell(folder, body); bindDetailEvents();
     }
 
-    async function buatFolder() {
-      const nama = document.getElementById("new-folder-name").value.trim();
-      if (!nama) return;
-      const payload = {nama, user_id: user.user_id};
-      if (isManager()) {
-        const checked = Array.from(document.querySelectorAll(".new-folder-division-cb:checked")).map(cb => cb.value);
-        if (checked.length) payload.division_ids = checked;
+    function fileIcon(type='') { if(type.includes('video'))return '🎬';if(type.includes('pdf'))return '📄';if(type.includes('word')||type.includes('document'))return '📝';if(type.includes('spreadsheet')||type.includes('excel'))return '📊';return '📦'; }
+    function formatBytesLocal(n){const x=Number(n||0);if(x<1024)return x+' B';if(x<1048576)return (x/1024).toFixed(1)+' KB';if(x<1073741824)return (x/1048576).toFixed(1)+' MB';return (x/1073741824).toFixed(1)+' GB';}
+
+    async function renderRules(folder) {
+      if (folder.type !== 'smart') { state.activeTab='content'; return renderContent(folder); }
+      const data = await getFolderRules(user.user_id,folder.id); state.rules=data.rules||[];
+      const manageable=canManage(folder);
+      const body = `<div class="rules-intro">Aset otomatis masuk ke <strong>${esc(folder.nama)}</strong> jika memiliki salah satu keyword tag berikut.</div>
+        <div class="rule-chips">${state.rules.length?state.rules.map(r=>`<span class="rule-chip">${esc(r.keyword)}${manageable?`<button data-rule-delete="${esc(r.id)}" title="Hapus rule"><i data-lucide="x"></i></button>`:''}</span>`).join(''):'<span style="font-size:12px;color:var(--text-muted)">Belum ada rule.</span>'}</div>
+        ${manageable?`<div class="rule-form"><div class="access-label">Tambah keyword</div><div class="rule-form-row"><input class="input" id="rule-input" placeholder="character, cartoon render hero"><button class="btn btn-primary btn-sm" id="add-rule-btn"><i data-lucide="plus" style="width:14px;height:14px"></i> Tambah</button></div><div class="rule-hint">Pisahkan banyak tag dengan koma, titik koma, spasi, atau baris baru. Duplikat otomatis diabaikan.</div></div>`:''}`;
+      document.getElementById('folder-detail').innerHTML = detailShell(folder,body); bindDetailEvents();
+    }
+
+    async function renderAccess(folder) {
+      if(folder.type!=='smart'){state.activeTab='content';return renderContent(folder)}
+      const [divData,userData] = await Promise.all([getFolderDivisions(folder.id),getFolderAccess(folder.id)]);
+      const divs=divData.divisions||[], users=userData.users||[];
+      const parent=folder.parent_id?byId(folder.parent_id):null;
+      const body=`<div class="access-intro">Lihat siapa yang dapat mengakses folder ini. Child Smart Folder mengikuti akses divisi parent untuk mencegah akses yang lebih luas dari folder induknya.</div>
+        <div class="access-section"><div class="access-label">Divisi</div><div class="access-chips">${divs.length?divs.map(d=>`<span class="access-chip">${esc(d.nama)}</span>`).join(''):'<span style="font-size:12px;color:var(--text-muted)">Belum ada data divisi.</span>'}</div>${parent?`<div class="rule-hint">Mengikuti parent: ${esc(parent.nama)}</div>`:''}</div>
+        <div class="access-section"><div class="access-label">Akses langsung user</div>${users.length?users.map(u=>`<div class="access-user"><i data-lucide="user"></i><div><strong>${esc(u.nama)}</strong><div style="font-size:10px;color:var(--text-muted)">${esc(u.email||'')}</div></div></div>`).join(''):'<div style="font-size:12px;color:var(--text-muted)">Belum ada akses langsung user.</div>'}</div>
+        ${canManage(folder)?'<div class="access-section"><button class="btn btn-outline btn-sm" data-action="share"><i data-lucide="share-2" style="width:14px;height:14px"></i> Bagikan ke Divisi Lain</button></div>':''}`;
+      document.getElementById('folder-detail').innerHTML=detailShell(folder,body);bindDetailEvents();
+    }
+
+    function renderSharedDetail(){
+      const shared=sharedFolders(); state.activeId=null;
+      const content=`<div class="detail-head"><div class="breadcrumbs"><span>Folder</span><span>›</span><span>Dibagikan ke Saya</span></div><div class="detail-title-row"><div class="detail-title-wrap"><div class="detail-title"><i data-lucide="users" style="width:20px;height:20px;color:#287a38"></i><span>Dibagikan ke Saya</span></div><div class="detail-subtitle">${shared.length} Smart Folder dibagikan kepada kamu</div></div></div></div><div class="detail-body">${shared.length?`<div class="folder-content-grid">${shared.map(f=>`<div class="child-folder-card" data-open-child="${esc(f.id)}"><div class="child-folder-visual"><i data-lucide="zap"></i></div><div class="card-info"><div class="card-name">${esc(f.nama)}</div><div class="card-meta">Dibagikan oleh ${esc(f.shared_by||f.owner||'—')}</div></div></div>`).join('')}</div>`:'<div class="empty-state"><i data-lucide="users"></i>Belum ada Smart Folder yang dibagikan kepada kamu.</div>'}</div>`;
+      document.getElementById('folder-detail').innerHTML=content;bindDetailEvents();lucide.createIcons();
+    }
+
+    function bindDetailEvents(){
+      document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=async()=>{if(b.disabled)return;state.activeTab=b.dataset.tab;await renderActiveDetail()});
+      document.querySelectorAll('[data-crumb-id]').forEach(b=>b.onclick=()=>selectFolder(b.dataset.crumbId));
+      document.querySelectorAll('[data-open-child]').forEach(c=>c.onclick=()=>selectFolder(c.dataset.openChild));
+      document.querySelectorAll('[data-asset-id]').forEach(c=>c.onclick=()=>openDetailPanel(c.dataset.assetId,'onAssetChangedFolder',state.activeId));
+      document.querySelectorAll('[data-action="new-child"]').forEach(b=>b.onclick=()=>openCreateModal(state.activeId));
+      document.querySelectorAll('[data-action="move"]').forEach(b=>b.onclick=()=>openMoveModal(state.activeId));
+      document.querySelectorAll('[data-action="share"]').forEach(b=>b.onclick=()=>openShareModal(state.activeId));
+      document.querySelectorAll('[data-action="delete"]').forEach(b=>b.onclick=()=>deleteActiveFolder());
+      document.querySelectorAll('[data-rule-delete]').forEach(b=>b.onclick=()=>removeRule(b.dataset.ruleDelete));
+      const add=document.getElementById('add-rule-btn'); if(add)add.onclick=addRulesFromInput;
+    }
+
+    function locationOptions(excludeId=null){
+      const exclude=excludeId?descendantsOf(excludeId):new Set(); if(excludeId)exclude.add(excludeId);
+      const options=[];
+      function pushNode(f,depth){
+        if(exclude.has(f.id))return;
+        options.push({id:f.id,label:`${'  '.repeat(depth)}${f.type==='system'?'📁':'⚡'} ${f.nama}`});
+        childrenOf(f).forEach(c=>pushNode(c,depth+1));
       }
-      try {
-        await fetch(`${API_BASE_URL}/folders/smart`, {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify(payload)
-        });
-        document.getElementById("new-folder-name").value = "";
-        document.querySelectorAll(".new-folder-division-cb:checked").forEach(cb => cb.checked = false);
-        await loadFolders();
-        await loadRules();
-        showToast("Smart folder dibuat");
-      } catch (e) {
-        showToast("Gagal buat folder", "error");
-      }
+      systemFolders().sort((a,b)=>a.nama.localeCompare(b.nama)).forEach(s=>pushNode(s,0));
+      return options;
     }
 
-    async function loadAllUsers() {
-      if (allUsers.length) return;
-      try {
-        const res  = await fetch(`${API_BASE_URL}/divisions/users`);
-        const data = await res.json();
-        allUsers = data.users;
-      } catch (e) { console.error(e); }
+    function openCreateModal(parentId=null){
+      const select=document.getElementById('create-parent'); const opts=locationOptions();
+      select.innerHTML=opts.map(o=>`<option value="${esc(o.id)}" ${parentId===o.id?'selected':''}>${esc(o.label)}</option>`).join('');
+      document.getElementById('create-name').value=''; openModal('create-modal'); setTimeout(()=>document.getElementById('create-name').focus(),50);
+    }
+    async function submitCreate(){const nama=document.getElementById('create-name').value.trim(),parent_id=document.getElementById('create-parent').value;if(!nama||!parent_id)return showToast('Isi nama dan pilih lokasi','error');try{await createSmartFolder({nama,user_id:user.user_id,parent_id});closeModal('create-modal');await reloadFolders(true);showToast('Smart Folder dibuat')}catch(e){showToast(e.message||'Gagal membuat folder','error')}}
+
+    function openMoveModal(id){const f=byId(id);if(!canManage(f))return;state.moveId=id;document.getElementById('move-subtitle').textContent=`Folder: ${f.nama}`;const opts=locationOptions(id);document.getElementById('move-parent').innerHTML=opts.map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('');openModal('move-modal')}
+    async function submitMove(){const parent_id=document.getElementById('move-parent').value;if(!state.moveId||!parent_id)return;try{await moveSmartFolder(state.moveId,user.user_id,parent_id);closeModal('move-modal');await reloadFolders(true);showToast('Folder dipindahkan')}catch(e){showToast(e.message||'Gagal memindahkan folder','error')}}
+
+    function openShareModal(id){const f=byId(id);if(!canManage(f))return;state.shareId=id;document.getElementById('share-subtitle').textContent=`Folder: ${f.nama}`;document.getElementById('share-division').innerHTML=state.divisions.filter(d=>String(d.nama).toLowerCase()!=='custom').map(d=>`<option value="${esc(d.id)}">${esc(d.nama)}</option>`).join('');openModal('share-modal')}
+    async function submitShare(){const div=document.getElementById('share-division').value;if(!state.shareId||!div)return;try{await shareFolderToDivision(state.shareId,user.user_id,div);closeModal('share-modal');await reloadFolders(true);showToast('Folder berhasil dibagikan')}catch(e){showToast(e.message||'Gagal membagikan folder','error')}}
+
+    async function deleteActiveFolder(){const f=byId(state.activeId);if(!canManage(f))return;if(!confirm(`Hapus Smart Folder "${f.nama}"? Aset tidak ikut terhapus.`))return;try{await deleteSmartFolder(f.id,user.user_id);state.activeId=null;await reloadFolders(false);renderEmptyDetail();showToast('Folder dihapus')}catch(e){showToast(e.message||'Gagal menghapus folder','error')}}
+
+    function parseKeywords(raw){return [...new Set(String(raw||'').toLowerCase().split(/[,;\s]+/).map(s=>s.trim()).filter(Boolean))]}
+    async function addRulesFromInput(){const input=document.getElementById('rule-input');const keywords=parseKeywords(input.value);if(!keywords.length)return showToast('Masukkan minimal satu keyword','error');try{const res=await addFolderRules(user.user_id,state.activeId,keywords);input.value='';await renderRules(byId(state.activeId));const skipped=(res.skipped||[]).length;showToast(`${(res.rules||[]).length} rule ditambahkan${skipped?`, ${skipped} duplikat dilewati`:''}`)}catch(e){showToast(e.message||'Gagal menambah rule','error')}}
+    async function removeRule(id){try{await deleteFolderRule(id);await renderRules(byId(state.activeId));showToast('Rule dihapus')}catch(e){showToast(e.message||'Gagal menghapus rule','error')}}
+
+    function openModal(id){document.getElementById(id).classList.add('open');lucide.createIcons()}
+    function closeModal(id){document.getElementById(id).classList.remove('open')}
+    document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal(b.dataset.close));
+    document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
+
+    document.getElementById('folder-tree').addEventListener('click',e=>{
+      const toggle=e.target.closest('[data-toggle-id]'); if(toggle){e.stopPropagation();const id=toggle.dataset.toggleId;state.expanded.has(id)?state.expanded.delete(id):state.expanded.add(id);return renderTree()}
+      const row=e.target.closest('[data-folder-id]'); if(row)return selectFolder(row.dataset.folderId);
+      const v=e.target.closest('[data-virtual]'); if(v){state.activeVirtual='shared';state.activeId=null;state.activeTab='content';renderTree();renderSharedDetail()}
+    });
+    document.getElementById('folder-search').addEventListener('input',e=>{state.search=e.target.value.trim().toLowerCase();renderTree()});
+    document.getElementById('create-folder-btn').onclick=()=>openCreateModal();
+    document.getElementById('create-submit').onclick=submitCreate;
+    document.getElementById('move-submit').onclick=submitMove;
+    document.getElementById('share-submit').onclick=submitShare;
+    document.getElementById('create-name').addEventListener('keydown',e=>{if(e.key==='Enter')submitCreate()});
+
+    function onAssetChangedFolder(){if(state.activeId)renderActiveDetail()}
+
+    async function reloadFolders(keepActive=true){
+      const old=keepActive?state.activeId:null;
+      const data=await getFolders(user.user_id); state.folders=(data.folders||[]).filter(f=>String(f.nama||'').trim().toLowerCase()!=='custom');
+      renderTree();
+      if(old&&byId(old)){state.activeId=old;await renderActiveDetail()}
     }
 
-    async function openShareModal(folder_id, folder_nama) {
-      shareModalFolderId = folder_id;
-      shareModalSelected = new Set();
-      document.getElementById("share-modal-subtitle").textContent = `Folder: ${folder_nama}`;
-      document.getElementById("share-modal").classList.add("open");
-      const listEl = document.getElementById("share-user-list");
-      listEl.innerHTML = `<div style="display:flex;justify-content:center;padding:16px;"><div class="spinner"></div></div>`;
-
-      await loadAllUsers();
-      let currentAccess = [];
-      try {
-        const res  = await fetch(`${API_BASE_URL}/folders/${folder_id}/access`);
-        const data = await res.json();
-        currentAccess = data.users.map(u => u.id);
-      } catch (e) { console.error(e); }
-      shareModalSelected = new Set(currentAccess);
-
-      renderShareUserList();
+    async function init(){
+      try{
+        const [folderData,divisionData]=await Promise.all([getFolders(user.user_id),getDivisions()]);
+        state.folders=(folderData.folders||[]).filter(f=>String(f.nama||'').trim().toLowerCase()!=='custom');
+        state.divisions=(divisionData.divisions||[]).filter(d=>String(d.nama||'').trim().toLowerCase()!=='custom');
+        systemFolders().forEach(f=>state.expanded.add(f.id)); renderTree();
+        const firstSystem=systemFolders().sort((a,b)=>a.nama.localeCompare(b.nama))[0]; if(firstSystem)await selectFolder(firstSystem.id); else renderEmptyDetail();
+      }catch(e){document.getElementById('folder-tree').innerHTML=`<div class="tree-empty">${esc(e.message||'Gagal memuat folder')}</div>`;renderEmptyDetail()}
+      lucide.createIcons(); initDetailPanelFromURL();
     }
-
-    function renderShareUserList() {
-      const listEl = document.getElementById("share-user-list");
-      const others = allUsers.filter(u => u.id !== user.user_id);
-      if (!others.length) {
-        listEl.innerHTML = `<div class="empty-folder">Tidak ada user lain.</div>`;
-        return;
-      }
-      listEl.innerHTML = others.map(u => `
-        <label class="modal-user-item">
-          <input type="checkbox" value="${u.id}" ${shareModalSelected.has(u.id) ? "checked" : ""} onchange="toggleShareUser('${u.id}', this.checked)">
-          <span class="modal-user-name">${u.nama}<br><span class="modal-user-email">${u.email}${u.division ? " • " + (u.division.divisions?.nama || "") : ""}</span></span>
-        </label>`).join("");
-    }
-
-    function toggleShareUser(user_id, checked) {
-      if (checked) shareModalSelected.add(user_id);
-      else shareModalSelected.delete(user_id);
-    }
-
-    function closeShareModal() {
-      document.getElementById("share-modal").classList.remove("open");
-      shareModalFolderId = null;
-    }
-
-    async function simpanShareFolder() {
-      if (!shareModalFolderId) return;
-      try {
-        await fetch(`${API_BASE_URL}/folders/${shareModalFolderId}/access`, {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({user_ids: Array.from(shareModalSelected), granted_by: user.user_id})
-        });
-        // Cabut akses user yang di-uncheck
-        let currentAccess = [];
-        try {
-          const res  = await fetch(`${API_BASE_URL}/folders/${shareModalFolderId}/access`);
-          const data = await res.json();
-          currentAccess = data.users.map(u => u.id);
-        } catch (e) {}
-        const toRemove = currentAccess.filter(uid => !shareModalSelected.has(uid));
-        for (const uid of toRemove) {
-          await fetch(`${API_BASE_URL}/folders/${shareModalFolderId}/access/${uid}`, {method: "DELETE"});
-        }
-        closeShareModal();
-        showToast("Akses folder disimpan");
-      } catch (e) {
-        showToast("Gagal menyimpan akses", "error");
-      }
-    }
-
-    async function openDivisionModal(folder_id, folder_nama) {
-      divisionModalFolderId = folder_id;
-      document.getElementById("division-modal-subtitle").textContent = `Folder: ${folder_nama}`;
-      document.getElementById("division-modal").classList.add("open");
-      const listEl = document.getElementById("division-list");
-      listEl.innerHTML = `<div style="display:flex;justify-content:center;padding:16px;"><div class="spinner"></div></div>`;
-
-      if (!allDivisions.length) await loadDivisionsForForm();
-      let currentDivisions = [];
-      try {
-        const res  = await fetch(`${API_BASE_URL}/folders/${folder_id}/divisions`);
-        const data = await res.json();
-        currentDivisions = data.divisions.map(d => d.id);
-      } catch (e) { console.error(e); }
-      divisionModalSelected = new Set(currentDivisions);
-      renderDivisionList();
-    }
-
-    function renderDivisionList() {
-      const listEl = document.getElementById("division-list");
-      if (!allDivisions.length) {
-        listEl.innerHTML = `<div class="empty-folder">Tidak ada divisi.</div>`;
-        return;
-      }
-      listEl.innerHTML = allDivisions.map(d => `
-        <label class="modal-user-item">
-          <input type="checkbox" value="${d.id}" ${divisionModalSelected.has(d.id) ? "checked" : ""} onchange="toggleDivisionCheck('${d.id}', this.checked)">
-          <span class="modal-user-name">${d.nama}</span>
-        </label>`).join("");
-    }
-
-    function toggleDivisionCheck(division_id, checked) {
-      if (checked) divisionModalSelected.add(division_id);
-      else divisionModalSelected.delete(division_id);
-    }
-
-    function closeDivisionModal() {
-      document.getElementById("division-modal").classList.remove("open");
-      divisionModalFolderId = null;
-    }
-
-    async function simpanDivisionFolder() {
-      if (!divisionModalFolderId) return;
-      if (!divisionModalSelected.size) {
-        showToast("Pilih minimal satu divisi", "error");
-        return;
-      }
-      try {
-        const res = await fetch(`${API_BASE_URL}/folders/${divisionModalFolderId}/divisions`, {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({division_ids: Array.from(divisionModalSelected), granted_by: user.user_id})
-        });
-        if (!res.ok) throw new Error();
-        closeDivisionModal();
-        await loadFolders();
-        showToast("Akses divisi folder disimpan");
-      } catch (e) {
-        showToast("Gagal menyimpan akses divisi", "error");
-      }
-    }
-
-    async function hapusFolder(folder_id) {
-      if (!confirm("Hapus smart folder ini? Aset di dalamnya tidak akan terhapus.")) return;
-      try {
-        await fetch(`${API_BASE_URL}/folders/${folder_id}`, {method: "DELETE"});
-        if (activeFolder === folder_id) {
-          activeFolder = null;
-          document.getElementById("folder-preview").innerHTML = `
-            <div class="folder-detail-head">
-              <div class="folder-detail-breadcrumb">Folder</div>
-              <div class="folder-detail-title-row">
-                <div class="folder-detail-title-main">
-                  <div class="folder-detail-name">
-                    <i data-lucide="folder" style="color:var(--accent-blue);"></i>
-                    Pilih folder
-                  </div>
-                  <div class="folder-detail-meta">Klik folder di panel kiri untuk melihat detail dan isinya.</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="folder-detail-tabs">
-              <button class="folder-detail-tab active" type="button">Isi Folder</button>
-              <button class="folder-detail-tab" type="button" disabled>Auto-Assign Rules</button>
-              <button class="folder-detail-tab" type="button" disabled>Access</button>
-            </div>
-
-            <div class="folder-detail-body">
-              <div class="folder-empty-state">
-                <i data-lucide="folder-open"></i>
-                Pilih folder untuk melihat isinya.
-              </div>
-            </div>`;
-          lucide.createIcons();
-        }
-        await loadFolders();
-        await loadRules();
-        showToast("Folder dihapus");
-      } catch (e) {
-        showToast("Gagal hapus folder", "error");
-      }
-    }
-
-    // Dipanggil oleh detail-panel.js setelah aset berhasil dihapus/dipindahkan/
-    // dikeluarkan dari panel, supaya folder yang sedang dibuka otomatis di-refresh.
-    function onAssetDeletedFolder() {
-      if (activeFolder) lihatFolder(activeFolder, activeFolderNama);
-    }
-
-    async function lihatFolder(folder_id, nama) {
-      activeFolder     = folder_id;
-      activeFolderNama = nama;
-      renderFolders();
-      const previewEl = document.getElementById("folder-preview");
-      previewEl.innerHTML = `<div style="display:flex;justify-content:center;padding:30px;"><div class="spinner"></div></div>`;
-      try {
-        const res    = await fetch(`${API_BASE_URL}/folders/${folder_id}/assets?user_id=${user.user_id}`);
-        if (res.status === 403) {
-          previewEl.innerHTML = `<div style="color:var(--danger);font-size:13px;text-align:center;padding:20px;">Kamu tidak punya akses ke folder ini.</div>`;
-          return;
-        }
-        const data   = await res.json();
-        const assets = data.assets;
-
-        const selectedFolder = folders.find(f => f.id === folder_id);
-        const folderType = selectedFolder?.type || "smart";
-        const folderMeta =
-          folderType === "system"
-            ? `Folder Divisi${selectedFolder?.div_nama ? ` · ${selectedFolder.div_nama}` : ""}`
-            : folderType === "shared"
-              ? "Shared · Semua divisi"
-              : `Smart Folder${selectedFolder?.div_nama ? ` · ${selectedFolder.div_nama}` : ""}`;
-
-        const canManage =
-          folderType === "smart" &&
-          (selectedFolder?.user_id === user.user_id || isManager());
-
-        const headerHtml = `
-          <div class="folder-detail-head">
-            <div class="folder-detail-breadcrumb">
-              ${selectedFolder?.div_nama ? `${selectedFolder.div_nama} › ` : ""}${nama}
-            </div>
-
-            <div class="folder-detail-title-row">
-              <div class="folder-detail-title-main">
-                <div class="folder-detail-name">
-                  <i data-lucide="${folderType === "smart" ? "zap" : "folder"}"
-                    style="color:${folderType === "smart" ? "var(--accent-yellow)" : "var(--accent-blue)"};"></i>
-                  ${nama}
-                </div>
-                <div class="folder-detail-meta">${folderMeta}</div>
-              </div>
-
-              ${canManage ? `
-                <div class="folder-detail-actions">
-                  <button class="btn btn-outline btn-sm"
-                    onclick="event.stopPropagation();openShareModal('${folder_id}','${nama.replace(/'/g, "\'")}')">
-                    <i data-lucide="share-2" style="width:14px;height:14px;"></i>
-                    Bagikan
-                  </button>
-                  <button class="btn btn-outline btn-sm"
-                    style="color:var(--danger);"
-                    onclick="event.stopPropagation();hapusFolder('${folder_id}')">
-                    <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
-                    Hapus
-                  </button>
-                </div>
-              ` : ""}
-            </div>
-          </div>
-
-          <div class="folder-detail-tabs">
-            <button class="folder-detail-tab active" type="button">Isi Folder</button>
-            <button class="folder-detail-tab" type="button" disabled>Auto-Assign Rules</button>
-            <button class="folder-detail-tab" type="button" disabled>Access</button>
-          </div>
-        `;
-
-        if (assets.length === 0) {
-          previewEl.innerHTML = `
-            ${headerHtml}
-            <div class="folder-detail-body">
-              <div class="folder-detail-count-row">
-                <div class="folder-detail-count">0 aset</div>
-              </div>
-
-              <div class="folder-empty-state">
-                <i data-lucide="folder-open"></i>
-                Folder ini belum memiliki aset.
-              </div>
-            </div>`;
-
-          lucide.createIcons();
-          return;
-        }
-
-        previewEl.innerHTML = `
-          ${headerHtml}
-          <div class="folder-detail-body">
-            <div class="folder-preview-heading">
-              <div class="folder-preview-heading-title">Isi Folder</div>
-              <div class="folder-preview-heading-meta">${assets.length} aset</div>
-            </div>
-
-            <div class="asset-grid-sm">
-              ${assets.map(a => {
-                const isImage = a.tipe_file.includes("image");
-                const preview = isImage
-                  ? `<div class="asset-preview-sm"><img src="${a.url}" loading="lazy"></div>`
-                  : `<div class="asset-preview-sm">${getFileIcon(a.tipe_file)}</div>`;
-
-                return `<div class="asset-card-sm" onclick="openDetailPanel('${a.id}', 'onAssetDeletedFolder', '${folder_id}')">
-                  ${preview}
-                  <div class="asset-name-sm">${a.nama_file}</div>
-                </div>`;
-              }).join("")}
-            </div>
-          </div>`;
-
-        lucide.createIcons();
-      } catch (e) {
-        previewEl.innerHTML = `<div style="color:var(--danger);font-size:13px;text-align:center;padding:20px;">Gagal memuat aset</div>`;
-      }
-    }
-
-    async function loadRules() {
-      try {
-        const res  = await fetch(`${API_BASE_URL}/folders/rules?user_id=${user.user_id}`);
-        const data = await res.json();
-        const el   = document.getElementById("rule-list");
-
-        if (data.rules.length === 0) {
-          el.innerHTML = `<div class="empty-folder">Belum ada rule.</div>`;
-          return;
-        }
-
-        el.innerHTML = data.rules.map(r => `
-          <div class="rule-item">
-            <span class="rule-keyword">${r.keyword}</span>
-            <span class="rule-arrow">→</span>
-            <span class="rule-folder">
-              <i data-lucide="folder" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;color:var(--accent-yellow);"></i>
-              ${r.folders?.nama || "—"}
-            </span>
-            <i data-lucide="trash-2" class="rule-delete" style="width:14px;height:14px;" onclick="hapusRule('${r.id}')"></i>
-          </div>`).join("");
-        lucide.createIcons();
-      } catch (e) { console.error(e); }
-    }
-
-    async function buatRule() {
-      const keyword   = document.getElementById("rule-keyword").value.trim().toLowerCase();
-      const folder_id = document.getElementById("rule-folder").value;
-      if (!keyword || !folder_id) {
-        showToast("Isi keyword dan pilih folder", "error");
-        return;
-      }
-      try {
-        await fetch(`${API_BASE_URL}/folders/rules`, {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({user_id: user.user_id, keyword, folder_id})
-        });
-        document.getElementById("rule-keyword").value = "";
-        document.getElementById("rule-folder").value  = "";
-        await loadRules();
-        showToast("Rule ditambahkan");
-      } catch (e) {
-        showToast("Gagal tambah rule", "error");
-      }
-    }
-
-    async function hapusRule(rule_id) {
-      try {
-        await fetch(`${API_BASE_URL}/folders/rules/${rule_id}`, {method: "DELETE"});
-        await loadRules();
-        showToast("Rule dihapus");
-      } catch (e) {
-        showToast("Gagal hapus rule", "error");
-      }
-    }
-
-    loadFolders();
-    loadRules();
-    lucide.createIcons();
-    initDetailPanelFromURL();
+    init();
   </script>
 </body>
 </html>
