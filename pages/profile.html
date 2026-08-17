@@ -96,6 +96,9 @@
 <body>
 
   <nav class="navbar">
+    <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Tampilkan/sembunyikan sidebar">
+      <i data-lucide="panel-left"></i>
+    </button>
     <div class="navbar-brand">DAM System</div>
     <div class="navbar-right">
       <span id="user-name" style="font-size:14px;color:var(--text-muted);"></span>
@@ -103,10 +106,8 @@
     </div>
   </nav>
 
-  <aside class="sidebar">
-    <a href="dashboard.html" class="sidebar-item" id="sidebar-dashboard" style="display:none;">
-      <i data-lucide="layout-dashboard"></i> Dashboard
-    </a>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-label">Menu</div>
     <a href="gallery.html" class="sidebar-item">
       <i data-lucide="image"></i> Gallery
     </a>
@@ -119,8 +120,13 @@
     <a href="profile.html" class="sidebar-item active">
       <i data-lucide="user"></i> Profile
     </a>
-    <a href="admin.html" class="sidebar-item" id="sidebar-admin" style="display:none;">
-      <i data-lucide="shield"></i> Admin
+
+    <div class="sidebar-label" id="sidebar-admin-label" style="display:none;">Admin</div>
+    <a href="dashboard.html" class="sidebar-item" id="sidebar-dashboard" style="display:none;">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
+    <a href="admin.html" class="sidebar-item" id="sidebar-users" style="display:none;">
+      <i data-lucide="users"></i> Users
     </a>
   </aside>
 
@@ -188,11 +194,13 @@
   <script src="../js/utils.js"></script>
   <script>
     requireAuth();
+    initSidebarToggle();
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
 
     if (isManager()) {
-      document.getElementById("sidebar-admin").style.display    = "flex";
+      document.getElementById("sidebar-admin-label").style.display = "block";
+      document.getElementById("sidebar-users").style.display     = "flex";
       document.getElementById("sidebar-dashboard").style.display = "flex";
     }
 

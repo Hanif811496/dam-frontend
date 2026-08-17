@@ -429,6 +429,9 @@
 <body>
 
   <nav class="navbar">
+    <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Tampilkan/sembunyikan sidebar">
+      <i data-lucide="panel-left"></i>
+    </button>
     <div class="navbar-brand">DAM System</div>
     <div style="margin-left:8px;font-size:11px;background:var(--primary);color:white;padding:2px 8px;border-radius:var(--radius-full);font-weight:600;">ADMIN</div>
     <div class="navbar-right">
@@ -437,10 +440,8 @@
     </div>
   </nav>
 
-  <aside class="sidebar">
-    <a href="dashboard.html" class="sidebar-item active">
-      <i data-lucide="layout-dashboard"></i> Dashboard
-    </a>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-label">Menu</div>
     <a href="gallery.html" class="sidebar-item">
       <i data-lucide="image"></i> Gallery
     </a>
@@ -453,8 +454,13 @@
     <a href="profile.html" class="sidebar-item">
       <i data-lucide="user"></i> Profile
     </a>
+
+    <div class="sidebar-label">Admin</div>
+    <a href="dashboard.html" class="sidebar-item active">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
     <a href="admin.html" class="sidebar-item">
-      <i data-lucide="shield"></i> Admin
+      <i data-lucide="users"></i> Users
     </a>
   </aside>
 
@@ -659,6 +665,7 @@
   <script src="../js/utils.js"></script>
   <script>
     requireManager();
+    initSidebarToggle();
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
     document.getElementById("last-update").textContent = "Update: " + new Date().toLocaleTimeString("id-ID");
