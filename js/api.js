@@ -15,19 +15,34 @@ async function apiCall(endpoint, options = {}, maxRetries = 3, retryDelayMs = 40
 
       const data = await res.json().catch(() => ({}));
 
-      if (res.ok) return data;
+      if (res.ok) {
+        return data;
+      }
+
+      const error = new Error(
+        data.detail ||
+        data.message ||
+        `Request gagal (${res.status})`
+      );
+
+      error.status = res.status;
+      error.data = data;
 
       if (res.status >= 500 && attempt < maxRetries) {
-        lastError = new Error(
-          data.detail || `Server error ${res.status}`
-        );
+        lastError = error;
       } else {
-        throw new Error(
-          data.detail || "Terjadi kesalahan"
-        );
+        throw error;
       }
+
     } catch (err) {
       lastError = err;
+
+      if (
+        err?.status &&
+        err.status < 500
+      ) {
+        throw err;
+      }
     }
 
     if (attempt < maxRetries) {
@@ -147,13 +162,16 @@ async function setAssetPermissions(
   asset_id,
   division_ids
 ) {
-  return apiCall("/assets/permissions", {
-    method: "POST",
-    body: JSON.stringify({
-      asset_id,
-      division_ids,
-    }),
-  });
+  return apiCall(
+    "/assets/permissions",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        asset_id,
+        division_ids,
+      }),
+    }
+  );
 }
 
 
@@ -188,15 +206,18 @@ async function shareAssetToDivision(
   to_division_id,
   catatan = null
 ) {
-  return apiCall("/assets/share", {
-    method: "POST",
-    body: JSON.stringify({
-      asset_id,
-      from_user_id,
-      to_division_id,
-      catatan,
-    }),
-  });
+  return apiCall(
+    "/assets/share",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        asset_id,
+        from_user_id,
+        to_division_id,
+        catatan,
+      }),
+    }
+  );
 }
 
 
@@ -225,101 +246,128 @@ async function uploadAsset(
   let lastError;
   let toastShown = false;
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+  for (
+    let attempt = 0;
+    attempt <= maxRetries;
+    attempt++
+  ) {
     try {
-      return await new Promise((resolve, reject) => {
-        const formData = new FormData();
+      return await new Promise(
+        (resolve, reject) => {
+          const formData =
+            new FormData();
 
-        formData.append("user_id", user_id);
-        formData.append("file", file);
-
-        if (target_division_id) {
           formData.append(
-            "target_division_id",
-            target_division_id
+            "user_id",
+            user_id
           );
-        }
 
-        const xhr = new XMLHttpRequest();
+          formData.append(
+            "file",
+            file
+          );
 
-        xhr.open(
-          "POST",
-          API_BASE_URL + "/assets/upload"
-        );
-
-        xhr.upload.onprogress = event => {
-          if (
-            event.lengthComputable &&
-            typeof onProgress === "function"
-          ) {
-            const percent = Math.round(
-              (event.loaded / event.total) * 100
+          if (target_division_id) {
+            formData.append(
+              "target_division_id",
+              target_division_id
             );
-
-            onProgress(percent);
-          }
-        };
-
-        xhr.onload = () => {
-          let data = {};
-
-          try {
-            data = JSON.parse(xhr.responseText);
-          } catch (err) {}
-
-          if (
-            xhr.status >= 200 &&
-            xhr.status < 300
-          ) {
-            resolve(data);
-            return;
           }
 
-          if (xhr.status >= 500) {
+          const xhr =
+            new XMLHttpRequest();
+
+          xhr.open(
+            "POST",
+            API_BASE_URL +
+            "/assets/upload"
+          );
+
+          xhr.upload.onprogress =
+            event => {
+              if (
+                event.lengthComputable &&
+                typeof onProgress ===
+                "function"
+              ) {
+                const percent =
+                  Math.round(
+                    (
+                      event.loaded /
+                      event.total
+                    ) * 100
+                  );
+
+                onProgress(percent);
+              }
+            };
+
+          xhr.onload = () => {
+            let data = {};
+
+            try {
+              data = JSON.parse(
+                xhr.responseText
+              );
+            } catch (err) {}
+
+            if (
+              xhr.status >= 200 &&
+              xhr.status < 300
+            ) {
+              resolve(data);
+              return;
+            }
+
+            if (
+              xhr.status >= 500
+            ) {
+              reject({
+                retryable: true,
+                error: new Error(
+                  data.detail ||
+                  `Server error ${xhr.status}`
+                ),
+              });
+
+              return;
+            }
+
+            reject({
+              retryable: false,
+              error: new Error(
+                data.detail ||
+                "Upload gagal"
+              ),
+            });
+          };
+
+          xhr.onerror = () => {
             reject({
               retryable: true,
               error: new Error(
-                data.detail ||
-                `Server error ${xhr.status}`
+                "Koneksi gagal"
               ),
             });
+          };
 
-            return;
-          }
+          xhr.ontimeout = () => {
+            reject({
+              retryable: true,
+              error: new Error(
+                "Waktu koneksi habis"
+              ),
+            });
+          };
 
-          reject({
-            retryable: false,
-            error: new Error(
-              data.detail ||
-              "Upload gagal"
-            ),
-          });
-        };
-
-        xhr.onerror = () => {
-          reject({
-            retryable: true,
-            error: new Error(
-              "Koneksi gagal"
-            ),
-          });
-        };
-
-        xhr.ontimeout = () => {
-          reject({
-            retryable: true,
-            error: new Error(
-              "Waktu koneksi habis"
-            ),
-          });
-        };
-
-        xhr.send(formData);
-      });
+          xhr.send(formData);
+        }
+      );
 
     } catch (rejection) {
       lastError =
-        rejection.error || rejection;
+        rejection.error ||
+        rejection;
 
       if (
         rejection.retryable === false ||
@@ -329,14 +377,16 @@ async function uploadAsset(
       }
 
       if (
-        typeof onProgress === "function"
+        typeof onProgress ===
+        "function"
       ) {
         onProgress(0);
       }
 
       if (
         !toastShown &&
-        typeof showToast === "function"
+        typeof showToast ===
+        "function"
       ) {
         toastShown = true;
 
@@ -347,7 +397,10 @@ async function uploadAsset(
       }
 
       await new Promise(resolve =>
-        setTimeout(resolve, retryDelayMs)
+        setTimeout(
+          resolve,
+          retryDelayMs
+        )
       );
     }
   }
@@ -382,14 +435,17 @@ async function createFolder(
   user_id,
   parent_id = null
 ) {
-  return apiCall("/folders", {
-    method: "POST",
-    body: JSON.stringify({
-      nama,
-      user_id,
-      parent_id,
-    }),
-  });
+  return apiCall(
+    "/folders",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        nama,
+        user_id,
+        parent_id,
+      }),
+    }
+  );
 }
 
 
@@ -400,16 +456,19 @@ async function createSmartFolder({
   target_division_id = null,
   division_ids = [],
 }) {
-  return apiCall("/folders/smart", {
-    method: "POST",
-    body: JSON.stringify({
-      nama,
-      user_id,
-      parent_id,
-      target_division_id,
-      division_ids,
-    }),
-  });
+  return apiCall(
+    "/folders/smart",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        nama,
+        user_id,
+        parent_id,
+        target_division_id,
+        division_ids,
+      }),
+    }
+  );
 }
 
 
@@ -425,9 +484,12 @@ async function deleteFolder(
       `?user_id=${encodeURIComponent(user_id)}`;
   }
 
-  return apiCall(endpoint, {
-    method: "DELETE",
-  });
+  return apiCall(
+    endpoint,
+    {
+      method: "DELETE",
+    }
+  );
 }
 
 
@@ -454,7 +516,7 @@ async function moveFolder(
 
 
 // ======================================================
-// ASSET ↔ FOLDER
+// ASSET <-> FOLDER
 // ======================================================
 
 async function addAssetToFolder(
@@ -528,7 +590,9 @@ async function shareFolderToDivision(
 }
 
 
-async function getFolderAccess(folder_id) {
+async function getFolderAccess(
+  folder_id
+) {
   return apiCall(
     `/folders/${encodeURIComponent(folder_id)}/access`
   );
@@ -667,19 +731,22 @@ async function deleteFolderRule(
 }
 
 
-function parseRuleKeywords(rawValue) {
+function parseRuleKeywords(
+  rawValue
+) {
   if (!rawValue) {
     return [];
   }
 
-  const values = String(rawValue)
-    .split(/[,\s;\n]+/)
-    .map(value =>
-      value
-        .trim()
-        .toLowerCase()
-    )
-    .filter(Boolean);
+  const values =
+    String(rawValue)
+      .split(/[,\s;\n]+/)
+      .map(value =>
+        value
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean);
 
   return [
     ...new Set(values)
@@ -687,6 +754,14 @@ function parseRuleKeywords(rawValue) {
 }
 
 
+/*
+ * Helper internal.
+ *
+ * Parameter:
+ * user_id
+ * rawKeywords
+ * folder_id
+ */
 async function createMultipleFolderRules(
   user_id,
   rawKeywords,
@@ -711,15 +786,23 @@ async function createMultipleFolderRules(
 
   if (!keywords.length) {
     return {
-      created: [],
+      rules: [],
       skipped: [],
       failed: [],
     };
   }
 
   /*
-   * Backend terbaru sudah menyediakan endpoint batch.
-   * Kita coba endpoint batch dulu agar lebih cepat.
+   * Backend terbaru punya endpoint:
+   *
+   * POST /folders/rules/batch
+   *
+   * body:
+   * {
+   *   user_id,
+   *   keywords,
+   *   folder_id
+   * }
    */
   try {
     const result =
@@ -730,24 +813,28 @@ async function createMultipleFolderRules(
       );
 
     return {
-      created:
+      rules:
         result.rules || [],
+
       skipped:
         result.skipped || [],
+
       failed: [],
-      result,
     };
 
   } catch (batchError) {
     /*
-     * Fallback untuk backend lama:
-     * buat rule satu per satu.
+     * Fallback untuk backend yang
+     * belum punya endpoint batch.
      */
-    const created = [];
+    const rules = [];
     const skipped = [];
     const failed = [];
 
-    for (const keyword of keywords) {
+    for (
+      const keyword
+      of keywords
+    ) {
       try {
         const result =
           await createFolderRule(
@@ -756,54 +843,64 @@ async function createMultipleFolderRules(
             folder_id
           );
 
-        if (result?.duplicate) {
-          skipped.push(keyword);
-        } else {
-          created.push({
-            keyword,
-            result,
-          });
+        if (
+          result &&
+          result.duplicate
+        ) {
+          skipped.push(
+            keyword
+          );
+
+          continue;
         }
 
-      } catch (err) {
+        rules.push(
+          result?.rule ||
+          result
+        );
+
+      } catch (error) {
         failed.push({
           keyword,
           error:
-            err?.message ||
+            error?.message ||
             "Gagal menambahkan rule",
         });
       }
     }
 
     return {
-      created,
+      rules,
       skipped,
       failed,
-      batchError:
-        batchError?.message || null,
     };
   }
 }
 
 
 /*
- * Compatibility helper.
+ * IMPORTANT
+ * =========
  *
- * folders.html versi explorer memanggil addFolderRules().
- * Fungsi ini menjadi alias ke implementation bulk rule di atas,
- * sehingga input:
+ * folders.html memanggil:
  *
- * jpg, png
+ * addFolderRules(
+ *   user_id,
+ *   folder_id,
+ *   keywords
+ * )
  *
- * akan diproses sebagai:
+ * Jadi urutan parameter fungsi ini
+ * HARUS:
  *
- * jpg
- * png
+ * 1. user_id
+ * 2. folder_id
+ * 3. rawKeywords
  */
 async function addFolderRules(
   user_id,
-  rawKeywords,
-  folder_id
+  folder_id,
+  rawKeywords
 ) {
   return createMultipleFolderRules(
     user_id,
@@ -877,14 +974,18 @@ async function assignDivision(
 // TAGS
 // ======================================================
 
-async function getTags(user_id) {
+async function getTags(
+  user_id
+) {
   return apiCall(
     `/tags?user_id=${encodeURIComponent(user_id)}`
   );
 }
 
 
-async function getTagCount(user_id) {
+async function getTagCount(
+  user_id
+) {
   return apiCall(
     `/tags/count?user_id=${encodeURIComponent(user_id)}`
   );
