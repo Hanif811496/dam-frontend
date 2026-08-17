@@ -153,6 +153,13 @@
     <div class="page-title">Upload Aset</div>
 
     <div class="upload-wrap">
+      <div class="section-box" id="upload-division-box" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Upload ke folder divisi (khusus Manager):</div>
+        <select class="input" id="upload-target-division" style="width:100%;">
+          <option value="">Divisi saya sendiri</option>
+        </select>
+      </div>
+
       <div class="dropzone" id="dropzone">
         <div class="dropzone-icon">☁️</div>
         <p>Seret file ke sini atau klik untuk memilih</p>
@@ -182,6 +189,21 @@
     
     const user = getUser();
     document.getElementById("user-name").textContent = user.nama;
+
+    if (isManager()) {
+      document.getElementById("upload-division-box").style.display = "block";
+      loadDivisionsForUpload();
+    }
+
+    async function loadDivisionsForUpload() {
+      try {
+        const res  = await fetch(`${API_BASE_URL}/divisions`);
+        const data = await res.json();
+        const sel  = document.getElementById("upload-target-division");
+        sel.innerHTML = `<option value="">Divisi saya sendiri</option>` +
+          data.divisions.map(d => `<option value="${d.id}">${d.nama}</option>`).join("");
+      } catch (e) { console.error(e); }
+    }
 
     let selectedFiles = [];
     let fileStatuses  = [];   // 'pending' | 'uploading' | 'done' | 'error'
@@ -319,9 +341,12 @@
         tagsEl.innerHTML = "";
 
         try {
+          const targetDiv = document.getElementById("upload-target-division")
+            ? document.getElementById("upload-target-division").value
+            : "";
           const result = await uploadAsset(user.user_id, file, (pct) => {
             progEl.style.width = pct + "%";
-          });
+          }, 3, 4000, targetDiv || null);
 
           progEl.style.width  = "100%";
           fileStatuses[i]     = "done";

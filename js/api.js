@@ -80,7 +80,7 @@ async function removeAssetFromFolder(folder_id, asset_id, user_id) {
   });
 }
 
-async function uploadAsset(user_id, file, onProgress, maxRetries = 3, retryDelayMs = 4000) {
+async function uploadAsset(user_id, file, onProgress, maxRetries = 3, retryDelayMs = 4000, target_division_id = null) {
   let lastError;
   let toastShown = false;
 
@@ -90,6 +90,7 @@ async function uploadAsset(user_id, file, onProgress, maxRetries = 3, retryDelay
         const formData = new FormData();
         formData.append("user_id", user_id);
         formData.append("file", file);
+        if (target_division_id) formData.append("target_division_id", target_division_id);
         const xhr = new XMLHttpRequest();
         xhr.open("POST", API_BASE_URL + "/assets/upload");
         xhr.upload.onprogress = (e) => {

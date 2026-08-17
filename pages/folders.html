@@ -227,7 +227,7 @@
     </div>
 
     <div class="info-banner">
-      <strong>Cara kerja:</strong> Folder Shared bisa diakses semua divisi. Folder Divisi hanya untuk divisinya masing-masing. Smart Folder otomatis mengisi aset berdasarkan rule keyword tag saat upload. Smart Folder juga bisa dibagikan ke user tertentu lewat ikon <i data-lucide="user-plus" style="width:12px;height:12px;vertical-align:middle;"></i> di sebelah namanya.
+      <strong>Cara kerja:</strong> Folder Shared bisa diakses semua divisi. Folder Divisi hanya untuk divisinya masing-masing. Smart Folder otomatis mengisi aset berdasarkan rule keyword tag saat upload. Manager bisa membuat Smart Folder untuk beberapa divisi sekaligus (mis. Editor & Animator), dan mengatur ulang divisi mana saja yang boleh akses lewat ikon <i data-lucide="building-2" style="width:12px;height:12px;vertical-align:middle;"></i>. Smart Folder juga bisa dibagikan ke user tertentu lewat ikon <i data-lucide="user-plus" style="width:12px;height:12px;vertical-align:middle;"></i> di sebelah namanya.
     </div>
 
     <div class="folders-wrap">
@@ -248,10 +248,13 @@
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;" id="new-folder-label">Buat Smart Folder baru (untuk divisi kamu):</div>
             <div class="add-form" style="flex-wrap:wrap;">
               <input type="text" class="input" id="new-folder-name" placeholder="Nama smart folder..." style="flex:1;min-width:140px;">
-              <select class="input" id="new-folder-division" style="display:none;flex:1;min-width:140px;"></select>
               <button class="btn btn-primary btn-sm" onclick="buatFolder()">
                 <i data-lucide="plus" style="width:14px;height:14px;"></i> Buat
               </button>
+            </div>
+            <div id="new-folder-division-wrap" style="display:none;margin-top:10px;">
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">Divisi yang bisa akses folder ini:</div>
+              <div id="new-folder-division-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
             </div>
           </div>
         </div>
@@ -311,6 +314,20 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="division-modal">
+    <div class="modal-box">
+      <div class="modal-title">Atur Akses Divisi</div>
+      <div class="modal-subtitle" id="division-modal-subtitle">Pilih divisi yang boleh mengakses folder ini.</div>
+      <div class="modal-user-list" id="division-list">
+        <div style="display:flex;justify-content:center;padding:16px;"><div class="spinner"></div></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-sm" onclick="closeDivisionModal()">Batal</button>
+        <button class="btn btn-primary btn-sm" onclick="simpanDivisionFolder()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../js/config.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/api.js"></script>
@@ -332,11 +349,12 @@
     let allDivisions = [];
     let shareModalFolderId = null;
     let shareModalSelected = new Set();
+    let divisionModalFolderId = null;
+    let divisionModalSelected = new Set();
 
     if (isManager()) {
-      document.getElementById("new-folder-label").textContent = "Buat Smart Folder baru (pilih divisi tujuan):";
-      const sel = document.getElementById("new-folder-division");
-      sel.style.display = "block";
+      document.getElementById("new-folder-label").textContent = "Buat Smart Folder baru (pilih divisi yang boleh akses):";
+      document.getElementById("new-folder-division-wrap").style.display = "block";
       loadDivisionsForForm();
     }
 
@@ -345,8 +363,11 @@
         const res  = await fetch(`${API_BASE_URL}/divisions`);
         const data = await res.json();
         allDivisions = data.divisions;
-        const sel = document.getElementById("new-folder-division");
-        sel.innerHTML = allDivisions.map(d => `<option value="${d.id}">${d.nama}</option>`).join("");
+        const listEl = document.getElementById("new-folder-division-list");
+        listEl.innerHTML = allDivisions.map(d => `
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius-full);padding:4px 10px;cursor:pointer;">
+            <input type="checkbox" class="new-folder-division-cb" value="${d.id}"> ${d.nama}
+          </label>`).join("");
       } catch (e) { console.error(e); }
     }
 
@@ -382,11 +403,12 @@
         return `
           <div class="folder-group-label" style="color:${color};">${label}</div>
           ${list.map(f => {
-            const isActive  = activeFolder === f.id;
-            const isOwner   = f.user_id === user.user_id;
-            const canDelete = f.type === "smart" && (isOwner || isManager());
-            const canShare  = f.type === "smart" && (isOwner || isManager());
-            const subtitle  = f.type === "system" ? f.div_nama || "" :
+            const isActive     = activeFolder === f.id;
+            const isOwner      = f.user_id === user.user_id;
+            const canDelete    = f.type === "smart" && (isOwner || isManager());
+            const canShare     = f.type === "smart" && (isOwner || isManager());
+            const canShareDiv  = f.type === "smart" && isManager();
+            const subtitle     = f.type === "system" ? f.div_nama || "" :
                               f.type === "shared"  ? "Semua divisi" :
                               f.shared_to_me ? `Dibagikan • ${f.div_nama || ""}` :
                               f.owner || "";
@@ -395,6 +417,7 @@
                 <i data-lucide="folder" style="width:16px;height:16px;color:${color};flex-shrink:0;"></i>
                 <span class="folder-item-name">${f.nama}</span>
                 <span style="font-size:10px;color:var(--text-muted);margin-right:4px;">${subtitle}</span>
+                ${canShareDiv ? `<i data-lucide="building-2" class="folder-share" style="width:14px;height:14px;" title="Atur divisi yang bisa akses" onclick="event.stopPropagation();openDivisionModal('${f.id}','${f.nama.replace(/'/g, "\\'")}')"></i>` : ""}
                 ${canShare ? `<i data-lucide="user-plus" class="folder-share" style="width:14px;height:14px;" title="Bagikan folder" onclick="event.stopPropagation();openShareModal('${f.id}','${f.nama.replace(/'/g, "\\'")}')"></i>` : ""}
                 ${canDelete ? `<i data-lucide="trash-2" class="folder-delete" style="width:14px;height:14px;" onclick="event.stopPropagation();hapusFolder('${f.id}')"></i>` : ""}
               </div>`;
@@ -427,8 +450,8 @@
       if (!nama) return;
       const payload = {nama, user_id: user.user_id};
       if (isManager()) {
-        const targetDiv = document.getElementById("new-folder-division").value;
-        if (targetDiv) payload.target_division_id = targetDiv;
+        const checked = Array.from(document.querySelectorAll(".new-folder-division-cb:checked")).map(cb => cb.value);
+        if (checked.length) payload.division_ids = checked;
       }
       try {
         await fetch(`${API_BASE_URL}/folders/smart`, {
@@ -437,6 +460,7 @@
           body: JSON.stringify(payload)
         });
         document.getElementById("new-folder-name").value = "";
+        document.querySelectorAll(".new-folder-division-cb:checked").forEach(cb => cb.checked = false);
         await loadFolders();
         await loadRules();
         showToast("Smart folder dibuat");
@@ -521,6 +545,68 @@
         showToast("Akses folder disimpan");
       } catch (e) {
         showToast("Gagal menyimpan akses", "error");
+      }
+    }
+
+    async function openDivisionModal(folder_id, folder_nama) {
+      divisionModalFolderId = folder_id;
+      document.getElementById("division-modal-subtitle").textContent = `Folder: ${folder_nama}`;
+      document.getElementById("division-modal").classList.add("open");
+      const listEl = document.getElementById("division-list");
+      listEl.innerHTML = `<div style="display:flex;justify-content:center;padding:16px;"><div class="spinner"></div></div>`;
+
+      if (!allDivisions.length) await loadDivisionsForForm();
+      let currentDivisions = [];
+      try {
+        const res  = await fetch(`${API_BASE_URL}/folders/${folder_id}/divisions`);
+        const data = await res.json();
+        currentDivisions = data.divisions.map(d => d.id);
+      } catch (e) { console.error(e); }
+      divisionModalSelected = new Set(currentDivisions);
+      renderDivisionList();
+    }
+
+    function renderDivisionList() {
+      const listEl = document.getElementById("division-list");
+      if (!allDivisions.length) {
+        listEl.innerHTML = `<div class="empty-folder">Tidak ada divisi.</div>`;
+        return;
+      }
+      listEl.innerHTML = allDivisions.map(d => `
+        <label class="modal-user-item">
+          <input type="checkbox" value="${d.id}" ${divisionModalSelected.has(d.id) ? "checked" : ""} onchange="toggleDivisionCheck('${d.id}', this.checked)">
+          <span class="modal-user-name">${d.nama}</span>
+        </label>`).join("");
+    }
+
+    function toggleDivisionCheck(division_id, checked) {
+      if (checked) divisionModalSelected.add(division_id);
+      else divisionModalSelected.delete(division_id);
+    }
+
+    function closeDivisionModal() {
+      document.getElementById("division-modal").classList.remove("open");
+      divisionModalFolderId = null;
+    }
+
+    async function simpanDivisionFolder() {
+      if (!divisionModalFolderId) return;
+      if (!divisionModalSelected.size) {
+        showToast("Pilih minimal satu divisi", "error");
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE_URL}/folders/${divisionModalFolderId}/divisions`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({division_ids: Array.from(divisionModalSelected), granted_by: user.user_id})
+        });
+        if (!res.ok) throw new Error();
+        closeDivisionModal();
+        await loadFolders();
+        showToast("Akses divisi folder disimpan");
+      } catch (e) {
+        showToast("Gagal menyimpan akses divisi", "error");
       }
     }
 
