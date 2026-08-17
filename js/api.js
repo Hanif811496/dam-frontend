@@ -713,6 +713,34 @@ async function getFolderRules(
 }
 
 
+async function getFolderMatchingAssets(
+  folder_id,
+  user_id
+) {
+  return apiCall(
+    `/folders/${encodeURIComponent(folder_id)}/matching-assets?user_id=${encodeURIComponent(user_id)}`
+  );
+}
+
+
+async function assignFolderMatchingAssets(
+  folder_id,
+  user_id,
+  asset_ids
+) {
+  return apiCall(
+    `/folders/${encodeURIComponent(folder_id)}/assign-matching-assets`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        user_id,
+        asset_ids,
+      }),
+    }
+  );
+}
+
+
 async function createFolderRule(
   user_id,
   keyword,

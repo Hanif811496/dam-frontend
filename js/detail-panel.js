@@ -308,22 +308,37 @@ async function tambahTagPanel() {
   const input = document.getElementById("dp-new-tag");
   const nama  = input.value.trim();
   if (!nama) return;
+
   try {
-    const result = await fetchWithRetry(`${API_BASE_URL}/assets/${detailPanelAssetId}/tags`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({nama_tag: nama, sumber: "manual", user_id: user.user_id})
-    });
+    const result = await addAssetTag(
+      detailPanelAssetId,
+      nama,
+      "manual",
+      user.user_id
+    );
+
     input.value = "";
     await loadDetailPanel();
+
     const count = (result.added || []).length;
+    const assignedFolders = result.assigned_folders || [];
+
     if (count === 0) {
       showToast("Tag sudah ada sebelumnya", "warning");
+      return;
+    }
+
+    if (assignedFolders.length) {
+      const names = assignedFolders.map(folder => folder.nama).filter(Boolean);
+      const suffix = names.length
+        ? ` • otomatis masuk ke ${names.join(", ")}`
+        : ` • masuk ke ${assignedFolders.length} Smart Folder`;
+      showToast(`${count} tag ditambahkan${suffix}`, "success");
     } else {
-      showToast(`${count} tag ditambahkan`);
+      showToast(`${count} tag ditambahkan`, "success");
     }
   } catch (err) {
-    showToast("Gagal menambah tag", "error");
+    showToast("Gagal menambah tag: " + (err.message || "Unknown error"), "error");
   }
 }
 

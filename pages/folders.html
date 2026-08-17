@@ -210,6 +210,21 @@
     .rules-intro,.access-intro{font-size:12px;color:var(--text-muted);line-height:1.55;margin-bottom:16px}
     .rule-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px}.rule-chip{display:inline-flex;align-items:center;gap:6px;background:var(--primary-light);color:var(--primary);border:1px solid rgba(214,38,38,.15);border-radius:999px;padding:5px 9px;font-size:12px;font-weight:600}.rule-chip button{border:0;background:transparent;padding:0;display:flex;color:inherit;cursor:pointer}.rule-chip button i{width:13px;height:13px}
     .rule-form{border-top:1px solid var(--border);padding-top:16px}.rule-form-row{display:flex;gap:8px;align-items:flex-start}.rule-form-row .input{flex:1}.rule-hint{font-size:10px;color:var(--text-muted);margin-top:6px}
+    .matching-section{border-top:1px solid var(--border);padding-top:17px;margin-top:18px}
+    .matching-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+    .matching-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text)}
+    .matching-summary{font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.45}
+    .matching-select-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 8px;font-size:11px;color:var(--text-muted)}
+    .matching-select-all{display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+    .matching-select-all input,.matching-checkbox{accent-color:var(--primary);cursor:pointer}
+    .matching-list{border:1px solid var(--border);border-radius:var(--radius-md);overflow:auto;max-height:330px;background:var(--surface)}
+    .matching-item{display:grid;grid-template-columns:24px 48px minmax(0,1fr);gap:10px;align-items:center;padding:9px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+    .matching-item:last-child{border-bottom:0}.matching-item:hover{background:var(--surface-2)}
+    .matching-thumb{width:48px;height:42px;border-radius:7px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:21px}.matching-thumb img{width:100%;height:100%;object-fit:cover}
+    .matching-info{min-width:0}.matching-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.matching-meta{font-size:10px;color:var(--text-muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .matching-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.matching-tag{font-size:9px;padding:2px 6px;border-radius:999px;background:var(--accent-yellow-light);color:#765d00;border:1px solid rgba(244,184,0,.25)}
+    .matching-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.matching-selected-count{font-size:11px;color:var(--text-muted)}
+    .matching-empty{border:1px dashed var(--border);border-radius:var(--radius-md);padding:16px;text-align:center;font-size:11px;color:var(--text-muted);background:var(--surface-2)}
     .access-section{border-top:1px solid var(--border);padding-top:15px;margin-top:15px}.access-section:first-of-type{border-top:0;padding-top:0;margin-top:0}.access-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}.access-chips{display:flex;flex-wrap:wrap;gap:6px}.access-chip{border:1px solid var(--border);border-radius:999px;padding:5px 9px;font-size:11px;background:var(--surface-2)}
     .access-user{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px}.access-user:last-child{border-bottom:0}.access-user i{width:15px;height:15px;color:var(--text-muted)}
     .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.46);z-index:120;align-items:center;justify-content:center;padding:18px}.modal-overlay.open{display:flex}.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:460px;max-width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 18px 60px rgba(0,0,0,.18)}
@@ -318,7 +333,8 @@
 
     const state = {
       folders: [], divisions: [], activeId: null, activeVirtual: null, activeTab: 'content',
-      expanded: new Set(), search: '', rules: [], allUsers: [], moveId: null, shareId: null
+      expanded: new Set(), search: '', rules: [], allUsers: [], moveId: null, shareId: null,
+      matchingAssets: [], matchingSelected: new Set(), matchingAlreadyCount: 0, matchingScannedCount: 0
     };
 
     const esc = (value='') => String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -457,12 +473,82 @@
 
     async function renderRules(folder) {
       if (folder.type !== 'smart') { state.activeTab='content'; return renderContent(folder); }
-      const data = await getFolderRules(user.user_id,folder.id); state.rules=data.rules||[];
-      const manageable=canManage(folder);
-      const body = `<div class="rules-intro">Aset otomatis masuk ke <strong>${esc(folder.nama)}</strong> jika memiliki salah satu keyword tag berikut.</div>
+
+      const manageable = canManage(folder);
+      const [ruleData, matchingData] = await Promise.all([
+        getFolderRules(user.user_id, folder.id),
+        manageable
+          ? getFolderMatchingAssets(folder.id, user.user_id)
+          : Promise.resolve({assets:[],already_assigned_count:0,scanned_count:0})
+      ]);
+
+      state.rules = ruleData.rules || [];
+      state.matchingAssets = matchingData.assets || [];
+      state.matchingAlreadyCount = matchingData.already_assigned_count || 0;
+      state.matchingScannedCount = matchingData.scanned_count || 0;
+      state.matchingSelected = new Set(state.matchingAssets.map(asset => asset.id));
+
+      const matchingHtml = !manageable ? '' : `
+        <div class="matching-section">
+          <div class="matching-head">
+            <div>
+              <div class="matching-title">Matching Assets Lama</div>
+              <div class="matching-summary">
+                ${state.rules.length
+                  ? `${state.matchingAssets.length} aset lama belum masuk dan cocok dengan rules.${state.matchingAlreadyCount ? ` ${state.matchingAlreadyCount} aset cocok sudah berada di folder/hierarchy ini.` : ''}`
+                  : 'Tambahkan minimal satu rule untuk memindai aset lama yang cocok.'}
+              </div>
+            </div>
+            <button class="btn btn-outline btn-sm" id="scan-matching-btn" ${state.rules.length?'':'disabled'}>
+              <i data-lucide="refresh-cw" style="width:13px;height:13px"></i> Scan ulang
+            </button>
+          </div>
+
+          ${!state.rules.length
+            ? '<div class="matching-empty">Belum ada rules untuk dipakai sebagai dasar scan.</div>'
+            : !state.matchingAssets.length
+              ? `<div class="matching-empty">Tidak ada aset lama baru yang cocok. ${state.matchingScannedCount ? `${state.matchingScannedCount} aset dalam divisi folder sudah diperiksa.` : ''}</div>`
+              : `
+                <div class="matching-select-row">
+                  <label class="matching-select-all">
+                    <input type="checkbox" id="matching-select-all" checked>
+                    Pilih semua
+                  </label>
+                  <span>${state.matchingAssets.length} kandidat</span>
+                </div>
+                <div class="matching-list">
+                  ${state.matchingAssets.map(asset => {
+                    const image = String(asset.tipe_file || '').includes('image');
+                    const preview = image
+                      ? `<img src="${esc(asset.url || '')}" loading="lazy" alt="">`
+                      : fileIcon(asset.tipe_file || '');
+                    return `<label class="matching-item">
+                      <input class="matching-checkbox" type="checkbox" data-match-asset="${esc(asset.id)}" checked>
+                      <span class="matching-thumb">${preview}</span>
+                      <span class="matching-info">
+                        <span class="matching-name">${esc(asset.nama_file)}</span>
+                        <span class="matching-meta">${esc(asset.uploader || '—')} • ${formatBytesLocal(asset.ukuran)}</span>
+                        <span class="matching-tags">${(asset.matching_tags || []).map(tag => `<span class="matching-tag">${esc(tag)}</span>`).join('')}</span>
+                      </span>
+                    </label>`;
+                  }).join('')}
+                </div>
+                <div class="matching-footer">
+                  <span class="matching-selected-count" id="matching-selected-count">${state.matchingSelected.size} aset dipilih</span>
+                  <button class="btn btn-primary btn-sm" id="assign-matching-btn">
+                    <i data-lucide="folder-input" style="width:14px;height:14px"></i>
+                    Masukkan ${state.matchingSelected.size} aset
+                  </button>
+                </div>`}
+        </div>`;
+
+      const body = `<div class="rules-intro">Aset baru otomatis masuk ke <strong>${esc(folder.nama)}</strong> jika memiliki salah satu keyword tag berikut. Untuk aset lama, review hasil scan lalu pilih aset yang ingin dimasukkan.</div>
         <div class="rule-chips">${state.rules.length?state.rules.map(r=>`<span class="rule-chip">${esc(r.keyword)}${manageable?`<button data-rule-delete="${esc(r.id)}" title="Hapus rule"><i data-lucide="x"></i></button>`:''}</span>`).join(''):'<span style="font-size:12px;color:var(--text-muted)">Belum ada rule.</span>'}</div>
-        ${manageable?`<div class="rule-form"><div class="access-label">Tambah keyword</div><div class="rule-form-row"><input class="input" id="rule-input" placeholder="character, cartoon render hero"><button class="btn btn-primary btn-sm" id="add-rule-btn"><i data-lucide="plus" style="width:14px;height:14px"></i> Tambah</button></div><div class="rule-hint">Pisahkan banyak tag dengan koma, titik koma, spasi, atau baris baru. Duplikat otomatis diabaikan.</div></div>`:''}`;
-      document.getElementById('folder-detail').innerHTML = detailShell(folder,body); bindDetailEvents();
+        ${manageable?`<div class="rule-form"><div class="access-label">Tambah keyword</div><div class="rule-form-row"><input class="input" id="rule-input" placeholder="character, cartoon render hero"><button class="btn btn-primary btn-sm" id="add-rule-btn"><i data-lucide="plus" style="width:14px;height:14px"></i> Tambah</button></div><div class="rule-hint">Pisahkan banyak tag dengan koma, titik koma, spasi, atau baris baru. Duplikat otomatis diabaikan. Tag manual juga ikut memicu auto-assign untuk aset yang baru ditag.</div></div>`:''}
+        ${matchingHtml}`;
+
+      document.getElementById('folder-detail').innerHTML = detailShell(folder,body);
+      bindDetailEvents();
     }
 
     async function renderAccess(folder) {
@@ -494,6 +580,10 @@
       document.querySelectorAll('[data-action="delete"]').forEach(b=>b.onclick=()=>deleteActiveFolder());
       document.querySelectorAll('[data-rule-delete]').forEach(b=>b.onclick=()=>removeRule(b.dataset.ruleDelete));
       const add=document.getElementById('add-rule-btn'); if(add)add.onclick=addRulesFromInput;
+      const scan=document.getElementById('scan-matching-btn'); if(scan)scan.onclick=refreshMatchingAssets;
+      const selectAll=document.getElementById('matching-select-all'); if(selectAll)selectAll.onchange=()=>toggleAllMatching(selectAll.checked);
+      document.querySelectorAll('[data-match-asset]').forEach(cb=>cb.onchange=()=>toggleMatchingAsset(cb.dataset.matchAsset,cb.checked));
+      const assign=document.getElementById('assign-matching-btn'); if(assign)assign.onclick=assignSelectedMatchingAssets;
     }
 
     function locationOptions(excludeId=null){
@@ -523,8 +613,46 @@
 
     async function deleteActiveFolder(){const f=byId(state.activeId);if(!canManage(f))return;if(!confirm(`Hapus Smart Folder "${f.nama}"? Aset tidak ikut terhapus.`))return;try{await deleteSmartFolder(f.id,user.user_id);state.activeId=null;await reloadFolders(false);renderEmptyDetail();showToast('Folder dihapus')}catch(e){showToast(e.message||'Gagal menghapus folder','error')}}
 
+    function syncMatchingSelectionUI(){
+      const total=state.matchingAssets.length;
+      const selected=state.matchingSelected.size;
+      const all=document.getElementById('matching-select-all');
+      if(all){all.checked=total>0&&selected===total;all.indeterminate=selected>0&&selected<total}
+      document.querySelectorAll('[data-match-asset]').forEach(cb=>{cb.checked=state.matchingSelected.has(cb.dataset.matchAsset)});
+      const count=document.getElementById('matching-selected-count');if(count)count.textContent=`${selected} aset dipilih`;
+      const btn=document.getElementById('assign-matching-btn');if(btn){btn.disabled=selected===0;btn.innerHTML=`<i data-lucide="folder-input" style="width:14px;height:14px"></i> Masukkan ${selected} aset`;lucide.createIcons()}
+    }
+
+    function toggleMatchingAsset(assetId,checked){
+      if(checked)state.matchingSelected.add(assetId);else state.matchingSelected.delete(assetId);
+      syncMatchingSelectionUI();
+    }
+
+    function toggleAllMatching(checked){
+      state.matchingSelected=checked?new Set(state.matchingAssets.map(asset=>asset.id)):new Set();
+      syncMatchingSelectionUI();
+    }
+
+    async function refreshMatchingAssets(){
+      const folder=byId(state.activeId);if(!folder)return;
+      try{await renderRules(folder);showToast('Scan aset lama diperbarui')}catch(e){showToast(e.message||'Gagal memindai aset lama','error')}
+    }
+
+    async function assignSelectedMatchingAssets(){
+      const folder=byId(state.activeId);if(!folder||!canManage(folder))return;
+      const assetIds=[...state.matchingSelected];
+      if(!assetIds.length)return showToast('Pilih minimal satu aset','warning');
+      const btn=document.getElementById('assign-matching-btn');if(btn){btn.disabled=true;btn.textContent='Memasukkan...'}
+      try{
+        const res=await assignFolderMatchingAssets(folder.id,user.user_id,assetIds);
+        const assigned=res.assigned_count||0,skipped=res.skipped_count||0;
+        showToast(`${assigned} aset berhasil dimasukkan${skipped?`, ${skipped} dilewati`:''}`,assigned?'success':'warning');
+        await renderRules(folder);
+      }catch(e){showToast(e.message||'Gagal memasukkan aset','error');syncMatchingSelectionUI()}
+    }
+
     function parseKeywords(raw){return [...new Set(String(raw||'').toLowerCase().split(/[,;\s]+/).map(s=>s.trim()).filter(Boolean))]}
-    async function addRulesFromInput(){const input=document.getElementById('rule-input');const keywords=parseKeywords(input.value);if(!keywords.length)return showToast('Masukkan minimal satu keyword','error');try{const res=await addFolderRules(user.user_id,state.activeId,keywords);input.value='';await renderRules(byId(state.activeId));const skipped=(res.skipped||[]).length;showToast(`${(res.rules||[]).length} rule ditambahkan${skipped?`, ${skipped} duplikat dilewati`:''}`)}catch(e){showToast(e.message||'Gagal menambah rule','error')}}
+    async function addRulesFromInput(){const input=document.getElementById('rule-input');const keywords=parseKeywords(input.value);if(!keywords.length)return showToast('Masukkan minimal satu keyword','error');try{const res=await addFolderRules(user.user_id,state.activeId,keywords);input.value='';await renderRules(byId(state.activeId));const skipped=(res.skipped||[]).length;const matches=state.matchingAssets.length;showToast(`${(res.rules||[]).length} rule ditambahkan${skipped?`, ${skipped} duplikat dilewati`:''}${matches?` • ${matches} aset lama cocok untuk direview`:''}`)}catch(e){showToast(e.message||'Gagal menambah rule','error')}}
     async function removeRule(id){try{await deleteFolderRule(id);await renderRules(byId(state.activeId));showToast('Rule dihapus')}catch(e){showToast(e.message||'Gagal menghapus rule','error')}}
 
     function openModal(id){document.getElementById(id).classList.add('open');lucide.createIcons()}
