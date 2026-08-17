@@ -991,7 +991,9 @@
       try {
         if (location.type === "root") {
           currentRawAssets = [...allAssets];
-          currentRawFolders = getSmartFolders().filter(folder => !folder.shared_to_me && !folder.parent_id);
+          // Root Gallery hanya menampilkan aset. Smart Folder hidup di bawah
+          // Folder Divisi agar hierarchy konsisten seperti Explorer/Drive.
+          currentRawFolders = [];
         } else if (location.type === "shared") {
           const directShared = sharedAssetShares.map(normalizeSharedAsset).filter(Boolean);
           const legacyFolders = getLegacySharedFolders();
@@ -1009,11 +1011,20 @@
           currentRawAssets = response.assets || [];
 
           if (location.folderType === "system") {
-            currentRawFolders = getSmartFolders().filter(folder =>
-              !folder.shared_to_me &&
-              !folder.parent_id &&
-              folder.division_id === location.division_id
-            );
+            currentRawFolders = getSmartFolders().filter(folder => {
+              if (folder.shared_to_me) return false;
+
+              // Folder baru: parent_id menunjuk langsung ke system folder.
+              const nestedUnderSystemFolder = folder.parent_id === location.id;
+
+              // Folder legacy: dibuat sebelum nested hierarchy, sehingga
+              // parent_id masih null tetapi division_id sudah menunjuk divisi.
+              const legacyDivisionRoot =
+                !folder.parent_id &&
+                folder.division_id === location.division_id;
+
+              return nestedUnderSystemFolder || legacyDivisionRoot;
+            });
           } else {
             currentRawFolders = getSmartFolders().filter(folder => folder.parent_id === location.id);
           }
