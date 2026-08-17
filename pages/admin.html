@@ -152,40 +152,64 @@
 
     .staff-toolbar {
       display: grid;
-      grid-template-columns: minmax(260px, 1.4fr) minmax(180px, .8fr) minmax(180px, .8fr) auto;
-      gap: 10px;
+      grid-template-columns: minmax(280px, 1.5fr) minmax(190px, .85fr) minmax(190px, .85fr) auto;
+      gap: 12px;
       align-items: center;
       margin-bottom: 18px;
-      padding: 14px;
+      padding: 16px 18px;
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       background: var(--surface);
     }
 
-    .staff-search-wrap {
-      position: relative;
+    .staff-toolbar .input {
+      width: 100%;
+      height: 42px;
+      min-height: 42px;
+      margin: 0;
+      box-sizing: border-box;
+      font-size: 13px;
     }
 
-    .staff-search-wrap i {
+    .staff-search-wrap {
+      position: relative;
+      width: 100%;
+      height: 42px;
+      display: flex;
+      align-items: center;
+    }
+
+    .staff-search-icon {
       position: absolute;
-      left: 11px;
+      left: 13px;
       top: 50%;
       transform: translateY(-50%);
-      width: 15px;
-      height: 15px;
+      width: 16px !important;
+      height: 16px !important;
       color: var(--text-muted);
       pointer-events: none;
+      z-index: 2;
     }
 
     .staff-search-wrap .input {
-      padding-left: 35px;
+      padding-left: 40px;
     }
 
     .staff-result-count {
+      height: 42px;
+      min-width: 78px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 12px;
       color: var(--text-muted);
       white-space: nowrap;
-      text-align: right;
+      text-align: center;
+      box-sizing: border-box;
     }
 
     .staff-pagination {
@@ -248,11 +272,15 @@
 
     @media (max-width: 1050px) {
       .staff-toolbar {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
+
+      .staff-search-wrap {
+        grid-column: 1 / -1;
       }
 
       .staff-result-count {
-        text-align: left;
+        justify-self: stretch;
       }
     }
 
@@ -328,7 +356,7 @@
 
     <div class="staff-toolbar">
       <div class="staff-search-wrap">
-        <i data-lucide="search"></i>
+        <i data-lucide="search" class="staff-search-icon"></i>
         <input
           type="text"
           class="input"
