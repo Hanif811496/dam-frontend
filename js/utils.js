@@ -1,16 +1,75 @@
 const SIDEBAR_COLLAPSE_KEY = "dam_sidebar_collapsed";
+const SIDEBAR_MOBILE_BREAKPOINT = 768;
 
 function initSidebarToggle() {
   const btn = document.getElementById("sidebar-toggle");
-  if (!btn) return;
+  const sidebar = document.getElementById("sidebar");
+  if (!btn || !sidebar) return;
 
-  // Default: sidebar terbuka. Hanya collapse kalau user pernah menutupnya.
-  const collapsed = localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === "true";
-  document.body.classList.toggle("sidebar-collapsed", collapsed);
+  let backdrop = document.querySelector(".sidebar-backdrop");
+  if (!backdrop) {
+    backdrop = document.createElement("div");
+    backdrop.className = "sidebar-backdrop";
+    backdrop.setAttribute("aria-hidden", "true");
+    document.body.appendChild(backdrop);
+  }
+
+  const isMobile = () => window.innerWidth <= SIDEBAR_MOBILE_BREAKPOINT;
+
+  function setMobileOpen(open) {
+    document.body.classList.toggle("sidebar-mobile-open", open);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.setAttribute("aria-label", open ? "Tutup menu navigasi" : "Buka menu navigasi");
+  }
+
+  function applyViewportState() {
+    if (isMobile()) {
+      // Mobile selalu mulai tertutup. State collapse desktop tidak ikut menyembunyikan toggle mobile.
+      document.body.classList.remove("sidebar-mobile-open");
+      btn.setAttribute("aria-expanded", "false");
+      btn.setAttribute("aria-label", "Buka menu navigasi");
+    } else {
+      document.body.classList.remove("sidebar-mobile-open");
+      const collapsed = localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === "true";
+      document.body.classList.toggle("sidebar-collapsed", collapsed);
+      btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      btn.setAttribute("aria-label", collapsed ? "Tampilkan sidebar" : "Sembunyikan sidebar");
+    }
+  }
+
+  applyViewportState();
 
   btn.addEventListener("click", () => {
-    const isCollapsed = document.body.classList.toggle("sidebar-collapsed");
-    localStorage.setItem(SIDEBAR_COLLAPSE_KEY, isCollapsed ? "true" : "false");
+    if (isMobile()) {
+      setMobileOpen(!document.body.classList.contains("sidebar-mobile-open"));
+      return;
+    }
+
+    const collapsed = document.body.classList.toggle("sidebar-collapsed");
+    localStorage.setItem(SIDEBAR_COLLAPSE_KEY, collapsed ? "true" : "false");
+    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    btn.setAttribute("aria-label", collapsed ? "Tampilkan sidebar" : "Sembunyikan sidebar");
+  });
+
+  backdrop.addEventListener("click", () => setMobileOpen(false));
+
+  sidebar.addEventListener("click", (event) => {
+    if (isMobile() && event.target.closest("a.sidebar-item")) {
+      setMobileOpen(false);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.body.classList.contains("sidebar-mobile-open")) {
+      setMobileOpen(false);
+      btn.focus();
+    }
+  });
+
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(applyViewportState, 120);
   });
 }
 

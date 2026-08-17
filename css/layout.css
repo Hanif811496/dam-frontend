@@ -142,6 +142,7 @@
   padding: 16px 10px;
   overflow-y: auto;
   transition: transform 0.2s ease;
+  z-index: 80;
 }
 
 body.sidebar-collapsed .sidebar {
@@ -218,7 +219,6 @@ body.sidebar-collapsed .main-content {
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 
 @media (max-width: 768px) {
-  .sidebar { display: none; }
   .main-content { margin-left: 0; padding: 16px; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
 }
