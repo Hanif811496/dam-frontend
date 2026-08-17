@@ -1,3 +1,19 @@
+const SIDEBAR_COLLAPSE_KEY = "dam_sidebar_collapsed";
+
+function initSidebarToggle() {
+  const btn = document.getElementById("sidebar-toggle");
+  if (!btn) return;
+
+  // Default: sidebar terbuka. Hanya collapse kalau user pernah menutupnya.
+  const collapsed = localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === "true";
+  document.body.classList.toggle("sidebar-collapsed", collapsed);
+
+  btn.addEventListener("click", () => {
+    const isCollapsed = document.body.classList.toggle("sidebar-collapsed");
+    localStorage.setItem(SIDEBAR_COLLAPSE_KEY, isCollapsed ? "true" : "false");
+  });
+}
+
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
