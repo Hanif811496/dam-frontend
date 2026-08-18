@@ -941,6 +941,9 @@
             <div class="tipe-item" data-tipe="video" onclick="setTipe(this,'video')">
               <div class="tipe-dot" style="background:var(--primary);"></div> Video
             </div>
+            <div class="tipe-item" data-tipe="audio" onclick="setTipe(this,'audio')">
+              <div class="tipe-dot" style="background:#7C3AED;"></div> Audio
+            </div>
             <div class="tipe-item" data-tipe="pdf" onclick="setTipe(this,'pdf')">
               <div class="tipe-dot" style="background:var(--accent-yellow);"></div> PDF
             </div>
@@ -1180,6 +1183,7 @@
     function getFileIcon(tipe = "") {
       if (tipe.includes("image")) return "🖼️";
       if (tipe.includes("video")) return "🎬";
+      if (tipe.includes("audio")) return "🎵";
       if (tipe.includes("pdf")) return "📄";
       if (tipe.includes("word") || tipe.includes("document")) return "📝";
       if (tipe.includes("spreadsheet") || tipe.includes("excel")) return "📊";
@@ -1247,7 +1251,7 @@
       let html = "";
 
       if (activeTipe) {
-        const label = { image: "Gambar", video: "Video", pdf: "PDF" }[activeTipe] || activeTipe;
+        const label = { image: "Gambar", video: "Video", audio: "Audio", pdf: "PDF" }[activeTipe] || activeTipe;
         html += `<div class="active-filter-badge">Tipe: ${escapeHtml(label)} <span onclick="clearTipe()">×</span></div>`;
       }
 

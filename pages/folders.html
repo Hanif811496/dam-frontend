@@ -469,7 +469,7 @@
       document.getElementById('folder-detail').innerHTML = detailShell(folder, body); bindDetailEvents();
     }
 
-    function fileIcon(type='') { if(type.includes('video'))return '🎬';if(type.includes('pdf'))return '📄';if(type.includes('word')||type.includes('document'))return '📝';if(type.includes('spreadsheet')||type.includes('excel'))return '📊';return '📦'; }
+    function fileIcon(type='') { if(type.includes('video'))return '🎬';if(type.includes('audio'))return '🎵';if(type.includes('pdf'))return '📄';if(type.includes('word')||type.includes('document'))return '📝';if(type.includes('spreadsheet')||type.includes('excel'))return '📊';return '📦'; }
     function formatBytesLocal(n){const x=Number(n||0);if(x<1024)return x+' B';if(x<1048576)return (x/1024).toFixed(1)+' KB';if(x<1073741824)return (x/1048576).toFixed(1)+' MB';return (x/1073741824).toFixed(1)+' GB';}
 
     async function renderRules(folder) {

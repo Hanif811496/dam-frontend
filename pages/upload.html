@@ -532,9 +532,9 @@
         <div class="dropzone" id="dropzone">
           <div class="dropzone-icon">☁️</div>
           <p>Seret file ke sini atau klik untuk memilih</p>
-          <p style="font-size:12px;">Mendukung: JPG, PNG, PDF, MP4, DOCX, XLSX (maks 50MB)</p>
+          <p style="font-size:12px;">Mendukung: JPG, PNG, PDF, MP4, MP3, WAV, DOCX, XLSX (maks 50MB)</p>
           <button class="btn btn-outline btn-sm" type="button">Pilih File</button>
-          <input type="file" id="file-input" multiple accept="image/*,video/*,.pdf,.docx,.xlsx" style="display:none;">
+          <input type="file" id="file-input" multiple accept="image/*,video/*,audio/*,.mp3,.wav,.pdf,.docx,.xlsx" style="display:none;">
         </div>
 
         <div class="file-list" id="file-list"></div>
@@ -553,7 +553,7 @@
               <div class="info-box-icon"><i data-lucide="file-check-2"></i></div>
               <div>
                 <div class="info-box-title">Format file</div>
-                <div class="info-box-text">JPG, PNG, PDF, MP4, DOCX, dan XLSX.</div>
+                <div class="info-box-text">JPG, PNG, PDF, MP4, MP3, WAV, DOCX, dan XLSX.</div>
               </div>
             </div>
 
@@ -751,10 +751,15 @@
           return;
         }
         wrap.innerHTML = recent.map(a => {
-          const isImage = (a.tipe_file || "").startsWith("image");
+          const tipe = String(a.tipe_file || "").toLowerCase();
+          const ext = String(a.nama_file || "").split(".").pop().toLowerCase();
+          const isImage = tipe.startsWith("image");
+          const isAudio = tipe.startsWith("audio") || ["mp3", "wav"].includes(ext);
           const thumb = isImage
             ? `<img class="recent-item-thumb" src="${a.url}" alt="">`
-            : `<div class="recent-item-icon"><i data-lucide="file"></i></div>`;
+            : isAudio
+              ? `<div class="recent-item-icon"><i data-lucide="music"></i></div>`
+              : `<div class="recent-item-icon"><i data-lucide="file"></i></div>`;
           return `
           <div class="recent-item">
             ${thumb}
@@ -803,6 +808,20 @@
       fileInput.value = "";
     });
 
+    function getFileExtension(name = "") {
+      const parts = String(name).toLowerCase().split(".");
+      return parts.length > 1 ? parts.pop() : "";
+    }
+
+    function getUploadFileIcon(file) {
+      const type = String(file?.type || "").toLowerCase();
+      const ext = getFileExtension(file?.name || "");
+      if (type.startsWith("audio/") || ["mp3", "wav"].includes(ext)) return "music";
+      if (type.startsWith("video/")) return "clapperboard";
+      if (ext === "pdf") return "file-text";
+      return "file";
+    }
+
     function addFiles(files) {
       files.forEach(f => {
         if (f.size > 50 * 1024 * 1024) {
@@ -843,7 +862,7 @@
         const tagsHtml = (fileTags[i] || []).map(t => `<span class="tag-pill">${t}</span>`).join("");
         const thumb    = filePreviews[i]
           ? `<img class="file-item-thumb" src="${filePreviews[i]}" alt="">`
-          : `<div class="file-item-icon"><i data-lucide="file"></i></div>`;
+          : `<div class="file-item-icon"><i data-lucide="${getUploadFileIcon(f)}"></i></div>`;
         return `
         <div class="file-item" id="file-item-${i}">
           <div class="file-item-header">

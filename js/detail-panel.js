@@ -63,10 +63,29 @@ function ensureDetailPanelDOM() {
 
 function getFileIconDetail(tipe) {
   if (tipe.includes("video")) return "🎬";
+  if (tipe.includes("audio")) return "🎵";
   if (tipe.includes("pdf"))   return "📄";
   if (tipe.includes("word") || tipe.includes("document")) return "📝";
   if (tipe.includes("spreadsheet") || tipe.includes("excel")) return "📊";
   return "📁";
+}
+
+
+function getFriendlyFileTypeDetail(asset) {
+  const name = String(asset?.nama_file || "").toLowerCase();
+  const ext = name.includes(".") ? name.split(".").pop() : "";
+  const labels = {
+    mp3: "MP3",
+    wav: "WAV",
+    mp4: "MP4",
+    jpg: "JPG",
+    jpeg: "JPEG",
+    png: "PNG",
+    pdf: "PDF",
+    docx: "DOCX",
+    xlsx: "XLSX",
+  };
+  return labels[ext] || asset?.tipe_file || "—";
 }
 
 async function openDetailPanel(assetId, refreshFnName, folderId) {
@@ -128,6 +147,7 @@ function renderDetailPanel() {
 
   const isImage = a.tipe_file.includes("image");
   const isVideo = a.tipe_file.includes("video");
+  const isAudio = a.tipe_file.includes("audio");
 
   let previewHtml = "";
   if (isImage) {
@@ -136,6 +156,14 @@ function renderDetailPanel() {
     previewHtml = `<video controls style="width:100%;max-height:360px;">
       <source src="${a.url}" type="${a.tipe_file}">
     </video>`;
+  } else if (isAudio) {
+    previewHtml = `<div style="padding:24px 12px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <div class="preview-icon-sm">🎵</div>
+      <audio controls preload="metadata" style="width:100%;">
+        <source src="${a.url}" type="${a.tipe_file}">
+        Browser tidak mendukung pemutar audio.
+      </audio>
+    </div>`;
   } else {
     previewHtml = `<div class="preview-icon-sm">${getFileIconDetail(a.tipe_file)}</div>`;
   }
@@ -173,7 +201,7 @@ function renderDetailPanel() {
       </div>
       <div class="info-row">
         <span class="info-row-label">Tipe</span>
-        <span class="info-row-value">${a.tipe_file}</span>
+        <span class="info-row-value">${getFriendlyFileTypeDetail(a)}</span>
       </div>
       <div class="info-row">
         <span class="info-row-label">Ukuran</span>

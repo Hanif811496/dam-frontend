@@ -605,6 +605,7 @@
 
     .tipe-image { background: #E6F1FB; color: var(--accent-blue); }
     .tipe-video { background: #FCEBEB; color: var(--primary); }
+    .tipe-audio { background: #F3E8FF; color: #6D28D9; }
     .tipe-pdf   { background: #FAEEDA; color: #633806; }
     .tipe-doc   { background: #EEEDFE; color: #3C3489; }
     .tipe-other { background: #F5F5F5; color: #666; }
@@ -985,6 +986,7 @@
             <option value="">Semua tipe</option>
             <option value="image">Gambar</option>
             <option value="video">Video</option>
+            <option value="audio">Audio</option>
             <option value="pdf">PDF</option>
             <option value="word">Word</option>
           </select>
@@ -1148,6 +1150,7 @@
       const value = String(tipe || "").toLowerCase();
       if (value.includes("image")) return "Gambar";
       if (value.includes("video")) return "Video";
+      if (value.includes("audio")) return "Audio";
       if (value.includes("pdf")) return "PDF";
       if (value.includes("word") || value.includes("document")) return "Word";
       if (value.includes("sheet") || value.includes("excel")) return "Spreadsheet";
@@ -1157,6 +1160,7 @@
     function getTipeBadge(tipe) {
       if (tipe.includes("image"))  return `<span class="tipe-badge tipe-image">Gambar</span>`;
       if (tipe.includes("video"))  return `<span class="tipe-badge tipe-video">Video</span>`;
+      if (tipe.includes("audio"))  return `<span class="tipe-badge tipe-audio">Audio</span>`;
       if (tipe.includes("pdf"))    return `<span class="tipe-badge tipe-pdf">PDF</span>`;
       if (tipe.includes("word") || tipe.includes("document")) return `<span class="tipe-badge tipe-doc">Word</span>`;
       return `<span class="tipe-badge tipe-other">Lainnya</span>`;
