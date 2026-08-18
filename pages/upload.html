@@ -272,27 +272,71 @@
       margin-bottom: 6px;
     }
 
-    .folder-suggest-item {
+    .folder-suggest-summary {
       display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    .folder-suggest-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
       align-items: center;
       gap: 8px;
       font-size: 12.5px;
-      padding: 4px 0;
+      padding: 7px 0;
       cursor: pointer;
       user-select: none;
+      border-bottom: 1px solid var(--border);
     }
 
+    .folder-suggest-item:last-child { border-bottom: 0; }
     .folder-suggest-item input { accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
 
-    .folder-suggest-item span:first-of-type { font-weight: 500; }
-
-    .folder-suggest-reason {
-      font-size: 11px;
-      color: var(--text-light);
-      margin-left: auto;
+    .folder-suggest-main { min-width: 0; }
+    .folder-suggest-name { font-weight: 600; color: var(--text); }
+    .folder-suggest-tags {
+      margin-top: 2px;
+      font-size: 10.5px;
+      color: var(--text-muted);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .folder-suggest-score {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    .folder-suggest-confidence {
+      display: inline-flex;
+      align-items: center;
+      border-radius: var(--radius-full);
+      padding: 3px 7px;
+      font-size: 9.5px;
+      font-weight: 700;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .folder-suggest-confidence.strong {
+      background: #E1F5EE;
+      color: #085041;
+      border-color: rgba(8,80,65,.12);
+    }
+
+    .folder-suggest-reason {
+      font-size: 10.5px;
+      color: var(--text-muted);
     }
 
     /* ── Kolom kanan: info panel ── */
@@ -824,6 +868,19 @@
       updateUploadButton();
     }
 
+    function suggestionComparator(a, b) {
+      const countDiff = Number(b.match_count || 0) - Number(a.match_count || 0);
+      if (countDiff) return countDiff;
+
+      const ratioDiff = Number(b.match_ratio || 0) - Number(a.match_ratio || 0);
+      if (ratioDiff) return ratioDiff;
+
+      const depthDiff = Number(b.depth || 0) - Number(a.depth || 0);
+      if (depthDiff) return depthDiff;
+
+      return String(a.nama || "").localeCompare(String(b.nama || ""), "id");
+    }
+
     function renderFolderSuggestions(i) {
       const wrap = document.getElementById(`folders-${i}`);
       if (!wrap) return;
@@ -832,13 +889,40 @@
         wrap.innerHTML = "";
         return;
       }
-      wrap.innerHTML = `<div class="folder-suggest-title">Folder tujuan (otomatis dari tag)</div>` +
-        suggestions.map((s, si) => `
-          <label class="folder-suggest-item">
-            <input type="checkbox" ${s.checked ? "checked" : ""} onchange="toggleSuggestedFolder(${i}, ${si}, this.checked)">
-            <span>${s.nama}</span>
-            <span class="folder-suggest-reason">${s.reason || ""}</span>
-          </label>`).join("");
+
+      const selectedCount = suggestions.filter(s => s.checked).length;
+      const autoNote = suggestions.length > 3
+        ? `${selectedCount} dari ${suggestions.length} rekomendasi dipilih otomatis`
+        : `${selectedCount} dari ${suggestions.length} rekomendasi dipilih`;
+
+      wrap.innerHTML = `
+        <div class="folder-suggest-title">Folder tujuan (diurutkan dari kecocokan tertinggi)</div>
+        <div class="folder-suggest-summary">
+          <span>${autoNote}</span>
+          ${suggestions.length > 3 ? '<span>Maks. 3 teratas dicentang otomatis</span>' : ''}
+        </div>` +
+        suggestions.map((s, si) => {
+          const matchedTags = Array.isArray(s.matched_tags) ? s.matched_tags : [];
+          const score = s.rule_count
+            ? `${s.match_count || 0}/${s.rule_count} tag cocok`
+            : (s.reason || "Folder divisi");
+          const confidence = s.confidence || "";
+          const confidenceClass = confidence === "Sangat cocok" ? "strong" : "";
+          const tagText = matchedTags.length ? matchedTags.join(" · ") : (s.reason || "");
+
+          return `
+            <label class="folder-suggest-item">
+              <input type="checkbox" ${s.checked ? "checked" : ""} onchange="toggleSuggestedFolder(${i}, ${si}, this.checked)">
+              <span class="folder-suggest-main">
+                <span class="folder-suggest-name">${s.nama}</span>
+                <span class="folder-suggest-tags">${tagText}</span>
+              </span>
+              <span class="folder-suggest-score">
+                ${confidence ? `<span class="folder-suggest-confidence ${confidenceClass}">${confidence}</span>` : ""}
+                <span class="folder-suggest-reason">${score}</span>
+              </span>
+            </label>`;
+        }).join("");
     }
 
     async function toggleSuggestedFolder(fileIndex, sugIndex, checked) {
@@ -851,9 +935,12 @@
       try {
         if (checked) {
           await addAssetToFolder(s.id, assetId, user.user_id);
+          s.serverAssigned = true;
         } else {
           await removeAssetFromFolder(s.id, assetId, user.user_id);
+          s.serverAssigned = false;
         }
+        renderFolderSuggestions(fileIndex);
       } catch (e) {
         // Gagal ubah di server -> kembalikan checkbox ke kondisi semula
         s.checked = !checked;
@@ -933,7 +1020,9 @@
           // Folder yang sudah otomatis diterapkan endpoint upload.
           // Backend hierarchy-aware hanya menyimpan tujuan yang relevan/terdalam.
           // Checkbox tetap ditampilkan agar user bisa melihat atau membatalkan assignment.
-          const suggestions = (result.suggested_folders || []).map(s => ({ ...s, checked: true }));
+          let suggestions = (result.suggested_folders || [])
+            .map(s => ({ ...s, checked: s.auto_selected === true, serverAssigned: s.auto_selected === true }))
+            .sort(suggestionComparator);
 
           // Kalau dipilih 2+ divisi, set visibility aset ke semua divisi itu,
           // lalu ambil & terapkan juga folder yang relevan (system + smart folder)
@@ -952,9 +1041,27 @@
 
                 for (const s of (predictRes.suggested_folders || [])) {
                   if (!suggestions.find(x => x.id === s.id)) {
-                    await addAssetToFolder(s.id, assetId, user.user_id);
-                    suggestions.push({ ...s, checked: true });
+                    suggestions.push({ ...s, checked: false, serverAssigned: false });
                   }
+                }
+
+                // Ranking ulang secara global setelah kandidat divisi tambahan digabung.
+                // Hanya 3 rekomendasi terbaik yang menjadi assignment default.
+                suggestions.sort(suggestionComparator);
+                const desiredIds = new Set(suggestions.slice(0, 3).map(s => s.id));
+
+                for (const s of suggestions) {
+                  const shouldBeChecked = desiredIds.has(s.id);
+
+                  if (shouldBeChecked && !s.serverAssigned) {
+                    await addAssetToFolder(s.id, assetId, user.user_id);
+                    s.serverAssigned = true;
+                  } else if (!shouldBeChecked && s.serverAssigned) {
+                    await removeAssetFromFolder(s.id, assetId, user.user_id);
+                    s.serverAssigned = false;
+                  }
+
+                  s.checked = shouldBeChecked;
                 }
               }
             } catch (multiDivErr) {
